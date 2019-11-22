@@ -1,10 +1,6 @@
-import javax.print.Doc;
 import java.io.*;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-
 
 public class ReadFile {
 
@@ -12,24 +8,20 @@ public class ReadFile {
 
     private BufferedReader curFileToRead;
     private Document nextDoc;
-    private StringBuilder text;
     private String line;
-    private Map<String, String> monthDic;
 
-    private final String[] docTagStr = {"<DOC>","</DOC>"};
-    private final String[] docNumStr = {"<DOCNO>"};
-    private final String[] docDateStartStr = {"<DATE1>","<DATE>"};
-    private final String[] docDateEndStr = {"</DATE"};
-    private final String[] docTitelStartStr = {"<TI>","<HEADLINE>"};
-    private final String[] docTitelEndtStr = {"</TI>","</HEADLINE>"};
-    private final String[] docTextStr = {"<TEXT>","</TEXT>"};
-    private final String[] docPerTagStr = {"<P>","</P>"};
+    private static final String[] docTagStr = {"<DOC>","</DOC>"};
+    private static final String[] docNumStr = {"<DOCNO>"};
+    private static final String[] docDateStartStr = {"<DATE1>","<DATE>"};
+    private static final String[] docDateEndStr = {"</DATE"};
+    private static final String[] docTitleStartStr = {"<TI>","<HEADLINE>"};
+    private static final String[] docTitleEndStr = {"</TI>","</HEADLINE>"};
+    private static final String[] docTextStr = {"<TEXT>","</TEXT>"};
+    private static final String[] docPerTagStr = {"<P>","</P>"};
 
     public ReadFile(String dirPath) throws FileNotFoundException {
 
         this.files = new LinkedList<>();
-        this.monthDic = new HashMap<>();
-//        creatMonthDic();
         getAllFiles(new File(dirPath));
         this.curFileToRead = new BufferedReader(new FileReader(this.files.remove(0)));
     }
@@ -52,8 +44,9 @@ public class ReadFile {
 
     private void saveNextFile() {
 
-        this.text = new StringBuilder();
         this.nextDoc = new Document();
+        StringBuilder text = new StringBuilder();
+
         boolean isText = false;
         boolean foundDate = false;
         boolean foundTitle = false;
@@ -74,9 +67,9 @@ public class ReadFile {
                     getAllDataTo(docDateEndStr);
                     removeTags();
                     nextDoc.setDate(insetContentToline());
-                } else if (!foundTitle && isLineContains(line, docTitelStartStr)){
+                } else if (!foundTitle && isLineContains(line, docTitleStartStr)){
                     foundTitle = true;
-                    getAllDataTo(docTitelEndtStr);
+                    getAllDataTo(docTitleEndStr);
                     removeTags();
                     insetContentToline();
                     nextDoc.setTitle(line);
@@ -95,27 +88,6 @@ public class ReadFile {
             e.printStackTrace();
         }
     }
-
-//    private void parseDate(){
-//        if (line.length() > 6)
-//            return;
-//        line = line.substring(4) + " " + monthDic.get(line.substring(2,4)) + " 19" + line.substring(0,2);
-//    }
-//
-//    private void creatMonthDic(){
-//        monthDic.put("01", "Jan");
-//        monthDic.put("02", "Feb");
-//        monthDic.put("03", "Mar");
-//        monthDic.put("04", "Apr");
-//        monthDic.put("05", "May");
-//        monthDic.put("06", "Jun");
-//        monthDic.put("07", "Jul");
-//        monthDic.put("08", "Aug");
-//        monthDic.put("09", "Sep");
-//        monthDic.put("10", "Oct");
-//        monthDic.put("11", "Nov");
-//        monthDic.put("12", "Dec");
-//    }
 
     private String insetContentToline(){
         String newLine = "";
@@ -182,12 +154,5 @@ public class ReadFile {
                 return true;
         return false;
     }
-
-
-
-    public int getNumberOfFiles(){
-        return this.files.size();
-    }
-
 
 }
