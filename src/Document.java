@@ -1,22 +1,11 @@
 public class Document {
 
-    private String docName;
     private String docNo;
     private String date;
-    private String header;
     private String text;
+    private String title;
 
-    public Document(String docName, String docNo, String date, String header, String text) {
-        this.docName = docName;
-        this.docNo = docNo;
-        this.date = date;
-        this.header = header;
-        this.text = text;
-    }
-
-    public String getDocName() {
-        return docName;
-    }
+    public Document(){}
 
     public String getDocNo() {
         return docNo;
@@ -26,16 +15,12 @@ public class Document {
         return date;
     }
 
-    public String getHeader() {
-        return header;
-    }
-
     public String getText() {
         return text;
     }
 
-    public void setDocName(String docName) {
-        this.docName = docName;
+    public String getTitle(){
+        return this.title;
     }
 
     public void setDocNo(String docNo) {
@@ -46,8 +31,8 @@ public class Document {
         this.date = date;
     }
 
-    public void setHeader(String header) {
-        this.header = header;
+    public void setTitle(String title){
+        this.title = title;
     }
 
     public void setText(String text) {
