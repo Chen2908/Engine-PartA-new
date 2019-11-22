@@ -19,11 +19,11 @@ public class ReadFile {
     private static final String[] docTextStr = {"<TEXT>","</TEXT>"};
     private static final String[] docPerTagStr = {"<P>","</P>"};
 
-    public ReadFile(String dirPath) throws FileNotFoundException {
-
+    public ReadFile(String dirPath) {
         this.files = new LinkedList<>();
+        this.line = null;
         getAllFiles(new File(dirPath));
-        this.curFileToRead = new BufferedReader(new FileReader(this.files.remove(0)));
+        this.curFileToRead = null;
     }
 
     private void getAllFiles(File file){
@@ -37,7 +37,7 @@ public class ReadFile {
         }
     }
 
-    public Document getNextFile() {
+    public Document getNextDoc() {
         saveNextFile();
         return this.nextDoc;
     }
@@ -108,7 +108,7 @@ public class ReadFile {
 
     private boolean findFirstLine() throws IOException {
         while (true) {
-            if ((line = this.curFileToRead.readLine()) == null) {
+            if (this.curFileToRead == null || (line = this.curFileToRead.readLine()) == null) {
                 if (this.files.size() == 0)
                     return false;
 
