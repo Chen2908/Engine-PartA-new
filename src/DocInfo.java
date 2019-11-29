@@ -1,8 +1,14 @@
 public class DocInfo {
 
+    //<editor-fold des="Class Fields">
+
     private String docNum;
     private int tfi; // number of times the term, that contains the Object, appears in this document.
     private StringBuilder termIndexes; // contains all the indexes where that term appears in the doc, separated by commas.
+
+    //</editor-fold>
+
+    //<editor-fold des="Constructor">
 
     public DocInfo(String docNum){
         this.docNum = docNum;
@@ -10,17 +16,27 @@ public class DocInfo {
         this.termIndexes = new StringBuilder();
     }
 
-    public String getDocNum() { return docNum; }
+    //</editor-fold>
 
-    public int getTfi() { return tfi; }
+    //<editor-fold des="Setters">
 
     public void setTfi(int tfi) { this.tfi = tfi; }
 
     public void increaseTfi(){ this.tfi++; }
 
+    public void addIndex(int index){ this.termIndexes.append("," + index); }
+
+    //</editor-fold>
+
+    //<editor-fold des="Getters">
+
+    public String getDocNum() { return docNum; }
+
+    public int getTfi() { return tfi; }
+
     public String getTermIndexes() { return termIndexes.toString(); }
 
-    public void addIndex(int index){ this.termIndexes.append("," + index); }
+    //</editor-fold>
 
     @Override
     public String toString(){

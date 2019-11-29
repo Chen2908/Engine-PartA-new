@@ -1,46 +1,34 @@
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-
-/**
- * This class represents a term in the corpus
- */
+import java.util.*;
 
 public class Term {
 
+    //<editor-fold des="Class Fields">
+
     private String value;
-    private int df;  //amount of docs it appeared in groups of files
     private HashMap<String, DocInfo> docs; // hashMap of all the docs that this term appears in
     private boolean startsWithCapital;
 
+
+    //</editor-fold>
+
+    //<editor-fold des="Constructors">
+
     public Term(String value) {
         setValue(value);
-        setDf(0);
         docs = new HashMap<>();
     }
 
-    public Term(String value, int df) {
-        setValue(value);
-        setDf(df);
-        docs = new HashMap<>();
-    }
+    //</editor-fold>
 
-    public boolean isStartsWithCapital() { return startsWithCapital; }
-
-    private void setStartsWithCapital(boolean startsWithCapital) {
-        this.startsWithCapital = startsWithCapital;
-    }
-
-    public int getDf() { return df; }
-
-    public void setDf(int df) { this.df = df; }
-
-    public String getValue() { return value; }
+    //<editor-fold des="Setters">
 
     public void setValue(String value) {
         this.value = value;
         setStartsWithCapital(Character.isUpperCase(value.charAt(0)));
+    }
+
+    private void setStartsWithCapital(boolean startsWithCapital) {
+        this.startsWithCapital = startsWithCapital;
     }
 
     public void updatesDocsInfo(String docNum, int index){
@@ -55,9 +43,26 @@ public class Term {
         curDoc.addIndex(index);
     }
 
+    //</editor-fold>
+
+    //<editor-fold des="Getters">
+
+    /**Amount of docs this term appears in groups of files*/
+    public int getDf() { return docs.size(); }
+
+    public String getValue() { return value; }
+
+    public boolean isStartsWithCapital() { return startsWithCapital; }
+
+    //<editor-fold des="Documents Information Getters">
+
     public int getDocTfi(String docNum){ return docs.get(docNum).getTfi(); }
 
     public String getTermDocIndexes(String docNum){ return docs.get(docNum).getTermIndexes(); }
+
+    //</editor-fold>
+
+    //<editor-fold des="Documents Lists Getters">
 
     public List<DocInfo> getDocsSortedByName(){
         ArrayList<DocInfo> docList = new ArrayList<>(docs.values());
@@ -65,5 +70,19 @@ public class Term {
         return docList;
     }
 
+    public List<String> getDocsWhereTfiIs(int tfi){
+        List<String> docsNumber = new LinkedList<>();
+        for (DocInfo doc: docs.values())
+            if (doc.getTfi() == tfi)
+                docsNumber.add(doc.getDocNum());
+
+        return docsNumber;
+    }
+
+    //</editor-fold>
+
     public DocInfo getDoc(String docNum){ return docs.get(docNum); }
+
+    //</editor-fold>
+
 }
