@@ -1,4 +1,4 @@
-public class DocInfo {
+public class DocTermInfo {
 
     //<editor-fold des="Class Fields">
 
@@ -10,7 +10,7 @@ public class DocInfo {
 
     //<editor-fold des="Constructor">
 
-    public DocInfo(String docNum){
+    public DocTermInfo(String docNum){
         this.docNum = docNum;
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
