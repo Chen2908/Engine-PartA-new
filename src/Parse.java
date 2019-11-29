@@ -1,5 +1,3 @@
-import com.sun.deploy.util.ArrayUtil;
-
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -9,10 +7,13 @@ import java.util.regex.Pattern;
 public class Parse {
 
     static HashSet<String> stopWords;
-    private Map<String, Long> helpDictionary;
+    private Map<String, Double> helpDictionary;
     private HashSet<Character> delimiters;
-    TreeMap<String, String> terms;
 
+    private static final double THOUSAND = Math.pow(10,3);
+    private static final double MILLION = Math.pow(10,6);
+    private static final double BILLION = Math.pow(10,9);
+    private static final double TRILLION = Math.pow(10,12);
 
     //patterns for input text
     private static Pattern $PRICEMB = Pattern.compile("((\\$)(([1-9][0-9]*)|0)(\\s)(million|billion))");
@@ -27,17 +28,19 @@ public class Parse {
     private static Pattern MONTHDD_UPPER = Pattern.compile("((JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\\s)(3[0|1]|[1|2][0-9]|[0-9]))|(()(\\s)(3[0|1]|[1|2][0-9]|[0-9]))");
     private static Pattern MONTHYEAR_LOWER = Pattern.compile("((January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\\s)((1|2)(\\d)(\\d)(\\d)))");
     private static Pattern MONTHYEAR_UPPER = Pattern.compile("((JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\\s)((1|2)(\\d)(\\d)(\\d)))");
-    private static Pattern PERCENT = Pattern.compile("(([1-9][0-9]*)|0)(\\%)|(([1-9][0-9]*)0)(\\s)(percent|percentage)");
+    private static Pattern PERCENT2 = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(percent|percentage)");
+    private static Pattern PERCENT1 = Pattern.compile("(([1-9][0-9]*)|0)(\\%)");
     private static Pattern PHRASE = Pattern.compile("(\\w)(\\-)(\\w)|(\\w)(\\-)(\\w)(\\-)(\\w)|(\\w)(\\-)(([1-9][0-9]*)|0)|(([1-9][0-9]*)|0)(\\-)(\\w)|(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)");
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
     private static Pattern NUMBER = Pattern.compile("^([1-9][0-9]*)|0$");
     private static Pattern DOUBLE_NUMBER = Pattern.compile("^(([1-9][0-9]*)|0)(\\.)(([1-9][0-9]*)|0)$");
-    //new law
-    private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
 
-    public Parse( String stopWordsPath) {
+    //new laws
+    private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
+    //add phone numbers, http address
+
+    public Parse(String stopWordsPath) {
         stopWords = readStopWords(stopWordsPath);
-        terms= new TreeMap<>();
         setHelpDic(helpDictionary);
         delimiters = new HashSet(Arrays.asList(new char[]{'\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
                 '#', '!', '?', '*', ':', '`', '|', '&', '^', '*', '@', '"'}));
@@ -58,23 +61,31 @@ public class Parse {
         return temp;
     }
 
-    private void setHelpDic(Map<String, Long> helpDictionary) {
-        helpDictionary.put("Thousand", 1000L);
-        helpDictionary.put("Million", 1000000L);
-        helpDictionary.put("Billion", 1000000000L);
-        helpDictionary.put("Trillion", 1000000000000L);
+
+
+    private void setHelpDic(Map<String, Double> helpDictionary) {
+        helpDictionary.put("thousand", Math.pow(10, 3));
+        helpDictionary.put("million", Math.pow(10, 6));
+        helpDictionary.put("billion", Math.pow(10, 9));
+        helpDictionary.put("trillion", Math.pow(10, 12));
+        helpDictionary.put("m", Math.pow(10, 6));
+        helpDictionary.put("bn", Math.pow(10, 9));
     }
 
-    private HashSet<String> parse(Document doc) {
-        HashSet<String> docTerms= new HashSet<>();
-        Pattern delimitersPattern = Pattern.compile("[ \\t\\n]");
-        String[] singleWords = delimitersPattern.split(doc.getText());
-        //String[] singleWords= doc.getText().split(" ");    check times!!!!
+    /**
+     *
+     * @param doc to parse
+     * @return a hashmap containing all terms that appeared in doc
+     */
+    private HashMap<String, String> parse(Document doc) {
+        String docNo=doc.getDocNo();
+        HashMap<String,String> docTerms= new HashMap<>();
+        String[] singleWords = doc.getText().split(" "); //check with string builder
         for (int i = 0; i < singleWords.length; i++) {
             String word = singleWords[i];
             cleanWord(word);
             char firstChar = word.charAt(0);
-            String found = "";
+            boolean found = false;
             //$ price
             if (firstChar == '$') {
                 String numberInWord = word.substring(1);
@@ -82,61 +93,84 @@ public class Parse {
                     //the word is in format $number and number>million
                     if (((i + 1) < singleWords.length)) {
                         Matcher match = $PRICEMB.matcher(word + " " + singleWords[i + 1]);
-                        if (match.find()) {
-                            found = match.group();
-                            terms.put(numberInWord + " M Dollars", doc.getDocNo());
-                            docTerms.add(numberInWord + " M Dollars");
+                        if (match.matches()) {
+                            found=true;
+                            saveAsNumDollars(docTerms, numberInWord, docNo);
                             i++;
                         }
                     }
-                    if (found.isEmpty()){ //didn't find the pattern or the last word in text
+                    if (! found){ //didn't find the pattern or the last word in text
                         if (Double.parseDouble(numberInWord) > Math.pow(10, 6)) { // $ over a million number
                             double num = Double.parseDouble(numberInWord) / Math.pow(10, 6);
-                            docTerms.add("" + num + " M Dollars");
-                            terms.put("" + num + " M Dollars", doc.getDocNo());
+                            saveAsNumMDollars(docTerms, num, docNo);
                         } else { //$ less than million number
                             double num = Double.parseDouble(numberInWord);
-                            docTerms.add("" + num + " Dollars");
-                            terms.put("" + num + " Dollars", doc.getDocNo());
+                            saveAsNumDollars(docTerms, ""+num, docNo);
                         }
                     }
                 }
             }
-            // price... / regular number / percent / num-num / date / phrase
+            // price...(4,3,2) / regular number(1) / percent(2,1) / num-num(1) / date(2)
             else if (Character.isDigit(firstChar)){
                 //phrase
                 if (word.contains("-")){
                     Matcher match = PHRASE.matcher(word);
-                    if (match.find()) {
-                        found = match.group();
+                    if (match.matches()) {
                         String[] splittedWord= word.split("-");
-                        if (isNumeric(splittedWord[1])) {
-                            terms.put(splittedWord[0], doc.getDocNo());
-                            terms.put(splittedWord[1], doc.getDocNo());
-                            docTerms.add(splittedWord[0]);
-                            docTerms.add(splittedWord[1]);
+                        if (isNumeric(splittedWord[0]) && isNumeric(splittedWord[1])) {  //range as num-num
+                            saveWordAsIs(docTerms, splittedWord[0],docNo );
+                            saveWordAsIs(docTerms, splittedWord[1],docNo );
                         }
-                        terms.put(word, doc.getDocNo());
-                        docTerms.add(singleWords[i]);
+                        saveWordAsIs(docTerms, word ,doc.getDocNo() );
+
                     }
                 }
+                // 4 words - price U.S
+                else if (((i + 3) < singleWords.length)){
+                    Matcher match = PRICEUS.matcher(word + " " + singleWords[i + 1]+ " " + singleWords[i + 2]+ " " + singleWords[i + 3]);
+                    if (match.matches()) {
+                        saveAsNumMDollars(docTerms,Double.parseDouble(word)*(helpDictionary.get(singleWords[i + 1])/THOUSAND), docNo);
+                        i+=3;
+                    }
+                }
+                // 3 words
+                else if (((i + 2) < singleWords.length)){
+                    // price bn/m dollars
+                    String threeWords=word + " " + singleWords[i + 1]+ " " + singleWords[i + 2];
+                    Matcher match = PRICEBIG$.matcher(threeWords);
+                    if (match.matches()) {
+                        saveAsNumMDollars(docTerms,Double.parseDouble(word)*(helpDictionary.get(singleWords[i + 1])/THOUSAND), docNo);
+                        i+=2;
+                    }
+                    else if (Double.parseDouble(word) <MILLION){  //price (less than million) fraction dollars
+                        match= PRICEFRAC.matcher(threeWords);
+                        if (match.matches()) {
+                            saveAsNumDollars(docTerms,word+ " " + singleWords[i + 1], docNo);
+                            i+=2;
+                        }
+                    }
+                }
+                // 2 words
+                else if (((i + 1) < singleWords.length)){
+                    handle_2_letters(word, docTerms);
+
+
+                }
+
+
             }
             //entities, between/ phrases/ capital/ date
             else if (Character.isLetter(firstChar)){
-                //entities
+                //entities    //switch order with number
 
                 //between
                 if (word.equals("between")||word.equals("Between")){
                     if (((i + 3) < singleWords.length)) {
                         Matcher match = BETWEEN.matcher(word + " " + singleWords[i + 1]+ " " + singleWords[i + 2]+ " " + singleWords[i + 3]);
-                        if (match.find()) {
-                            found = match.group();
-                            terms.put(singleWords[i + 1] + "-" + singleWords[i + 3], doc.getDocNo());
-                            docTerms.add(singleWords[i + 1] + "-" + singleWords[i + 3]);
-                            terms.put(singleWords[i + 1], doc.getDocNo());
-                            docTerms.add(singleWords[i + 1]);
-                            terms.put(singleWords[i + 3], doc.getDocNo());
-                            docTerms.add(singleWords[i + 3]);
+                        if (match.matches()) {
+                            saveWordAsIs(docTerms, singleWords[i + 1]+ "-" + singleWords[i + 3], docNo);
+                            saveWordAsIs(docTerms, singleWords[i + 1], docNo);
+                            saveWordAsIs(docTerms, singleWords[i + 3], docNo);
                             i+=3;
                         }
                     }
@@ -144,21 +178,46 @@ public class Parse {
                 //phrase
                 if (word.contains("-")){
                     Matcher match = PHRASE.matcher(word);
-                    if (match.find()) {
-                        found = match.group();
-                        terms.put(word, doc.getDocNo());
-                        docTerms.add(singleWords[i]);
+                    if (match.matches()) {
+                        saveWordAsIs(docTerms, word, docNo);
                     }
                 }
                 //date
 
             }
         }
-
         return docTerms;
-
     }
 
+
+
+    private void handle_2_letters(String word, HashMap<String, String> docTerms) {
+    }
+
+
+    //saving formats
+    private void saveAsNumMDollars(HashMap<String, String> docTerms, double num, String docNO){
+        docTerms.put("" + num + " M Dollars", docNO);
+    }
+
+    private void saveAsNumDollars(HashMap<String, String> docTerms, String num, String docNO){
+        docTerms.put(num + " Dollars", docNO);
+    }
+
+    private void saveWordAsIs(HashMap<String, String> docTerms,String word, String docNO){
+        docTerms.put(word, docNO);
+    }
+
+    private void saveAsPercent(HashMap<String, String> docTerms, String word, String docNo) {
+        docTerms.put(word+"%", docNo);
+    }
+
+
+
+    /**
+     * Removes all delimiters from the beginning or end of the input word
+     * @param word a string to clean
+     */
     private void cleanWord(String word) {
         if (delimiters.contains(word.charAt(0)))  //remove first char
             word = word.substring(1);
@@ -167,27 +226,11 @@ public class Parse {
             word = word.substring(0, len);
     }
 
-    //handle numbers
-    private String handleNumbers(double d) {
-        //keep only 3 digits after the point
-        String add = "";
-        int divideIn = 1;
-        if (d >= 1000 && d < 1000000) {
-            add = "K";
-            divideIn = 1000;
-        } else if (d >= 1000000 && d < 100000000) {
-            add = "M";
-            divideIn = 1000000;
-        } else if (d > 100000000) {
-            add = "B";
-            divideIn = 1000000000;
-        }
-        d = d / divideIn;
-        String rounded = (new DecimalFormat("##.000")).format(d);
-        rounded += add;
-        return rounded;
-    }
-
+    /**
+     *
+     * @param strNum
+     * @return true if strNum is a number, otherwise returns false
+     */
     //checks if the string is a number
     private boolean isNumeric(String strNum) {
         if (strNum.contains(",")) {
@@ -201,12 +244,42 @@ public class Parse {
         return true;
     }
 
-    //checks if the string is a fraction of format number/number
-    private boolean isFraction(String w2) {
-        if (w2.contains("/")) {
-            int index = w2.indexOf("/");
-            String numeratorS = w2.substring(0, index);
-            String denominatorS = w2.substring(index + 1);
+    /**
+     *
+     * @param d - a double number to handle
+     * @return a string in the format the number d should be saves as
+     */
+    private String handleNumbers(double d) {
+        //keep only 3 digits after the point
+        String add = "";
+        double divideIn = 1.0;
+        if (d >= 1000 && d < MILLION) {
+            add = "K";
+            divideIn = THOUSAND;
+        } else if (d >= MILLION && d < BILLION) {
+            add = "M";
+            divideIn = MILLION;
+        } else if (d > BILLION) {
+            add = "B";
+            divideIn = TRILLION;
+        }
+        d = d / divideIn;
+        String rounded = (new DecimalFormat("##.000")).format(d);
+        rounded += add;
+        return rounded;
+    }
+
+
+    /**
+     * checks if the string is a fraction of format number/number
+     * @param frac a string suspected to be a fraction
+     * @return true if frac is a fraction, otherwise returns false
+     */
+    private boolean isFraction(String frac) {
+        if (frac.contains("/")) {
+            int index = frac.indexOf("/");
+            String numeratorS = frac.substring(0, index);
+            String denominatorS = frac.substring(index + 1);
             try {
                 int numerator = Integer.parseInt(numeratorS);
                 int enominator = Integer.parseInt(denominatorS);
@@ -231,67 +304,8 @@ public class Parse {
         return stopWords.contains(w);
     }
 
-    public Pattern getPRICEFRAC() {
-        return PRICEFRAC;
-    }
-
-    public void setPRICEFRAC(Pattern PRICEFRAC) {
-        this.PRICEFRAC = PRICEFRAC;
-    }
-
-    private Pattern getPRICEBIG$() {
-        return PRICEBIG$;
-    }
-
-    private void setPRICEBIG$(Pattern PRICEBIG$) {
-        this.PRICEBIG$ = PRICEBIG$;
-    }
-
-//    private void handleWords(String allText) {
-//            String term;
-//            String[] words = allText.split("[ \t&+:;=?@#|'<>^*()!]");
-//            int i=0;
-//            String w1 = words[i];
-//            String w2 = words[i+1];
-//            if (w1 == "")
-//                continue;
-//            //numbers or price
-//            if (isNumeric(w1)){
-//                double d = Double.parseDouble(w1);
-//                if (isFraction(w2)){
-//                    term = w1+w2;
-//                    i++;
-//                    continue;
-//                }
-//                else if (helpDictionary.containsKey(w2)) {
-//                    d *= helpDictionary.get(w2);
-//                    i++;
-//                }
-//                term = handleNumbers(d);
-//            }
-//            //all letters
-//            else if (isAllLetters(w1)){
-//                char first = w1.charAt(0);
-//                if (Character.isUpperCase(first)) //check in all the corpus!!!!!!
-//                    term = w1.toUpperCase();
-//                else
-//                    term= w1;
-//            }
-//            // percent
-//            else if (w1.charAt(w1.length()-1)=='%')
-//                term = w1;
-//            else if (w2.equals("percent") || w2.equals("percentage")) {
-//                term = w1 + "%";
-//                i++;
-//            }
-//            //price
-//            else if ((w1.charAt(0)=='$' && isNumeric(w1.substring(1)) || isNumeric(w1) && w2.equals("Dollars"))){
-//
-//            }
 
 
-//            if(! isAStopWord(w))
-//                term = w1;
 
 
 }
