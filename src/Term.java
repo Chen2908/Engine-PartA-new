@@ -15,24 +15,20 @@ public class Term {
     private boolean startsWithCapital;
 
     public Term(String value) {
-        setAllFields(value, 0,Character.isUpperCase(value.charAt(0)));
+        setValue(value);
+        setDf(0);
         docs = new HashMap<>();
     }
 
     public Term(String value, int df) {
-        setAllFields(value, df,Character.isUpperCase(value.charAt(0)));
-        docs = new HashMap<>();
-    }
-
-    private void setAllFields(String value, int df, boolean isUpper){
         setValue(value);
         setDf(df);
-        setStartsWithCapital(isUpper);
+        docs = new HashMap<>();
     }
 
     public boolean isStartsWithCapital() { return startsWithCapital; }
 
-    public void setStartsWithCapital(boolean startsWithCapital) {
+    private void setStartsWithCapital(boolean startsWithCapital) {
         this.startsWithCapital = startsWithCapital;
     }
 
@@ -42,7 +38,10 @@ public class Term {
 
     public String getValue() { return value; }
 
-    public void setValue(String value) { this.value = value; }
+    public void setValue(String value) {
+        this.value = value;
+        setStartsWithCapital(Character.isUpperCase(value.charAt(0)));
+    }
 
     public void updatesDocsInfo(String docNum, int index){
         DocInfo curDoc = docs.get(docNum);
