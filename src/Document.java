@@ -4,6 +4,8 @@ public class Document {
     private String date;
     private String text;
     private String title;
+    private int max_tf;
+    private int uniqueAmount;
 
     public Document(){}
 
@@ -37,5 +39,21 @@ public class Document {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public void setMax_tf(int max_tf) {
+        this.max_tf = max_tf;
+    }
+
+    public void setUniqueAmount(int uniqueAmount) {
+        this.uniqueAmount = uniqueAmount;
+    }
+
+    public int getMax_tf() {
+        return max_tf;
+    }
+
+    public int getUniqueAmount() {
+        return uniqueAmount;
     }
 }
