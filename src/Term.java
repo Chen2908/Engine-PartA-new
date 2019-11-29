@@ -5,7 +5,7 @@ public class Term {
     //<editor-fold des="Class Fields">
 
     private String value;
-    private HashMap<String, DocInfo> docs; // hashMap of all the docs that this term appears in
+    private HashMap<String, DocTermInfo> docs; // hashMap of all the docs that this term appears in
     private boolean startsWithCapital;
 
 
@@ -32,10 +32,10 @@ public class Term {
     }
 
     public void updatesDocsInfo(String docNum, int index){
-        DocInfo curDoc = docs.get(docNum);
+        DocTermInfo curDoc = docs.get(docNum);
         if (curDoc == null) {
             // creates a new document info object
-            curDoc = new DocInfo(docNum);
+            curDoc = new DocTermInfo(docNum);
             docs.put(docNum, curDoc);
         }
 
@@ -64,15 +64,15 @@ public class Term {
 
     //<editor-fold des="Documents Lists Getters">
 
-    public List<DocInfo> getDocsSortedByName(){
-        ArrayList<DocInfo> docList = new ArrayList<>(docs.values());
-        docList.sort(Comparator.comparing(DocInfo::getDocNum));
+    public List<DocTermInfo> getDocsSortedByName(){
+        ArrayList<DocTermInfo> docList = new ArrayList<>(docs.values());
+        docList.sort(Comparator.comparing(DocTermInfo::getDocNum));
         return docList;
     }
 
     public List<String> getDocsWhereTfiIs(int tfi){
         List<String> docsNumber = new LinkedList<>();
-        for (DocInfo doc: docs.values())
+        for (DocTermInfo doc: docs.values())
             if (doc.getTfi() == tfi)
                 docsNumber.add(doc.getDocNum());
 
@@ -81,7 +81,7 @@ public class Term {
 
     //</editor-fold>
 
-    public DocInfo getDoc(String docNum){ return docs.get(docNum); }
+    public DocTermInfo getDoc(String docNum){ return docs.get(docNum); }
 
     //</editor-fold>
 
