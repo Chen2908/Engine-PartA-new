@@ -1,13 +1,13 @@
 import java.util.*;
 
-public class Term {
+public class Term implements IWritable{
 
     //<editor-fold des="Class Fields">
 
     private String value;
     private HashMap<String, DocTermInfo> docs; // hashMap of all the docs that this term appears in
     private boolean startsWithCapital;
-
+    private final String del = ",";
 
     //</editor-fold>
 
@@ -70,13 +70,13 @@ public class Term {
         return docList;
     }
 
-    public List<String> getDocsWhereTfiIs(int tfi){
+    public int getDocsWhereTfiIsNum(int tfi){
         List<String> docsNumber = new LinkedList<>();
         for (DocTermInfo doc: docs.values())
             if (doc.getTfi() == tfi)
                 docsNumber.add(doc.getDocNum());
 
-        return docsNumber;
+        return docsNumber.size();
     }
 
     //</editor-fold>
@@ -84,5 +84,23 @@ public class Term {
     public DocTermInfo getDoc(String docNum){ return docs.get(docNum); }
 
     //</editor-fold>
+
+    @Override
+    //
+    public String toString(){
+        return getDf() + "";
+    }
+
+    @Override
+    public List<String> toFile() {
+        List<String> toWrite = new ArrayList<String>();
+        toWrite.add(toString());
+        return toWrite;
+    }
+
+    @Override
+    public List<String> update(List<String> toUpdate) {
+        return null;
+    }
 
 }

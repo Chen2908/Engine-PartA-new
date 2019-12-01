@@ -1,10 +1,14 @@
-public class DocTermInfo {
+import java.util.ArrayList;
+import java.util.List;
+
+public class DocTermInfo implements IWritable{
 
     //<editor-fold des="Class Fields">
 
     private String docNum;
     private int tfi; // number of times the term, that contains the Object, appears in this document.
     private StringBuilder termIndexes; // contains all the indexes where that term appears in the doc, separated by commas.
+    private final String del = ":";
 
     //</editor-fold>
 
@@ -39,8 +43,21 @@ public class DocTermInfo {
     //</editor-fold>
 
     @Override
+    // add Wij
     public String toString(){
-        return this.docNum + ":" + this.tfi + ":" + getTermIndexes() + ";";
+        return docNum + del + tfi + del + getTermIndexes() + ";";
+    }
+
+    @Override
+    public List<String> toFile() {
+        List<String> toWrite = new ArrayList<String>();
+        toWrite.add(toString());
+        return toWrite;
+    }
+
+    @Override
+    public List<String> update(List<String> toUpdate) {
+        return toFile();
     }
 
 }
