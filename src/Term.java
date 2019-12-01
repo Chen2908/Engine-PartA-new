@@ -85,6 +85,8 @@ public class Term implements IWritable{
 
     //</editor-fold>
 
+    //<editor-fold des="Interface Functions">
+
     @Override
     //
     public String toString(){
@@ -102,5 +104,7 @@ public class Term implements IWritable{
     public List<String> update(List<String> toUpdate) {
         return null;
     }
+
+    //</editor-fold>
 
 }

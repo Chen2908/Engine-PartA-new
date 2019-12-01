@@ -42,6 +42,8 @@ public class DocTermInfo implements IWritable{
 
     //</editor-fold>
 
+    //<editor-fold des="Interface Functions">
+
     @Override
     // add Wij
     public String toString(){
@@ -59,5 +61,8 @@ public class DocTermInfo implements IWritable{
     public List<String> update(List<String> toUpdate) {
         return toFile();
     }
+
+
+    //</editor-fold>
 
 }

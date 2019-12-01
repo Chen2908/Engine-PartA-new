@@ -49,7 +49,7 @@ public class DocCorpusInfo implements IWritable{
 
     //</editor-fold>
 
-    //<editor-fold des="Writable Functions">
+    //<editor-fold des="Interface Functions">
 
     @Override
     // add
