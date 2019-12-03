@@ -403,7 +403,7 @@ public class Parse {
         if (term != null) {  //appears in docTerms
             term.setValue(format);
         } else {
-            term = new Term(format, 1);
+            term = new Term(format);
             docTerms.put(format, term);
         }
         term.updatesDocsInfo(docNo, position);
@@ -509,7 +509,7 @@ public class Parse {
     private void enterKey(HashMap<String, Term> docTerms, String key, int position) {
         Term term;
         if (!docTerms.containsKey(key)) {
-            term = new Term(key, 1);
+            term = new Term(key);
             docTerms.put(key, term);
         } else
             term = docTerms.get(key);
