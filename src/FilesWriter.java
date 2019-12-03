@@ -13,10 +13,6 @@ public class FilesWriter implements Runnable {
     private static ConcurrentLinkedDeque<Boolean> appendToFile;
     private static ConcurrentHashMap<String,Semaphore> fileStatus;
     private static Semaphore semaphore = new Semaphore(1);
-    // Files Status options
-    private final String WAITING = "Waiting";
-    private final String READING = "Reading";
-    private final String WRITING = "Writing";
 
     private static int count = 0;
 
@@ -84,7 +80,6 @@ public class FilesWriter implements Runnable {
                 writer.append(line + "\n");
 
             writer.close();
-            System.out.println("finish " + ++count);
 
             release(filePath);
 
