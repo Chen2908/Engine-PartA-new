@@ -1,6 +1,5 @@
 
 import org.apache.commons.lang3.StringUtils;
-
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -66,7 +65,7 @@ public class Parse {
         helpDicMonths = new HashMap<>();
         setHelpDicMon(helpDicMonths);
         delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
-                '#', '!', '?', '*', ':', '`', '|', '&', '^', '*', '@', '+').collect(Collectors.toSet());
+                '#', '!', '?', '*', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
     }
 
     /**
@@ -87,7 +86,7 @@ public class Parse {
         this.docNo = docNo;
         this.stem = stem;
         HashMap<String, Term> docTerms = new HashMap<>();
-        String[] singleWords = StringUtils.split(text, " "); //check with string builder
+        String[] singleWords = StringUtils.split(text, " ");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
@@ -105,6 +104,7 @@ public class Parse {
                 if (!found) {
                     word = removeDeli(word);
                     handle_1_word_term(docTerms, word, i);
+                    continue;
                 }
             } else { //can be a term of more than one word
                 //$ price
@@ -612,7 +612,7 @@ public class Parse {
             result[1] = true;
         }
         try {
-            double d = Double.parseDouble(strNum);
+            double dNum = Double.parseDouble(strNum);
         } catch (NumberFormatException | NullPointerException nfe) {
             result[0] = false;
         }
@@ -730,6 +730,5 @@ public class Parse {
         }
         return temp;
     }
-
 
 }
