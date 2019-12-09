@@ -42,8 +42,9 @@ public class Parse {
     private static Pattern PERCENT2 = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(percent|percentage)");
     private static Pattern PHRASE = Pattern.compile("(\\w)(\\-)(\\w)|(\\w)(\\-)(\\w)(\\-)(\\w)|(\\w)(\\-)(([1-9][0-9]*)|0)|(([1-9][0-9]*)|0)(\\-)(\\w)|(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)");
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
-    private static Pattern NUMBER = Pattern.compile("^([1-9][0-9]*)|0$");
-    private static Pattern DOUBLE_NUMBER = Pattern.compile("^(([1-9][0-9]*)|0)(\\.)(([1-9][0-9]*)|0)$");
+   // private static Pattern NUMBER = Pattern.compile("^([1-9][0-9]*)|0$");
+   // private static Pattern DOUBLE_NUMBER = Pattern.compile("^(([1-9][0-9]*)|0)(\\.)(([1-9][0-9]*)|0)$");
+    private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
 
     //new laws
     private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
@@ -343,6 +344,13 @@ public class Parse {
                     return;
                 }
             }
+            if (word.contains("@")){
+                Matcher match = EMAIL.matcher(word);
+                if (match.find()) {
+                    enterKey(docTerms, word, position);
+                    return;
+                }
+            }
             //capital letter word
             //use porter stemmer to stem word
             if (!isAStopWord(word)) {
@@ -365,6 +373,14 @@ public class Parse {
                     return;
                 }
             } else {
+                Matcher match = FRACTION.matcher(word);
+                if (match.find()) {
+                    String[] numbers = word.split("/");
+                    if (isNumeric(numbers[1])[0]) {
+                        enterKey(docTerms, word, position);
+                        return;
+                    }
+                }
                 //num%- one word
                 if (word.endsWith("%") && isNumeric(word.substring(0, word.length() - 1))[0]) {
                     String numberInWord = word.substring(0, word.length() - 1);
