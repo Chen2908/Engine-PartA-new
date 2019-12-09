@@ -18,6 +18,7 @@ public class Parse {
     private Set<Character> delimiters;
     private int textLength;
     private boolean stem;
+    HashMap<String, Term> docTerms;
 
 
     //<editor-fold des="initiate static variables">
@@ -42,8 +43,6 @@ public class Parse {
     private static Pattern PERCENT2 = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(percent|percentage)");
     private static Pattern PHRASE = Pattern.compile("(\\w)(\\-)(\\w)|(\\w)(\\-)(\\w)(\\-)(\\w)|(\\w)(\\-)(([1-9][0-9]*)|0)|(([1-9][0-9]*)|0)(\\-)(\\w)|(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)");
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
-   // private static Pattern NUMBER = Pattern.compile("^([1-9][0-9]*)|0$");
-   // private static Pattern DOUBLE_NUMBER = Pattern.compile("^(([1-9][0-9]*)|0)(\\.)(([1-9][0-9]*)|0)$");
     private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
 
     //new laws
@@ -55,7 +54,6 @@ public class Parse {
     private static Pattern PHONENUM = Pattern.compile("(\\()(\\d)(\\d)(\\d)(\\))(\\s)(\\d)(\\d)(\\d)(\\-)(\\d)(\\d)(\\d)(\\d)");
 
 
-    //add phone numbers, http address
     //</editor-fold>
 
     public Parse(String stopWordsPath) {
@@ -69,12 +67,23 @@ public class Parse {
                 '#', '!', '?', '*', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
     }
 
+
     /**
-     * @param doc to parse, sends all the necessary parameters to working parse
-     * @return hash map of the document's terms
+     * parse cover for batch
+     * @param docs to parse, sends all the necessary parameters to working parse
+     * @return hash map of the documents' terms
      */
-    public HashMap<String, Term> parse(Document doc, boolean stem) {
-        return parse(doc.getText(), doc.getDocNo(), doc.getDate(), stem);
+    public HashMap<String, Term> parse(List<Document> docs, boolean stem) {
+        setDocTerms();
+        for (Document doc : docs){
+            parse(doc.getText(), doc.getDocNo(), doc.getDate(), stem);
+        }
+        return docTerms;
+    }
+
+    //init hashmap for each batch
+    private void setDocTerms() {
+        docTerms = new HashMap<>();
     }
 
     /**
@@ -86,7 +95,6 @@ public class Parse {
     public HashMap<String, Term> parse(String text, String docNo, String docDate, boolean stem) {
         this.docNo = docNo;
         this.stem = stem;
-        HashMap<String, Term> docTerms = new HashMap<>();
         String[] singleWords = StringUtils.split(text, " ");
         this.textLength = singleWords.length;
         //go over every word in the text
