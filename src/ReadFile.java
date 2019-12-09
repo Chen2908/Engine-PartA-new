@@ -68,6 +68,7 @@ public class ReadFile {
                 return;
             }
 
+            nextDoc = new Document();
             findLineWith(docNumStr);
             removeTags();
             nextDoc.setDocNo(insetContentToline());
