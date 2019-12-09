@@ -137,7 +137,7 @@ public class Parse {
                             found = true;
                         }
                         if (found) {
-                            enterKey(docTerms, temp, i);
+                            enterKey(docTerms, temp, i, true);
                             i = curr - 1;
                         }
                     }
@@ -252,7 +252,7 @@ public class Parse {
         String twoWords = word + " " + word2;
         Matcher match = PHONENUM.matcher(twoWords);
         if (match.find()) {
-            enterKey(docTerms, word + " " + removeDeli(word2), position);
+            enterKey(docTerms, word + " " + removeDeli(word2), position, false);
             return true;
         }
         return false;
@@ -264,9 +264,9 @@ public class Parse {
             String lastWord = word4;
             if (separatedWord(lastWord))
                 lastWord = removeDeli(lastWord);
-            enterKey(docTerms, word2 + "-" + lastWord, position);
-            enterKey(docTerms, word2, position + 1);
-            enterKey(docTerms, lastWord, position + 3);
+            enterKey(docTerms, word2 + "-" + lastWord, position, false);
+            enterKey(docTerms, word2, position + 1, false);
+            enterKey(docTerms, lastWord, position + 3, false);
             position += 3;
             return true;
         }
@@ -282,7 +282,7 @@ public class Parse {
         }
         Matcher match2 = PHRASE.matcher(word1);
         if (match2.find()) {
-            enterKey(docTerms, word1, position);
+            enterKey(docTerms, word1, position, false);
             return true;
         }
         return false;
@@ -340,14 +340,14 @@ public class Parse {
             if (word.contains("-")) {
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
-                    enterKey(docTerms, word, position);
+                    enterKey(docTerms, word, position, false);
                     return;
                 }
             }
             if (word.contains("@")){
                 Matcher match = EMAIL.matcher(word);
                 if (match.find()) {
-                    enterKey(docTerms, word, position);
+                    enterKey(docTerms, word, position, false);
                     return;
                 }
             }
@@ -366,10 +366,10 @@ public class Parse {
                     String first = splittedWord[0];
                     String second = splittedWord[1];
                     if (isNumeric(first)[0] && isNumeric(second)[0]) {  //range as num-num
-                        enterKey(docTerms, first, position);
-                        enterKey(docTerms, second, position);
+                        enterKey(docTerms, first, position, false);
+                        enterKey(docTerms, second, position, false);
                     }
-                    enterKey(docTerms, removeDeli(word), position);
+                    enterKey(docTerms, removeDeli(word), position, false);
                     return;
                 }
             } else {
@@ -377,7 +377,7 @@ public class Parse {
                 if (match.find()) {
                     String[] numbers = word.split("/");
                     if (isNumeric(numbers[1])[0]) {
-                        enterKey(docTerms, word, position);
+                        enterKey(docTerms, word, position, false);
                         return;
                     }
                 }
@@ -419,7 +419,7 @@ public class Parse {
         if (term != null) {  //appears in docTerms
             term.setValue(format);
         } else {
-            term = new Term(format);
+            term = new Term(format, false);
             docTerms.put(format, term);
         }
         term.updatesDocsInfo(docNo, position);
@@ -463,13 +463,13 @@ public class Parse {
     private boolean checkMillionBillion(HashMap<String, Term> docTerms, String word1, String word2, int position) {
         boolean found = false;
         if (word2.equals("Million")) {
-            enterKey(docTerms, word1 + "M", position);
+            enterKey(docTerms, word1 + "M", position, false);
             found = true;
         } else if (word2.equals("Billion")) {
-            enterKey(docTerms, word1 + "B", position);
+            enterKey(docTerms, word1 + "B", position, false);
             found = true;
         } else if (word2.equals("Thousand")) {
-            enterKey(docTerms, word1 + "K", position);
+            enterKey(docTerms, word1 + "K", position, false);
             found = true;
         }
         return found;
@@ -522,10 +522,10 @@ public class Parse {
     }
 
 
-    private void enterKey(HashMap<String, Term> docTerms, String key, int position) {
+    private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
         Term term;
         if (!docTerms.containsKey(key)) {
-            term = new Term(key);
+            term = new Term(key, isEntity);
             docTerms.put(key, term);
         } else
             term = docTerms.get(key);
@@ -542,7 +542,7 @@ public class Parse {
         } else {
             time = word;
         }
-        enterKey(docTerms, time, position);
+        enterKey(docTerms, time, position, false);
     }
 
     private void saveAsTimePM(HashMap<String, Term> docTerms, String word, int position) {
@@ -559,24 +559,24 @@ public class Parse {
             String time2 = word.substring(5, 7) + ":" + word.substring(7);
             time += "-" + time2;
         }
-        enterKey(docTerms, time, position);
+        enterKey(docTerms, time, position, false);
     }
 
     //saving formats
     private void saveAsNumMDollars(HashMap<String, Term> docTerms, double num, int position) {
         DecimalFormat format = new DecimalFormat("0.###");
         String key = format.format(num) + " M Dollars";
-        enterKey(docTerms, key, position);
+        enterKey(docTerms, key, position, false);
     }
 
     private void saveAsNumDollars(HashMap<String, Term> docTerms, String num, int position) {
         String key = num + " Dollars";
-        enterKey(docTerms, key, position);
+        enterKey(docTerms, key, position, false);
     }
 
     private void saveAsPercent(HashMap<String, Term> docTerms, String word, int position) {
         String key = word + "%";
-        enterKey(docTerms, key, position);
+        enterKey(docTerms, key, position, false);
     }
 
     private void saveAsDateMMDD(HashMap<String, Term> docTerms, String month, String day, int position) {
@@ -588,13 +588,13 @@ public class Parse {
             }
             String monthNum = removeDeli(month);
             String key = helpDicMonths.get(monthNum) + "-" + day;
-            enterKey(docTerms, key, position);
+            enterKey(docTerms, key, position, false);
         }
     }
 
     private void saveAsDateMMYYYY(HashMap<String, Term> docTerms, String month, String year, int position) {
         String key = year + "-" + helpDicMonths.get(month);
-        enterKey(docTerms, key, position);
+        enterKey(docTerms, key, position, false);
     }
 
     /**
@@ -656,7 +656,7 @@ public class Parse {
         number = number / divideIn;
         String rounded = (new DecimalFormat("##.###")).format(number) + add;
 
-        enterKey(docTerms, "" + rounded, position);
+        enterKey(docTerms, "" + rounded, position, false);
     }
 
 
