@@ -405,7 +405,7 @@ public class Parse {
                 if (match.find()) {
                     String[] numbers = word.split("/");
                     if (isNumeric(numbers[1])[0]) {
-                        enterKey(docTerms, word, position, false);
+                        enterKey(docTerms, numbers[0]+"_"+numbers[1], position, false);
                         return;
                     }
                 }
