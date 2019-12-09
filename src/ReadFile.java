@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class ReadFile {
         this.line = null;
         getAllFiles(new File(dirPath));
         this.curFileToRead = null;
+        this.nextDoc = new Document();
     }
 
     private void getAllFiles(File file){
@@ -37,6 +39,16 @@ public class ReadFile {
         }
     }
 
+    public List<Document> getNextDocs(int numOfDocs){
+        if (nextDoc == null)
+            return null;
+        List<Document> docs = new ArrayList<>();
+        for (int i = 0; i < numOfDocs && getNextDoc() != null ; i++)
+            docs.add(nextDoc);
+
+        return docs;
+    }
+
     public Document getNextDoc() {
         saveNextFile();
         return this.nextDoc;
@@ -44,7 +56,6 @@ public class ReadFile {
 
     private void saveNextFile() {
 
-        this.nextDoc = new Document();
         StringBuilder text = new StringBuilder();
 
         boolean isText = false;
