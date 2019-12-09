@@ -352,6 +352,26 @@ public class Parse {
                     return;
                 }
             }
+            if (word.contains("/")) {
+                String[] wordsSeperated = word.split("/");
+                for (String sep: wordsSeperated){
+                    if (!isAStopWord(sep)) {
+                        if (stem)
+                            sep = stemmedWord(sep);
+                        enterKey(docTerms, sep, position, false);
+                    }
+                }
+                return;
+            }
+            if (word.contains(".")) {
+                String noDots = StringUtils.replace(word, ".", "");
+                if (!isAStopWord(noDots)) {
+                    if (stem)
+                        noDots = stemmedWord(noDots);
+                    enterKey(docTerms, noDots, position, false);
+                }
+                return;
+            }
             if (word.contains("@")){
                 Matcher match = EMAIL.matcher(word);
                 if (match.find()) {
