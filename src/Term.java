@@ -7,15 +7,23 @@ public class Term implements IWritable{
     private String value;
     private HashMap<String, DocTermInfo> docs; // hashMap of all the docs that this term appears in
     private boolean startsWithCapital;
+    private boolean isEntity;
     private final String del = ",";
 
     //</editor-fold>
 
     //<editor-fold des="Constructors">
 
+    public Term(String value, boolean isEntity) {
+        setValue(value);
+        docs = new HashMap<>();
+        this.isEntity = isEntity;
+    }
+
     public Term(String value) {
         setValue(value);
         docs = new HashMap<>();
+        this.isEntity = false;
     }
 
     //</editor-fold>
@@ -53,6 +61,8 @@ public class Term implements IWritable{
     public String getValue() { return value; }
 
     public boolean isStartsWithCapital() { return startsWithCapital; }
+
+    public boolean isEntity(){ return this.isEntity; }
 
     //<editor-fold des="Documents Information Getters">
 
@@ -95,14 +105,18 @@ public class Term implements IWritable{
 
     @Override
     public List<String> toFile() {
-        List<String> toWrite = new ArrayList<String>();
+        List<String> toWrite = new ArrayList<>();
         toWrite.add(toString());
         return toWrite;
     }
 
     @Override
     public List<String> update(List<String> toUpdate) {
-        return null;
+        String df = toUpdate.remove(0);
+        int updatedDf = Integer.parseInt(df) + getDf();
+        List<String> toWrite = new ArrayList<>();
+        toWrite.add(updatedDf + "");
+        return toWrite;
     }
 
     //</editor-fold>
