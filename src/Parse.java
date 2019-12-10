@@ -56,14 +56,15 @@ public class Parse {
 
     //</editor-fold>
 
-    public Parse(String stopWordsPath) {
-        stopWords = readStopWords(stopWordsPath);
-        porterStemmer = new Stemmer();
-        helpDicNumbers = new HashMap<>();
-        setHelpDicNum(helpDicNumbers);
-        helpDicMonths = new HashMap<>();
-        setHelpDicMon(helpDicMonths);
-        delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
+    public Parse(String stopWordsPath, boolean stemming) {
+        this.stem=stemming;
+        this.stopWords = readStopWords(stopWordsPath);
+        this.porterStemmer = new Stemmer();
+        this.helpDicNumbers = new HashMap<>();
+        setHelpDicNum(this.helpDicNumbers);
+        this.helpDicMonths = new HashMap<>();
+        setHelpDicMon(this.helpDicMonths);
+        this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
                 '#', '!', '?', '*', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
     }
 
@@ -73,10 +74,10 @@ public class Parse {
      * @param docs to parse, sends all the necessary parameters to working parse
      * @return hash map of the documents' terms
      */
-    public HashMap<String, Term> parse(List<Document> docs, boolean stem) {
+    public HashMap<String, Term> parse(List<Document> docs) {
         setDocTerms();
         for (Document doc : docs){
-            parse(doc.getText(), doc.getDocNo(), doc.getDate(), stem);
+            parse(doc.getText(), doc.getDocNo(), doc.getDate());
         }
         return docTerms;
     }
@@ -92,7 +93,7 @@ public class Parse {
      * @param docDate - the date of the document
      * @return hash map of the document's terms
      */
-    public HashMap<String, Term> parse(String text, String docNo, String docDate, boolean stem) {
+    public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
         this.stem = stem;
         String[] singleWords = StringUtils.split(text, " ");
@@ -386,8 +387,9 @@ public class Parse {
                     word = stemmedWord(word);
                 checkFirstLetter(word, docTerms, position);
             }
-        } else if (Character.isDigit(firstChar)) {
-            if (word.contains("-")) {
+        } else if (Character.isDigit(firstChar) || (firstChar=='-' && Character.isDigit(word.charAt(1)))){
+
+            if (word.contains("-") && firstChar!='-') {
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
                     String[] splittedWord = word.split("-");
@@ -405,7 +407,7 @@ public class Parse {
                 if (match.find()) {
                     String[] numbers = word.split("/");
                     if (isNumeric(numbers[1])[0]) {
-                        enterKey(docTerms, word, position, false);
+                        enterKey(docTerms, numbers[0]+"_"+numbers[1], position, false);
                         return;
                     }
                 }
@@ -415,12 +417,17 @@ public class Parse {
                     saveAsPercent(docTerms, numberInWord, position);
                 } else {
                     boolean[] infoOnWord = isNumeric(word);
+                    boolean negative=false;
                     if (infoOnWord[0]) {
                         //plain number
                         if (infoOnWord[1])
                             word = StringUtils.replace(word, ",", "");
+                        if (firstChar=='-'){
+                            negative=true;
+                            word=word.substring(1);
+                        }
                         double number = Double.parseDouble(word);
-                        handleNumbers(docTerms, number, position);
+                        handleNumbers(docTerms, number, position, negative);
                     }
                 }
             }
@@ -650,10 +657,15 @@ public class Parse {
      */
     //checks if the string is a number
     private boolean[] isNumeric(String strNum) {
+        boolean negative = false;
         boolean[] result = {true, false};  //first index: is in a number, second index: whether in contains a comma
         if (StringUtils.contains(strNum, ",")) {
             strNum = StringUtils.replace(strNum, ",", "");
             result[1] = true;
+        }
+        if (strNum.charAt(0)=='-'){
+            strNum=strNum.substring(1);
+            negative=true;
         }
         try {
             double dNum = Double.parseDouble(strNum);
@@ -667,10 +679,12 @@ public class Parse {
      * @param number - a double number to handle
      * @return a string in the format the number d should be saves as
      */
-    private void handleNumbers(HashMap<String, Term> docTerms, double number, int position) {
+    private void handleNumbers(HashMap<String, Term> docTerms, double number, int position, boolean negative) {
         //keep only 3 digits after the point
         String add = "";
         double divideIn = 1.0;
+        if (negative)
+            number*=-1;
         if (number >= THOUSAND && number < MILLION) {
             add = "K";
             divideIn = THOUSAND;
