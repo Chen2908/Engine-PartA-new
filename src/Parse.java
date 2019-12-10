@@ -1,4 +1,5 @@
 
+import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import org.apache.commons.lang3.StringUtils;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -16,6 +17,7 @@ public class Parse {
     private HashMap<String, String> helpDicMonths;
     private String docNo;
     private Set<Character> delimiters;
+    private Set<Character> smallDelimiters;
     private int textLength;
     private boolean stem;
     HashMap<String, Term> docTerms;
@@ -25,7 +27,6 @@ public class Parse {
     private final double THOUSAND = Math.pow(10, 3);
     private final double MILLION = Math.pow(10, 6);
     private final double BILLION = Math.pow(10, 9);
-    private final double TRILLION = Math.pow(10, 12);
     private final int AMTOPM = 12;
 
     //patterns for input text
@@ -44,6 +45,8 @@ public class Parse {
     private static Pattern PHRASE = Pattern.compile("(\\w)(\\-)(\\w)|(\\w)(\\-)(\\w)(\\-)(\\w)|(\\w)(\\-)(([1-9][0-9]*)|0)|(([1-9][0-9]*)|0)(\\-)(\\w)|(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)");
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
     private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
+    //private static Pattern MARKS = Pattern.compile("\\w+[\\/\\(\\)\\[\\]]\\w+");
+   // private static Regex MARKS = new Regex("\\/\\(\\)\\[\\]\\w+");
 
     //new laws
     private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
@@ -57,6 +60,7 @@ public class Parse {
     //</editor-fold>
 
     public Parse(String stopWordsPath, boolean stemming) {
+        docTerms = new HashMap<>();
         this.stem=stemming;
         this.stopWords = readStopWords(stopWordsPath);
         this.porterStemmer = new Stemmer();
@@ -65,7 +69,8 @@ public class Parse {
         this.helpDicMonths = new HashMap<>();
         setHelpDicMon(this.helpDicMonths);
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
-                '#', '!', '?', '*', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
+                '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
+        this.smallDelimiters= Stream.of('\'', '(', '[', '{', ')', ']', '}',  '/', '\\','"').collect(Collectors.toSet());
     }
 
 
@@ -131,12 +136,18 @@ public class Parse {
                 }
                 //entities, between/ phrases/ capital/ date
                 else if (Character.isLetter(firstChar) && !word.contains("-")) {
+                    String[] separatedWords={word};
+                    if(StringUtils.containsAny(word, smallDelimiters.toString())) {
+                        separatedWords = StringUtils.split(word,smallDelimiters.toString());
+                        enterKey(docTerms, separatedWords[0], i, false);
+                        word = separatedWords[1];
+                    }
                     //entities - 2 words and above
                     if (Character.isUpperCase(firstChar) && i + 1 < textLength) {
                         int curr = i + 1;
                         String temp = word;
                         boolean finish = false;
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
+                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr],"/\\()[]")) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
@@ -345,6 +356,12 @@ public class Parse {
                 }
             }
         } else if (Character.isLetter(firstChar)) {
+            String[] separatedWords={word};
+            if(StringUtils.containsAny(word, smallDelimiters.toString())) {
+                separatedWords = StringUtils.split(word,smallDelimiters.toString());
+                enterKey(docTerms, separatedWords[0], position, false);
+                word = separatedWords[1];
+            }
             //phrase - one word
             if (word.contains("-")) {
                 Matcher match = PHRASE.matcher(word);
@@ -354,11 +371,13 @@ public class Parse {
                 }
             }
             if (word.contains("/")) {
-                String[] wordsSeperated = word.split("/");
+                String[] wordsSeperated = StringUtils.split(word,"/");
                 for (String sep: wordsSeperated){
                     if (!isAStopWord(sep)) {
-                        if (stem)
+                        if (stem) {
                             sep = stemmedWord(sep);
+                            sep=removeDeli(sep);
+                        }
                         enterKey(docTerms, sep, position, false);
                     }
                 }
@@ -367,9 +386,11 @@ public class Parse {
             if (word.contains(".")) {
                 String noDots = StringUtils.replace(word, ".", "");
                 if (!isAStopWord(noDots)) {
-                    if (stem)
+                    if (stem) {
                         noDots = stemmedWord(noDots);
-                    enterKey(docTerms, noDots, position, false);
+                    }
+                    if (!noDots.isEmpty())
+                        enterKey(docTerms, noDots, position, false);
                 }
                 return;
             }
@@ -383,13 +404,22 @@ public class Parse {
             //capital letter word
             //use porter stemmer to stem word
             if (!isAStopWord(word)) {
-                if (stem)
-                    word = stemmedWord(word);
-                checkFirstLetter(word, docTerms, position);
+                String[] words={word};
+                if (StringUtils.containsAny(word,delimiters.toString())) {
+                    words= separatedByDelimiters(word);
+                }
+                for(String word1:words) {
+                    if (word1.length() > 1) {
+                        if (stem) {
+                            word1 = stemmedWord(word1);
+                            word1 = removeDeli(word1);
+                        }
+                        checkFirstLetter(word1, docTerms, position);
+                    }
+                }
             }
-        } else if (Character.isDigit(firstChar) || (firstChar=='-' && Character.isDigit(word.charAt(1)))){
-
-            if (word.contains("-") && firstChar!='-') {
+        } else if (Character.isDigit(firstChar)){
+            if (word.contains("-") && firstChar != '-') {
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
                     String[] splittedWord = word.split("-");
@@ -432,6 +462,11 @@ public class Parse {
                 }
             }
         }
+    }
+
+    private String[] separatedByDelimiters(String word) {
+        String[] seperated = StringUtils.split(word, smallDelimiters.toString());
+        return seperated;
     }
 
 
@@ -589,9 +624,9 @@ public class Parse {
 
     private void saveAsTime(HashMap<String, Term> docTerms, String word, int position) {
         //0012-0024
-        String time = word.substring(0, 2) + ":" + word.substring(2, 4);
+        String time = word.substring(0, 2) + ";" + word.substring(2, 4);
         if (word.length() == 9 && word.charAt(4) == '-') {
-            String time2 = word.substring(5, 7) + ":" + word.substring(7);
+            String time2 = word.substring(5, 7) + ";" + word.substring(7);
             time += "-" + time2;
         }
         enterKey(docTerms, time, position, false);
@@ -641,7 +676,8 @@ public class Parse {
         int first = 0;
         int last = word.length() - 1;
         while (first > last && delimiters.contains(word.charAt(first)))  //prefix
-            first++;
+            if (word.charAt(first)!='-')
+                first++;
         while (last > 0 && delimiters.contains(word.charAt(last)))  //suffix
             last--;
         return StringUtils.substring(word, first, last + 1);
@@ -657,8 +693,13 @@ public class Parse {
      */
     //checks if the string is a number
     private boolean[] isNumeric(String strNum) {
-        boolean negative = false;
         boolean[] result = {true, false};  //first index: is in a number, second index: whether in contains a comma
+        if (strNum.isEmpty()){
+            result[0]=false;
+            return result;
+        }
+        boolean negative = false;
+
         if (StringUtils.contains(strNum, ",")) {
             strNum = StringUtils.replace(strNum, ",", "");
             result[1] = true;
