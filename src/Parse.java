@@ -102,7 +102,7 @@ public class Parse {
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
         this.stem = stem;
-        String[] singleWords = StringUtils.split(text, " ][=<>*");
+        String[] singleWords = StringUtils.split(text, " ][=<>*:");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
