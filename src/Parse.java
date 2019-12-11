@@ -102,7 +102,7 @@ public class Parse {
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
         this.stem = stem;
-        String[] singleWords = StringUtils.split(text, " ");
+        String[] singleWords = StringUtils.split(text, " ][=<>*");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
@@ -836,8 +836,9 @@ public class Parse {
 
     //read all stop words from the given file and add them into an array list
     private HashSet<String> readStopWords(String stopWordsPath) {
+        String filePath= stopWordsPath+"\\stop words.txt";
         HashSet<String> temp = new HashSet<String>();
-        File stopWordsFile = new File(stopWordsPath);
+        File stopWordsFile = new File(filePath);
         try {
             Scanner sc = new Scanner(stopWordsFile);
             while (sc.hasNext()) {
