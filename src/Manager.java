@@ -28,11 +28,14 @@ public class Manager {
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
         while(docs!=null){
             docTerms=parser.parse(docs);
+            callIndexBuild(docTerms);
             docs= reader.getNextDocs(BATCH_SIZE);
         }
     }
 
+    private void callIndexBuild(HashMap<String,Term> docTerms) {
 
+    }
 
 
 }
