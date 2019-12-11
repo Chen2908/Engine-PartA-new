@@ -1,6 +1,7 @@
 
 import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import org.apache.commons.lang3.StringUtils;
+
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -30,7 +31,7 @@ public class Parse {
     private final int AMTOPM = 12;
 
     //patterns for input text
-    private static Pattern $PRICEMB = Pattern.compile("((\\$)(([1-9][0-9]*)|0)(\\s)(million|billion))");
+    private static Pattern $PRICEMB = Pattern.compile("((\\$)(([1-9][0-9]*)|0)[(\\s)(\\-)](million|billion))");
     private static Pattern PRICEUS = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(billion|million|trillion)(\\s)(U.S.)(\\s)(dollars)");
     private static Pattern PRICEBIG$ = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(m|bn)(\\s)(Dollars)");
     private static Pattern PRICEFRAC = Pattern.compile("(([1-9][0-9]*)|0)(\\s)([1-9][0-9]*\\/[1-9][0-9]*)(\\s)(Dollars)");
@@ -46,7 +47,6 @@ public class Parse {
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
     private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
     //private static Pattern MARKS = Pattern.compile("\\w+[\\/\\(\\)\\[\\]]\\w+");
-   // private static Regex MARKS = new Regex("\\/\\(\\)\\[\\]\\w+");
 
     //new laws
     private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
@@ -61,7 +61,7 @@ public class Parse {
 
     public Parse(String stopWordsPath, boolean stemming) {
         docTerms = new HashMap<>();
-        this.stem=stemming;
+        this.stem = stemming;
         this.stopWords = readStopWords(stopWordsPath);
         this.porterStemmer = new Stemmer();
         this.helpDicNumbers = new HashMap<>();
@@ -70,18 +70,19 @@ public class Parse {
         setHelpDicMon(this.helpDicMonths);
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
                 '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
-        this.smallDelimiters= Stream.of('\'', '(', '[', '{', ')', ']', '}',  '/', '\\','"').collect(Collectors.toSet());
+        // this.smallDelimiters= Stream.of('\'', '(', '[', '{', ')', ']', '}',  '/', '\\','"').collect(Collectors.toSet());
     }
 
 
     /**
      * parse cover for batch
+     *
      * @param docs to parse, sends all the necessary parameters to working parse
      * @return hash map of the documents' terms
      */
     public HashMap<String, Term> parse(List<Document> docs) {
         setDocTerms();
-        for (Document doc : docs){
+        for (Document doc : docs) {
             parse(doc.getText(), doc.getDocNo(), doc.getDate());
         }
         return docTerms;
@@ -107,6 +108,7 @@ public class Parse {
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
             boolean separated = separatedWord(word);
+
             char firstChar = word.charAt(0);
             boolean found = false;
             //the word ends with a separator, can be phone number or a term of one word
@@ -136,18 +138,27 @@ public class Parse {
                 }
                 //entities, between/ phrases/ capital/ date
                 else if (Character.isLetter(firstChar) && !word.contains("-")) {
-                    String[] separatedWords={word};
-                    if(StringUtils.containsAny(word, smallDelimiters.toString())) {
-                        separatedWords = StringUtils.split(word,smallDelimiters.toString());
+                    String[] separatedWords = {word};
+                    if (StringUtils.contains(word, "/\\)")) {
+                        separatedWords = StringUtils.split(word, "/\\)");
                         enterKey(docTerms, separatedWords[0], i, false);
                         word = separatedWords[1];
                     }
                     //entities - 2 words and above
                     if (Character.isUpperCase(firstChar) && i + 1 < textLength) {
-                        int curr = i + 1;
-                        String temp = word;
                         boolean finish = false;
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr],"/\\()[]")) {
+                        int curr = i + 1;
+                        String temp = word.replaceAll("/", " ");
+                        if(temp.length()>word.length()){
+                            String[] spplittedEnt = StringUtils.split(word," ");
+                            for (String w: spplittedEnt){
+                                if (!Character.isUpperCase(w.charAt(0))) {
+                                    finish = true;
+                                    break;
+                                }
+                            }
+                        }
+                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "/\\)")) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
@@ -204,7 +215,7 @@ public class Parse {
                         }
                         // 3 words
                         if (!found && ((i + 2) < textLength)) {
-                            found = checkPricebn(docTerms, word, price, singleWords[i+1], i);
+                            found = checkPricebn(docTerms, word, price, singleWords[i + 1], i);
                             if (found)
                                 i += 2;
                         }
@@ -302,6 +313,8 @@ public class Parse {
         }
         Matcher match2 = PHRASE.matcher(word1);
         if (match2.find()) {
+            if (word1.contains("/"))
+                word1=word1.substring(0,word1.indexOf("/"));
             enterKey(docTerms, word1, position, false);
             return true;
         }
@@ -356,13 +369,27 @@ public class Parse {
                 }
             }
         } else if (Character.isLetter(firstChar)) {
-            String[] separatedWords={word};
-            if(StringUtils.containsAny(word, smallDelimiters.toString())) {
-                separatedWords = StringUtils.split(word,smallDelimiters.toString());
-                enterKey(docTerms, separatedWords[0], position, false);
-                word = separatedWords[1];
-            }
+//            String[] separatedWords = {word};
+//            if (StringUtils.containsAny(word, "/)(\\")) {
+//                separatedWords = StringUtils.split(word, "/)(\\");
+//                enterKey(docTerms, separatedWords[0], position, false);
+//                word = separatedWords[1];
+//            }
             //phrase - one word
+            if (StringUtils.containsAny(word, "/)(\\")) {
+                String[] wordsSeperated = StringUtils.split(word, "/()\\");
+                for (String sep : wordsSeperated) {
+                    if (!isAStopWord(sep)) {
+                        if (stem) {
+                            sep = stemmedWord(sep);
+                            sep = removeDeli(sep);
+                        }
+                        if (sep.length() > 1)
+                            enterKey(docTerms, sep, position, false);
+                    }
+                }
+                return;
+            }
             if (word.contains("-")) {
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
@@ -370,31 +397,18 @@ public class Parse {
                     return;
                 }
             }
-            if (word.contains("/")) {
-                String[] wordsSeperated = StringUtils.split(word,"/");
-                for (String sep: wordsSeperated){
-                    if (!isAStopWord(sep)) {
-                        if (stem) {
-                            sep = stemmedWord(sep);
-                            sep=removeDeli(sep);
-                        }
-                        enterKey(docTerms, sep, position, false);
-                    }
-                }
-                return;
-            }
             if (word.contains(".")) {
                 String noDots = StringUtils.replace(word, ".", "");
                 if (!isAStopWord(noDots)) {
                     if (stem) {
                         noDots = stemmedWord(noDots);
                     }
-                    if (!noDots.isEmpty())
+                    if (noDots.length() > 1)
                         enterKey(docTerms, noDots, position, false);
                 }
                 return;
             }
-            if (word.contains("@")){
+            if (word.contains("@")) {
                 Matcher match = EMAIL.matcher(word);
                 if (match.find()) {
                     enterKey(docTerms, word, position, false);
@@ -404,21 +418,26 @@ public class Parse {
             //capital letter word
             //use porter stemmer to stem word
             if (!isAStopWord(word)) {
-                String[] words={word};
-                if (StringUtils.containsAny(word,delimiters.toString())) {
-                    words= separatedByDelimiters(word);
+                if (stem) {
+                    word = stemmedWord(word);
+                    word = removeDeli(word);
                 }
-                for(String word1:words) {
-                    if (word1.length() > 1) {
-                        if (stem) {
-                            word1 = stemmedWord(word1);
-                            word1 = removeDeli(word1);
-                        }
-                        checkFirstLetter(word1, docTerms, position);
-                    }
-                }
+                checkFirstLetter(word, docTerms, position);
+//                String[] words={word};
+//                if (StringUtils.containsAny(word,delimiters.toString())) {
+//                    words= separatedByDelimiters(word);
+//                }
+//                for(String word1:words) {
+//                    if (word1.length() > 1) {
+//                        if (stem) {
+//                            word1 = stemmedWord(word1);
+//                            word1 = removeDeli(word1);
+//                        }
+//                        checkFirstLetter(word1, docTerms, position);
+//                    }
+//                }
             }
-        } else if (Character.isDigit(firstChar)){
+        } else if (Character.isDigit(firstChar)) {
             if (word.contains("-") && firstChar != '-') {
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
@@ -437,7 +456,7 @@ public class Parse {
                 if (match.find()) {
                     String[] numbers = word.split("/");
                     if (isNumeric(numbers[1])[0]) {
-                        enterKey(docTerms, numbers[0]+"_"+numbers[1], position, false);
+                        enterKey(docTerms, numbers[0] + "_" + numbers[1], position, false);
                         return;
                     }
                 }
@@ -447,14 +466,14 @@ public class Parse {
                     saveAsPercent(docTerms, numberInWord, position);
                 } else {
                     boolean[] infoOnWord = isNumeric(word);
-                    boolean negative=false;
+                    boolean negative = false;
                     if (infoOnWord[0]) {
                         //plain number
                         if (infoOnWord[1])
                             word = StringUtils.replace(word, ",", "");
-                        if (firstChar=='-'){
-                            negative=true;
-                            word=word.substring(1);
+                        if (firstChar == '-') {
+                            negative = true;
+                            word = word.substring(1);
                         }
                         double number = Double.parseDouble(word);
                         handleNumbers(docTerms, number, position, negative);
@@ -465,7 +484,7 @@ public class Parse {
     }
 
     private String[] separatedByDelimiters(String word) {
-        String[] seperated = StringUtils.split(word, smallDelimiters.toString());
+        String[] seperated = StringUtils.split(word, "/)(\\");
         return seperated;
     }
 
@@ -676,7 +695,7 @@ public class Parse {
         int first = 0;
         int last = word.length() - 1;
         while (first > last && delimiters.contains(word.charAt(first)))  //prefix
-            if (word.charAt(first)!='-')
+            if (word.charAt(first) != '-')
                 first++;
         while (last > 0 && delimiters.contains(word.charAt(last)))  //suffix
             last--;
@@ -694,8 +713,8 @@ public class Parse {
     //checks if the string is a number
     private boolean[] isNumeric(String strNum) {
         boolean[] result = {true, false};  //first index: is in a number, second index: whether in contains a comma
-        if (strNum.isEmpty()){
-            result[0]=false;
+        if (strNum.isEmpty()) {
+            result[0] = false;
             return result;
         }
         boolean negative = false;
@@ -704,9 +723,9 @@ public class Parse {
             strNum = StringUtils.replace(strNum, ",", "");
             result[1] = true;
         }
-        if (strNum.charAt(0)=='-'){
-            strNum=strNum.substring(1);
-            negative=true;
+        if (strNum.charAt(0) == '-') {
+            strNum = strNum.substring(1);
+            negative = true;
         }
         try {
             double dNum = Double.parseDouble(strNum);
@@ -725,7 +744,7 @@ public class Parse {
         String add = "";
         double divideIn = 1.0;
         if (negative)
-            number*=-1;
+            number *= -1;
         if (number >= THOUSAND && number < MILLION) {
             add = "K";
             divideIn = THOUSAND;
