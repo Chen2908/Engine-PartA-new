@@ -151,7 +151,7 @@ public class Parse {
                         boolean notEnt=false;
                         String temp = word.replaceAll("/", " ");
                         if(! temp.equals(word)){
-                            String[] splittedEnt = StringUtils.split(word," ");
+                            String[] splittedEnt = StringUtils.split(temp," ");
                             handle_splitted(splittedEnt, i);   //handle the words after split, not an entity
                             temp=splittedEnt[splittedEnt.length-1];
                             if (!Character.isUpperCase(temp.charAt(0)))
@@ -359,6 +359,9 @@ public class Parse {
 
 
     private void handle_1_word_term(HashMap<String, Term> docTerms, String word, int position) {
+        //wouldn't want to save a word containing &
+        if (StringUtils.contains(word, '&'))
+            return;
         //$price, number%, first capital, phrase, plain num, plain word with letters
         char firstChar = word.charAt(0);
         //$price
@@ -622,7 +625,7 @@ public class Parse {
 
     private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
         boolean singleLetters= Character.isLetter(key.charAt(0)) && key.length()<3;
-        if (!singleLetters) {
+        if (!singleLetters || StringUtils.equalsIgnoreCase(key, "us")) {
             Term term;
             if (!docTerms.containsKey(key)) {
                 term = new Term(key, isEntity);
