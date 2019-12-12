@@ -1,5 +1,3 @@
-
-import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -102,13 +100,15 @@ public class Parse {
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
         this.stem = stem;
-        String[] singleWords = StringUtils.split(text, " ][=<>*:");
+        String[] singleWords = StringUtils.split(text, " ][=<>*:\\?|\"");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
+            //wouldn't want to keep a single letter
+            if(word.length()<2)
+                continue;
             boolean separated = separatedWord(word);
-
             char firstChar = word.charAt(0);
             boolean found = false;
             //the word ends with a separator, can be phone number or a term of one word
@@ -148,22 +148,24 @@ public class Parse {
                     if (Character.isUpperCase(firstChar) && i + 1 < textLength) {
                         boolean finish = false;
                         int curr = i + 1;
+                        boolean notEnt=false;
                         String temp = word.replaceAll("/", " ");
-                        if(temp.length()>word.length()){
-                            String[] spplittedEnt = StringUtils.split(word," ");
-                            for (String w: spplittedEnt){
-                                if (!Character.isUpperCase(w.charAt(0))) {
-                                    finish = true;
-                                    break;
-                                }
-                            }
+                        if(! temp.equals(word)){
+                            String[] splittedEnt = StringUtils.split(word," ");
+                            handle_splitted(splittedEnt, i);   //handle the words after split, not an entity
+                            temp=splittedEnt[splittedEnt.length-1];
+                            if (!Character.isUpperCase(temp.charAt(0)))
+                                notEnt=true;
                         }
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "/\\)")) {
+                        while (!notEnt && !finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "/\\)")) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
                                 add = removeDeli(add);
                             temp += " " + add;
+                            //limit the entity size
+                            if (temp.length()>=6)
+                                finish=true;
                             curr++;
                             found = true;
                         }
@@ -195,6 +197,8 @@ public class Parse {
                 // price...(4,3,2) / regular number(1) / percent(2,1) / num-num(1) / date(2)
                 else if (Character.isDigit(firstChar)) {
                     if (word.contains("-")) {
+                        if (word.contains("--"))  //need to split here
+                            continue;
                         if ((i + 1) < textLength) {
                             found = checkPhrases(docTerms, word, singleWords[i + 1], i);
                             if (found)
@@ -235,6 +239,13 @@ public class Parse {
                 handle_1_word_term(docTerms, word, i);
         }
         return docTerms;
+    }
+
+    private void handle_splitted(String[] splittedEnt, int position ) {
+        int len= splittedEnt.length-1;
+        for (int i=0; i<len; i++){
+            handle_1_word_term(docTerms, splittedEnt[i], position);
+        }
     }
 
     private boolean checkPriceMB(HashMap<String, Term> docTerms, String word, String word2, int position) {
@@ -368,13 +379,7 @@ public class Parse {
                     saveAsNumDollars(docTerms, numberInWord, position);
                 }
             }
-        } else if (Character.isLetter(firstChar)) {
-//            String[] separatedWords = {word};
-//            if (StringUtils.containsAny(word, "/)(\\")) {
-//                separatedWords = StringUtils.split(word, "/)(\\");
-//                enterKey(docTerms, separatedWords[0], position, false);
-//                word = separatedWords[1];
-//            }
+        } else if (Character.isLetter(firstChar) && word.length()>2) {
             //phrase - one word
             if (StringUtils.containsAny(word, "/)(\\")) {
                 String[] wordsSeperated = StringUtils.split(word, "/()\\");
@@ -384,13 +389,15 @@ public class Parse {
                             sep = stemmedWord(sep);
                             sep = removeDeli(sep);
                         }
-                        if (sep.length() > 1)
+                        if (sep.length() > 2)
                             enterKey(docTerms, sep, position, false);
                     }
                 }
                 return;
             }
             if (word.contains("-")) {
+                if(word.contains("--")) //need to split here
+                    return;
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
                     enterKey(docTerms, word, position, false);
@@ -417,7 +424,7 @@ public class Parse {
             }
             //capital letter word
             //use porter stemmer to stem word
-            if (!isAStopWord(word)) {
+            if (!isAStopWord(word) && word.length()>2) {
                 if (stem) {
                     word = stemmedWord(word);
                     word = removeDeli(word);
@@ -483,11 +490,11 @@ public class Parse {
         }
     }
 
+
     private String[] separatedByDelimiters(String word) {
         String[] seperated = StringUtils.split(word, "/)(\\");
         return seperated;
     }
-
 
     private String stemmedWord(String word) {
         porterStemmer.add(word.toCharArray(), word.length());
@@ -496,22 +503,24 @@ public class Parse {
     }
 
     private void checkFirstLetter(String word, HashMap<String, Term> docTerms, int position) {
-        Term term = docTerms.get(word);
-        String format;
-        boolean capital = Character.isUpperCase(word.charAt(0));
-        //if first letter is capital and it appeared already with capital letter- all caps
-        if (capital && (term == null || term.isStartsWithCapital())) {
-            format = word.toUpperCase();
-        } else {
-            format = word.toLowerCase();
+        if (word.length()>2) {
+            Term term = docTerms.get(word);
+            String format;
+            boolean capital = Character.isUpperCase(word.charAt(0));
+            //if first letter is capital and it appeared already with capital letter- all caps
+            if (capital && (term == null || term.isStartsWithCapital())) {
+                format = word.toUpperCase();
+            } else {
+                format = word.toLowerCase();
+            }
+            if (term != null) {  //appears in docTerms
+                term.setValue(format);
+            } else {
+                term = new Term(format, false);
+                docTerms.put(format, term);
+            }
+            term.updatesDocsInfo(docNo, position);
         }
-        if (term != null) {  //appears in docTerms
-            term.setValue(format);
-        } else {
-            term = new Term(format, false);
-            docTerms.put(format, term);
-        }
-        term.updatesDocsInfo(docNo, position);
     }
 
 
@@ -612,13 +621,16 @@ public class Parse {
 
 
     private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
-        Term term;
-        if (!docTerms.containsKey(key)) {
-            term = new Term(key, isEntity);
-            docTerms.put(key, term);
-        } else
-            term = docTerms.get(key);
-        term.updatesDocsInfo(docNo, position);
+        boolean singleLetters= Character.isLetter(key.charAt(0)) && key.length()<3;
+        if (!singleLetters) {
+            Term term;
+            if (!docTerms.containsKey(key)) {
+                term = new Term(key, isEntity);
+                docTerms.put(key, term);
+            } else
+                term = docTerms.get(key);
+            term.updatesDocsInfo(docNo, position);
+        }
     }
 
     private void saveAsTimeAM(HashMap<String, Term> docTerms, String word, int position) {
