@@ -488,22 +488,43 @@ public class Parse {
 
     private void checkFirstLetter(String word, HashMap<String, Term> docTerms, int position) {
         if (word.length() > 2) {
-            Term term = docTerms.get(word);
-            String format;
+            boolean needToUpdate=false;
+            String originalKey=null;
+            Term term = docTerms.get(word.toLowerCase());
+            Term TERM = docTerms.get(word.toUpperCase());
+            Term finalTerm=null;
+            String format=word.toLowerCase();
             boolean capital = Character.isUpperCase(word.charAt(0));
-            //if first letter is capital and it appeared already with capital letter- all caps
-            if (capital && (term == null || term.isStartsWithCapital())) {
-                format = word.toUpperCase();
-            } else {
+            if (term == null && TERM == null){
+                if (capital)
+                    format = word.toUpperCase();
+            }
+            else if (term!=null){
                 format = word.toLowerCase();
+                originalKey=format;
+                finalTerm=term;
             }
-            if (term != null) {  //appears in docTerms
-                term.setValue(format);
+            else if (capital && TERM!=null){
+                format = word.toUpperCase();
+                finalTerm=TERM;
+            }
+            else if (!capital && TERM!=null){
+                originalKey=word.toUpperCase();
+                format = word.toLowerCase();
+                finalTerm=TERM;
+                needToUpdate=true;
+            }
+            if (finalTerm != null) {  //appears in docTerms
+                finalTerm.setValue(format);
+                if (needToUpdate){
+                    docTerms.remove(originalKey);
+                    docTerms.put(format, finalTerm);
+                }
             } else {
-                term = new Term(format, false);
-                docTerms.put(format, term);
+                finalTerm = new Term(format, false);
+                docTerms.put(format, finalTerm);
             }
-            term.updatesDocsInfo(docNo, position);
+            finalTerm.updatesDocsInfo(docNo, position);
         }
     }
 
