@@ -68,7 +68,6 @@ public class Parse {
         setHelpDicMon(this.helpDicMonths);
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
                 '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
-        // this.smallDelimiters= Stream.of('\'', '(', '[', '{', ')', ']', '}',  '/', '\\','"').collect(Collectors.toSet());
     }
 
 
@@ -99,18 +98,28 @@ public class Parse {
      */
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
-        this.stem = stem;
-        String[] singleWords = StringUtils.split(text, " ][=<>*:\\?|\"");
+        String[] singleWords = StringUtils.split(text, " ;][=<>*:\\?|\"");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
             //wouldn't want to keep a single letter
-            if(word.length()<2)
+            if (word.length() < 2)
                 continue;
-            boolean separated = separatedWord(word);
             char firstChar = word.charAt(0);
             boolean found = false;
+            //if the word contains / need to break it
+            if (word.contains("/")) {
+                found = checkFraction(docTerms, word, i);
+                if (found)
+                    continue;
+                String[] splitedUntil = StringUtils.split(word, "/");
+                if (splitedUntil.length > 1) {
+                    handle_splitted(splitedUntil, i);   //handle the words after split, not an entity
+                    word = splitedUntil[splitedUntil.length - 1];
+                }
+            }
+            boolean separated = separatedWord(word);
             //the word ends with a separator, can be phone number or a term of one word
             if (separated) {
                 if ((i + 1) < textLength) {
@@ -148,24 +157,19 @@ public class Parse {
                     if (Character.isUpperCase(firstChar) && i + 1 < textLength) {
                         boolean finish = false;
                         int curr = i + 1;
-                        boolean notEnt=false;
-                        String temp = word.replaceAll("/", " ");
-                        if(! temp.equals(word)){
-                            String[] splittedEnt = StringUtils.split(temp," ");
-                            handle_splitted(splittedEnt, i);   //handle the words after split, not an entity
-                            temp=splittedEnt[splittedEnt.length-1];
-                            if (!Character.isUpperCase(temp.charAt(0)))
-                                notEnt=true;
-                        }
-                        while (!notEnt && !finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "/\\)")) {
+                        String temp = word;
+                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "/\\)")) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
                                 add = removeDeli(add);
-                            temp += " " + add;
+                            if (!StringUtils.contains(add, '&'))
+                                temp += " " + add;
+                            else
+                                finish = true;
                             //limit the entity size
-                            if (temp.length()>=6)
-                                finish=true;
+                            if (temp.length() >= 6)
+                                finish = true;
                             curr++;
                             found = true;
                         }
@@ -200,7 +204,7 @@ public class Parse {
                         if (word.contains("--"))  //need to split here
                             continue;
                         if ((i + 1) < textLength) {
-                            found = checkPhrases(docTerms, word, singleWords[i + 1], i);
+                            found = checkPhrasesTime(docTerms, word, singleWords[i + 1], i);
                             if (found)
                                 i++;
                         }
@@ -241,10 +245,11 @@ public class Parse {
         return docTerms;
     }
 
-    private void handle_splitted(String[] splittedEnt, int position ) {
-        int len= splittedEnt.length-1;
-        for (int i=0; i<len; i++){
-            handle_1_word_term(docTerms, splittedEnt[i], position);
+    //reaches here if the original word contained / so each word should be handled
+    private void handle_splitted(String[] splitted, int position) {
+        int len = splitted.length - 1;
+        for (int i = 0; i < len; i++) {
+            handle_1_word_term(docTerms, splitted[i], position);
         }
     }
 
@@ -316,17 +321,19 @@ public class Parse {
     }
 
 
-    private boolean checkPhrases(HashMap<String, Term> docTerms, String word1, String word2, int position) {
+    private boolean checkPhrases(HashMap<String, Term> docTerms, String word1, int position) {
+        Matcher match2 = PHRASE.matcher(word1);
+        if (match2.find()) {
+            enterKey(docTerms, word1, position, false);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean checkPhrasesTime(HashMap<String, Term> docTerms, String word1, String word2, int position) {
         Matcher match = TIMETOTIMEGMT.matcher(word1 + " " + removeDeli(word2));
         if (match.find()) {
             saveAsTime(docTerms, word1, position);
-            return true;
-        }
-        Matcher match2 = PHRASE.matcher(word1);
-        if (match2.find()) {
-            if (word1.contains("/"))
-                word1=word1.substring(0,word1.indexOf("/"));
-            enterKey(docTerms, word1, position, false);
             return true;
         }
         return false;
@@ -382,7 +389,7 @@ public class Parse {
                     saveAsNumDollars(docTerms, numberInWord, position);
                 }
             }
-        } else if (Character.isLetter(firstChar) && word.length()>2) {
+        } else if (Character.isLetter(firstChar) && word.length() > 2) {
             //phrase - one word
             if (StringUtils.containsAny(word, "/)(\\")) {
                 String[] wordsSeperated = StringUtils.split(word, "/()\\");
@@ -399,13 +406,10 @@ public class Parse {
                 return;
             }
             if (word.contains("-")) {
-                if(word.contains("--")) //need to split here
+                if (word.contains("--")) //need to split here
                     return;
-                Matcher match = PHRASE.matcher(word);
-                if (match.find()) {
-                    enterKey(docTerms, word, position, false);
-                    return;
-                }
+                checkPhrases(docTerms, word, position);
+                return;
             }
             if (word.contains(".")) {
                 String noDots = StringUtils.replace(word, ".", "");
@@ -427,25 +431,12 @@ public class Parse {
             }
             //capital letter word
             //use porter stemmer to stem word
-            if (!isAStopWord(word) && word.length()>2) {
+            if (!isAStopWord(word) && word.length() > 2) {
                 if (stem) {
                     word = stemmedWord(word);
                     word = removeDeli(word);
                 }
                 checkFirstLetter(word, docTerms, position);
-//                String[] words={word};
-//                if (StringUtils.containsAny(word,delimiters.toString())) {
-//                    words= separatedByDelimiters(word);
-//                }
-//                for(String word1:words) {
-//                    if (word1.length() > 1) {
-//                        if (stem) {
-//                            word1 = stemmedWord(word1);
-//                            word1 = removeDeli(word1);
-//                        }
-//                        checkFirstLetter(word1, docTerms, position);
-//                    }
-//                }
             }
         } else if (Character.isDigit(firstChar)) {
             if (word.contains("-") && firstChar != '-') {
@@ -462,13 +453,8 @@ public class Parse {
                     return;
                 }
             } else {
-                Matcher match = FRACTION.matcher(word);
-                if (match.find()) {
-                    String[] numbers = word.split("/");
-                    if (isNumeric(numbers[1])[0]) {
-                        enterKey(docTerms, numbers[0] + "_" + numbers[1], position, false);
-                        return;
-                    }
+                if (checkFraction(docTerms, word, position)){
+                    return;
                 }
                 //num%- one word
                 if (word.endsWith("%") && isNumeric(word.substring(0, word.length() - 1))[0]) {
@@ -494,11 +480,6 @@ public class Parse {
     }
 
 
-    private String[] separatedByDelimiters(String word) {
-        String[] seperated = StringUtils.split(word, "/)(\\");
-        return seperated;
-    }
-
     private String stemmedWord(String word) {
         porterStemmer.add(word.toCharArray(), word.length());
         porterStemmer.stem();
@@ -506,7 +487,7 @@ public class Parse {
     }
 
     private void checkFirstLetter(String word, HashMap<String, Term> docTerms, int position) {
-        if (word.length()>2) {
+        if (word.length() > 2) {
             Term term = docTerms.get(word);
             String format;
             boolean capital = Character.isUpperCase(word.charAt(0));
@@ -586,6 +567,19 @@ public class Parse {
         return false;
     }
 
+    private boolean checkFraction(HashMap<String, Term> docTerms, String word, int position) {
+        Matcher match = FRACTION.matcher(word);
+        if (match.find()) {
+            word = removeDeli(word);
+            String[] numbers = word.split("/");
+            if (isNumeric(numbers[0])[0] && isNumeric(numbers[1])[0]) {
+                enterKey(docTerms, numbers[0] + "/" + numbers[1], position, false);
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean checkDDMM(HashMap<String, Term> docTerms, String word1, String twoWords, String word2, int position) {
         //DD MM
         Matcher match1 = DDMONTH_LOWER.matcher(twoWords);
@@ -624,7 +618,7 @@ public class Parse {
 
 
     private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
-        boolean singleLetters= Character.isLetter(key.charAt(0)) && key.length()<3;
+        boolean singleLetters = Character.isLetter(key.charAt(0)) && key.length() < 3;
         if (!singleLetters || StringUtils.equalsIgnoreCase(key, "us")) {
             Term term;
             if (!docTerms.containsKey(key)) {
@@ -658,9 +652,9 @@ public class Parse {
 
     private void saveAsTime(HashMap<String, Term> docTerms, String word, int position) {
         //0012-0024
-        String time = word.substring(0, 2) + ";" + word.substring(2, 4);
+        String time = word.substring(0, 2) + ":" + word.substring(2, 4);
         if (word.length() == 9 && word.charAt(4) == '-') {
-            String time2 = word.substring(5, 7) + ";" + word.substring(7);
+            String time2 = word.substring(5, 7) + ":" + word.substring(7);
             time += "-" + time2;
         }
         enterKey(docTerms, time, position, false);
@@ -851,7 +845,7 @@ public class Parse {
 
     //read all stop words from the given file and add them into an array list
     private HashSet<String> readStopWords(String stopWordsPath) {
-        String filePath= stopWordsPath+"\\stop words.txt";
+        String filePath = stopWordsPath + "\\stop words.txt";
         HashSet<String> temp = new HashSet<String>();
         File stopWordsFile = new File(filePath);
         try {
