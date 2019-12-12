@@ -1,3 +1,5 @@
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.*;
 
 public class Term implements IWritable{
@@ -9,6 +11,12 @@ public class Term implements IWritable{
     private boolean startsWithCapital;
     private boolean isEntity;
     private final String del = ",";
+    private final String docPrefixDel = "#";
+    private String lastFileNumPrefix;
+
+    private final int VALUE_INDEX = 0;
+    private final int DF_INDEX = 1;
+    private final int DOCLIST_INDEX = 2;
 
     //</editor-fold>
 
@@ -18,12 +26,14 @@ public class Term implements IWritable{
         setValue(value);
         docs = new HashMap<>();
         this.isEntity = isEntity;
+        lastFileNumPrefix = "";
     }
 
     public Term(String value) {
         setValue(value);
         docs = new HashMap<>();
         this.isEntity = false;
+        lastFileNumPrefix = "";
     }
 
     //</editor-fold>
@@ -75,6 +85,8 @@ public class Term implements IWritable{
     //<editor-fold des="Documents Lists Getters">
 
     public List<DocTermInfo> getDocsSortedByName(){
+//        ArrayList<IWritable> docList = new ArrayList<>(docs.values());
+//        docList.sort(Comparator.comparing(o -> ((DocTermInfo) o).getDocNum()));
         ArrayList<DocTermInfo> docList = new ArrayList<>(docs.values());
         docList.sort(Comparator.comparing(DocTermInfo::getDocNum));
         return docList;
@@ -97,27 +109,64 @@ public class Term implements IWritable{
 
     //<editor-fold des="Interface Functions">
 
-    @Override
-    //
-    public String toString(){
-        return getDf() + "";
+    public String toFileString(){
+        StringBuilder termData = new StringBuilder();
+        termData.append(getValue() + "|");
+        termData.append(getDf() + "|");
+        termData.append(getDocListString());
+        return termData.toString();
     }
 
     @Override
     public List<String> toFile() {
         List<String> toWrite = new ArrayList<>();
-        toWrite.add(toString());
+        toWrite.add(toFileString());
         return toWrite;
     }
 
-    @Override
-    public List<String> update(List<String> toUpdate) {
-        String df = toUpdate.remove(0);
-        int updatedDf = Integer.parseInt(df) + getDf();
-        List<String> toWrite = new ArrayList<>();
-        toWrite.add(updatedDf + "");
-        return toWrite;
+    public void update(List<String> toUpdate, int lineNum) {
+
+        String termPosting = toUpdate.remove(lineNum);
+        String[] lineSplitToMainSections = StringUtils.split(termPosting, "|");
+        StringBuilder updatedTermData = new StringBuilder();
+
+        updatedTermData.append(getUpdatedValue(lineSplitToMainSections[VALUE_INDEX]) + "|");
+        updatedTermData.append(getUpdatedDF(lineSplitToMainSections[DF_INDEX]) + "|");
+        updatedTermData.append(getUpdatedDocListString(lineSplitToMainSections[DOCLIST_INDEX]));
+
+        toUpdate.add(lineNum, updatedTermData.toString());
     }
+
+    private String getUpdatedValue(String prevValue){
+        if(isEntity || value.compareTo(prevValue.toLowerCase()) == 0)
+            return  value;
+        return prevValue;
+    }
+
+    private String getUpdatedDF(String prevDF){
+        return (Integer.parseInt(prevDF) + getDf()) + "";
+    }
+
+    private StringBuilder getDocListString(){
+        return getUpdatedDocListString("").replace(0,1, "");
+    }
+
+    private StringBuilder getUpdatedDocListString(String prevDocList){
+
+        StringBuilder newDocList = new StringBuilder(prevDocList);
+
+        for(DocTermInfo docInfo: getDocsSortedByName())
+
+            if(docInfo.getDocNumPrefix().compareTo(lastFileNumPrefix) == 0)
+                newDocList.append(docInfo.toString());
+            else {
+                lastFileNumPrefix = docInfo.getDocNumPrefix();
+                newDocList.append(docPrefixDel + lastFileNumPrefix + ":" + docInfo.toString());
+            }
+
+        return newDocList;
+    }
+
 
     //</editor-fold>
 

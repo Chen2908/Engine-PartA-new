@@ -64,14 +64,13 @@ public class DocCorpusInfo implements IWritable{
         return toWrite;
     }
 
-    @Override
     public List<String> update(List<String> toUpdate) {
         String[] update = toUpdate.get(0).split(del);
-        int m = maxTf + Integer.parseInt(update[0]);
-        int mu = numOfUniqTerms + Integer.parseInt(update[1]);
-        double t = sumOfTermsSquare + Double.parseDouble(update[2]);
+        int updatedMaxTf = maxTf + Integer.parseInt(update[0]);
+        int updatedNumOfUniqTerms = numOfUniqTerms + Integer.parseInt(update[1]);
+        double updatedSumOfTermsSquare = sumOfTermsSquare + Double.parseDouble(update[2]);
         List<String> toWrite = new ArrayList<>();
-        toWrite.add(m + del + mu + del + t);
+        toWrite.add(updatedMaxTf + del + updatedNumOfUniqTerms + del + updatedSumOfTermsSquare);
         return toWrite;
     }
 

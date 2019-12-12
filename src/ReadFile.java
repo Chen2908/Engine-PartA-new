@@ -102,20 +102,19 @@ public class ReadFile {
     }
 
     private String insetContentToline(){
-        String newLine = "";
         boolean[] gotIn = {false,false};
-        for (int i=0; i < line.length() && (!gotIn[0] || !gotIn[1]) ; i++){
-            if (line.charAt(i) != ' ' && !gotIn[0]) {
-                newLine = line.substring(i);
+        int length = line.length();
+        for (int i=0; i < length && (!gotIn[0] || !gotIn[1]) ; i++){
+            if (!gotIn[0] && line.charAt(i) != ' ') {
+                line = line.substring(i);
                 gotIn[0] = true;
             }
-            if (line.charAt(line.length()-i-1) != ' ' && !gotIn[1]) {
-                newLine = line.substring(0, line.length() - i);
+            if (!gotIn[1] && line.charAt(line.length()-i-1) != ' ') {
+                line = line.substring(0, line.length() - i);
                 gotIn[1] = true;
             }
         }
-        line = newLine;
-        return newLine;
+        return line;
     }
 
     private boolean findFirstLine() throws IOException {

@@ -1,10 +1,11 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class ObjectWriter {
 
@@ -13,7 +14,6 @@ public class ObjectWriter {
     private String dirPath;
     private FilesWriter filesWriter;
     private ExecutorService threadPool;
-    CountDownLatch latch = new CountDownLatch(5);
 
     public ObjectWriter(String directoryPath, int poolSize){
         filesWriter = new FilesWriter();
@@ -27,34 +27,23 @@ public class ObjectWriter {
 
     //<editor-fold des="OverLoading Functions">
 
-    public void write(IWritable toWrite, String subFilePath){
-        write(toWrite, subFilePath, false);
+    public void write(IWritable toWrite, String filePath){
+        write(toWrite, filePath, false);
     }
 
-    public void write(List<IWritable> toWrite, String subFilePath){
-        write(toWrite, subFilePath, false);
+    public void write(List<String> toWrite, String filePath){
+        write(toWrite, filePath, false);
     }
 
     //</editor-fold>
 
-    public void write(IWritable toWrite, String subFilePath, boolean toAppend){
-        this.filesWriter.addFilesToWrite(dirPath + subFilePath, toWrite.toFile(), toAppend);
+    public void write(IWritable toWrite, String filePath, boolean toAppend){
+        this.filesWriter.addFilesToWrite(filePath, toWrite.toFile(), toAppend);
         start();
     }
 
-    public void write(List<IWritable> toWrite, String subFilePath, boolean toAppend){
-        this.filesWriter.addFilesToWrite(dirPath + subFilePath, getCombinedList(toWrite), toAppend);
-        start();
-    }
-
-    public void update(IWritable toWrite, String subFilePath) {
-        List<String> toUpdate = readFile(subFilePath);
-
-        if (toUpdate == null || toUpdate.size() == 0)
-            return;
-
-        this.filesWriter.addFilesToWrite(dirPath + subFilePath, toWrite.update(toUpdate), false);
-
+    public void write(List<String> toWrite, String filePath, boolean toAppend){
+        this.filesWriter.addFilesToWrite(filePath, toWrite, toAppend);
         start();
     }
 
@@ -66,22 +55,15 @@ public class ObjectWriter {
         threadPool.execute(filesWriter);
     }
 
-    private List<String> getCombinedList(List<IWritable> toCombine){
-        List<String> combined = toCombine.remove(0).toFile();
-        for (IWritable w: toCombine)
-            combined.addAll(w.toFile());
-        return combined;
-    }
-
-    private List<String> readFile(String subPath){
+    public List<String> readFile(String filePath){
         List<String> lines = new ArrayList<>();
 
         try {
-            File file = new File(dirPath + subPath);
+            File file = new File(filePath);
             if (!file.exists())
-                return null;
+                return lines;
 
-            filesWriter.acquire(dirPath + subPath);
+            filesWriter.acquire(filePath);
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line = "";
@@ -90,7 +72,7 @@ public class ObjectWriter {
                 lines.add(line);
 
             reader.close();
-            filesWriter.release(dirPath + subPath);
+            filesWriter.release(filePath);
 
             return lines;
 
@@ -98,6 +80,14 @@ public class ObjectWriter {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public void acquire(String filePath){
+        filesWriter.acquire(filePath);
+    }
+
+    public void release(String filePath){
+        filesWriter.release(filePath);
     }
 
     public void close(){
