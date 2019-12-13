@@ -58,11 +58,18 @@ public class ObjectWriter {
     }
 
     public List<StringBuilder> readFile(String filePath){
-        List<StringBuilder> lines = new ArrayList<>();
 
+        List<StringBuilder> lines = new ArrayList<>();
+        boolean tried = false;
         try {
+            while(filesWriter.isInLine(filePath))
+                if (!tried) {
+                    lines = filesWriter.getFileToUpdate(filePath);
+                    tried = true;
+                }
+
             File file = new File(filePath);
-            if (!file.exists())
+            if (!file.exists() || lines.size() > 0)
                 return lines;
 
             filesWriter.acquire(filePath);

@@ -134,15 +134,13 @@ public class Indexer {
 
             if(isNew) {
                 fileLines.add(terms.get(termValue).toFileString());
-                addToDictionary(terms.get(termValue));
+                addToDictionary(termValue);
             }
             else
                 try {
                     terms.get(termValue).update(fileLines, dictionary.get(dicKey));
                 } catch (IndexOutOfBoundsException e){
-                    System.out.println(isNew);
                     System.out.println(termValue);
-                    System.out.println(fileLines.size());
                     System.out.println(filePath);
                 }
         }
@@ -164,15 +162,15 @@ public class Indexer {
         return terms;
     }
 
-    private void addToDictionary(Term term){
-        String fileName = getFileName(term.getValue());
+    private void addToDictionary(String term){
+        String fileName = getFileName(term);
 
         if(fileLastLine.containsKey(fileName))
-            fileLastLine.put(getFileName(term.getValue()), fileLastLine.get(fileName)+1);
+            fileLastLine.put(fileName, fileLastLine.get(fileName)+1);
         else
             fileLastLine.put(fileName, 0);
 
-        dictionary.put(term.getValue(), fileLastLine.get(fileName));
+        dictionary.put(term, fileLastLine.get(fileName));
     }
 
     private String getPath(File dir, String term){
