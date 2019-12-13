@@ -20,7 +20,7 @@ public class DocCorpusInfo implements IWritable {
 
     public DocCorpusInfo(){
         this.maxTf = 0;
-        this. numOfUniqTerms = 0;
+        this.numOfUniqTerms = 0;
         this.sumOfTermsSquare = 0;
     }
 

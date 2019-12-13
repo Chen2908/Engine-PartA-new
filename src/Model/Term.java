@@ -1,6 +1,5 @@
 package Model;
 
-import Model.DocTermInfo;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -13,9 +12,10 @@ public class Term implements IWritable {
     private HashMap<String, DocTermInfo> docs; // hashMap of all the docs that this term appears in
     private boolean startsWithCapital;
     private boolean isEntity;
+
+    private String lastFileNumPrefix;
     private final String del = ",";
     private final String docPrefixDel = "#";
-    private String lastFileNumPrefix;
 
     private final int VALUE_INDEX = 0;
     private final int DF_INDEX = 1;
@@ -73,13 +73,26 @@ public class Term implements IWritable {
 
     public boolean isBellowThreshHold(int numOfDocs, int totalNum){
 
+        if(isEntity && docs.size() == 1)
+            return false;
+
         if(docs.size() > numOfDocs)
             return false;
+
         int tfSum = 0;
         for(DocTermInfo doc : docs.values())
             tfSum += doc.getTfi();
         return tfSum < totalNum;
 
+    }
+
+    public void marge(Term term){
+        value = getUpdatedValue(term.value);
+        docs.putAll(term.getDocs());
+    }
+
+    public HashMap<String, DocTermInfo> getDocs() {
+        return docs;
     }
 
     public String getValue() { return value; }
@@ -153,7 +166,7 @@ public class Term implements IWritable {
 
     private String getUpdatedValue(String prevValue){
         if(isEntity || value.compareTo(prevValue.toLowerCase()) == 0)
-            return  value;
+            return value;
         return prevValue;
     }
 

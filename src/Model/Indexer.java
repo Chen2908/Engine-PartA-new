@@ -1,9 +1,10 @@
 package Model;
 
-import Model.DocCorpusInfo;
-
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
 public class Indexer {
 
@@ -14,7 +15,7 @@ public class Indexer {
      * create dictionary
      * create corpus info file
      */
-    private final int HASH_SIZE = 8000;
+    private final int HASH_SIZE = 5000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -26,7 +27,7 @@ public class Indexer {
     private HashMap<String, Integer> dictionary;
     private HashMap<String, Integer> fileLastLine;
     private HashMap<String, Term> terms;
-    private List<Term> termsList;
+    private List<String> termsList;
     private HashMap<String, DocCorpusInfo> docsIndexInfo;
     private HashMap<String, Term> bellowThreshHold;
 
@@ -79,11 +80,11 @@ public class Indexer {
     public void createIndex(){
 
         Term term;
-        termsList = new ArrayList<>(this.terms.values());
-        termsList.sort(Comparator.comparing(o -> filesNameHashFunction(o.getValue())));
+        termsList = new ArrayList<>(this.terms.keySet());
+        termsList.sort(Comparator.comparing(o -> filesNameHashFunction(o)));
 
         while (termsList.size() > 0){
-            term = termsList.remove(0);
+            term = terms.get(termsList.remove(0));
 
             if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, 5)){
                 this.bellowThreshHold.put(term.getValue(), term);
@@ -106,14 +107,8 @@ public class Indexer {
         String dicKey = null;
 
         for(String termValue: fileTerm){
-            isNew = false;
 
             isNew = false;
-            if(terms.get(termValue).isEntity() && terms.get(termValue).getDf() == 1 || terms.get(termValue).isBellowThreshHold(1, 5)){
-                this.bellowThreshHold.put(term.getValue(), term);
-                continue;
-            }
-
             termLower = termValue.toLowerCase();
             termUpper = termValue.toUpperCase();
 
@@ -129,14 +124,23 @@ public class Indexer {
             else
                 isNew = true;
 
+            if(isNew && bellowThreshHold.containsKey(termValue.toLowerCase())) {
+                terms.get(termValue).marge(bellowThreshHold.get(termValue.toLowerCase()));
+                bellowThreshHold.remove(termValue.toLowerCase());
+            }
+
+            if(terms.get(termValue).isBellowThreshHold(1, 6)){
+                bellowThreshHold.put(termValue.toLowerCase(), terms.get(termValue));
+                continue;
+            }
 
             if(isNew) {
                 addToDictionary(terms.get(termValue));
                 fileLines.add(terms.get(termValue).toFileString());
-            } else
+            }
+            else
                 terms.get(termValue).update(fileLines, dictionary.get(dicKey));
 
-            termsList.remove(terms.get(termValue));
         }
         objectWriter.write(fileLines, filePath);
     }
@@ -150,8 +154,8 @@ public class Indexer {
         int hashCode = filesNameHashFunction(term.getValue());
         List<String> terms = new ArrayList<>();
         terms.add(term.getValue());
-        while(termsList.size() > 0 && filesNameHashFunction(termsList.get(0).getValue()) == hashCode)
-            terms.add(termsList.remove(0).getValue());
+        while(termsList.size() > 0 && filesNameHashFunction(termsList.get(0)) == hashCode)
+            terms.add(termsList.remove(0));
 
         return terms;
     }
@@ -194,5 +198,27 @@ public class Indexer {
 
     public HashMap<String, Term> getBellowThreshHold() {
         return bellowThreshHold;
+    }
+
+    public void writeDictionary(){
+        StringBuilder dic = new StringBuilder();
+        List<String> words = new ArrayList<>(dictionary.keySet());
+        words.sort(String::compareTo);
+        for(String word: words)
+            dic.append(word + " - " + dictionary.get(word) + "\n");
+        List<StringBuilder> toWrite = new ArrayList<>();
+        toWrite.add(dic);
+        objectWriter.write(toWrite, outputDir + "\\dictionary.txt");
+    }
+
+    public void writeBellowThreshHold(){
+        StringBuilder dic = new StringBuilder();
+        List<Term> words = new ArrayList<>(bellowThreshHold.values());
+        words.sort(Comparator.comparing(Term::getValue));
+        for(Term term: words)
+            dic.append(term.getValue() + "\n");
+        List<StringBuilder> toWrite = new ArrayList<>();
+        toWrite.add(dic);
+        objectWriter.write(toWrite, outputDir + "\\bellowThreshHold.txt");
     }
 }
