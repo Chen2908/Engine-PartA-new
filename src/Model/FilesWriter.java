@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -11,10 +12,10 @@ import java.util.concurrent.Semaphore;
 
 public class FilesWriter implements Runnable {
 
-    private ConcurrentLinkedDeque<List<StringBuilder>> lines;
     private ConcurrentLinkedDeque<String> filesPath;
-    private ConcurrentLinkedDeque<Boolean> appendToFile;
-    private ConcurrentHashMap<String,Semaphore> fileStatus;
+    private ConcurrentHashMap<String, List<StringBuilder>> lines;
+    private ConcurrentHashMap<String, Boolean> appendToFile;
+    private ConcurrentHashMap<String, Semaphore> fileStatus;
     private ConcurrentHashMap<String, Boolean> isInLine;
     private Semaphore semaphore = new Semaphore(1);
     private Semaphore inLine = new Semaphore(1);
@@ -26,9 +27,9 @@ public class FilesWriter implements Runnable {
     }
 
     public void reset(){
-        lines = new ConcurrentLinkedDeque<>();
+        lines = new ConcurrentHashMap<>();
         filesPath = new ConcurrentLinkedDeque<>();
-        appendToFile = new ConcurrentLinkedDeque<>();
+        appendToFile = new ConcurrentHashMap<>();
         fileStatus = new ConcurrentHashMap<>();
         isInLine = new ConcurrentHashMap<>();
     }
@@ -36,22 +37,11 @@ public class FilesWriter implements Runnable {
     public void addFilesToWrite(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
+            if (!fileStatus.containsKey(filePath))
+                fileStatus.put(filePath, new Semaphore(1));
             filesPath.addLast(filePath);
-            lines.addLast(toAdd);
-            appendToFile.addLast(append);
-            isInLine.put(filePath, true);
-            semaphore.release();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void addFilesToWriteAtStart(String filePath, List<StringBuilder> toAdd, boolean append){
-        try {
-            semaphore.acquire();
-            filesPath.addFirst(filePath);
-            lines.addFirst(toAdd);
-            appendToFile.addFirst(append);
+            lines.put(filePath, toAdd);
+            appendToFile.put(filePath, append);
             isInLine.put(filePath, true);
             semaphore.release();
         } catch (InterruptedException e) {
@@ -69,8 +59,6 @@ public class FilesWriter implements Runnable {
 
     public void acquire(String file){
         try {
-            if (!fileStatus.containsKey(file))
-                fileStatus.put(file, new Semaphore(1));
             fileStatus.get(file).acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -85,15 +73,37 @@ public class FilesWriter implements Runnable {
         return isInLine.containsKey(filePath);
     }
 
+    public List<StringBuilder> getFileToUpdate(String filePath){
+        List<StringBuilder> fileLines = new LinkedList<>();
+        try {
+            semaphore.acquire();
+            if(lines.containsKey(filePath) && fileStatus.get(filePath).tryAcquire()){
+                filesPath.remove(filePath);
+                appendToFile.remove(filePath);
+                fileLines = lines.remove(filePath);
+                isInLine.remove(filePath);
+                fileStatus.get(filePath).release();
+            }
+            semaphore.release();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return fileLines;
+    }
+
     @Override
     public void run() {
 
+        Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         String filePath = "";
         try {
+            if(numOfFilesToWrite() == 0)
+                return;
+
             semaphore.acquire();
-            List<StringBuilder> toWrite = lines.removeFirst();
             filePath = filesPath.removeFirst();
-            boolean toAppend = appendToFile.removeFirst();
+            List<StringBuilder> toWrite = lines.remove(filePath);
+            boolean toAppend = appendToFile.remove(filePath);
             semaphore.release();
 
             acquire(filePath);
