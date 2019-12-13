@@ -1,10 +1,7 @@
 package Model;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Indexer {
 
@@ -15,7 +12,7 @@ public class Indexer {
      * create dictionary
      * create corpus info file
      */
-    private final int HASH_SIZE = 5000;
+    private final int HASH_SIZE = 8000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -30,6 +27,7 @@ public class Indexer {
     private List<String> termsList;
     private HashMap<String, DocCorpusInfo> docsIndexInfo;
     private HashMap<String, Term> bellowThreshHold;
+    private FilesCache filesCache;
 
     //<editor-fold des="Read Write">
 
@@ -80,7 +78,7 @@ public class Indexer {
     public void createIndex(){
 
         Term term;
-        termsList = new ArrayList<>(this.terms.keySet());
+        termsList = new LinkedList<>(this.terms.keySet());
         termsList.sort(Comparator.comparing(o -> filesNameHashFunction(o)));
 
         while (termsList.size() > 0){
@@ -101,7 +99,7 @@ public class Indexer {
         String filePath = getPath(termDir, term.getValue());
         List<StringBuilder> fileLines = objectWriter.readFile(filePath);
         List<String> fileTerm = getTermValues(term);
-        boolean isNew = false;
+        boolean isNew;
         String termLower;
         String termUpper;
         String dicKey = null;
@@ -135,12 +133,18 @@ public class Indexer {
             }
 
             if(isNew) {
-                addToDictionary(terms.get(termValue));
                 fileLines.add(terms.get(termValue).toFileString());
+                addToDictionary(terms.get(termValue));
             }
             else
-                terms.get(termValue).update(fileLines, dictionary.get(dicKey));
-
+                try {
+                    terms.get(termValue).update(fileLines, dictionary.get(dicKey));
+                } catch (IndexOutOfBoundsException e){
+                    System.out.println(isNew);
+                    System.out.println(termValue);
+                    System.out.println(fileLines.size());
+                    System.out.println(filePath);
+                }
         }
         objectWriter.write(fileLines, filePath);
     }
@@ -152,17 +156,12 @@ public class Indexer {
 
     private List<String> getTermValues(Term term){
         int hashCode = filesNameHashFunction(term.getValue());
-        List<String> terms = new ArrayList<>();
+        List<String> terms = new LinkedList<>();
         terms.add(term.getValue());
         while(termsList.size() > 0 && filesNameHashFunction(termsList.get(0)) == hashCode)
             terms.add(termsList.remove(0));
 
         return terms;
-    }
-
-    private void writeNewTerm(Term term){
-        addToDictionary(term);
-        objectWriter.write(term, getPath(termDir, term.getValue()), true);
     }
 
     private void addToDictionary(Term term){

@@ -14,6 +14,7 @@ public class FilesWriter implements Runnable {
     private ConcurrentLinkedDeque<List<StringBuilder>> lines;
     private ConcurrentLinkedDeque<String> filesPath;
     private ConcurrentLinkedDeque<Boolean> appendToFile;
+    private ConcurrentHashMap<String, Semaphore> isInLine;
     private ConcurrentHashMap<String,Semaphore> fileStatus;
     private Semaphore semaphore = new Semaphore(1);
 
@@ -28,11 +29,13 @@ public class FilesWriter implements Runnable {
         filesPath = new ConcurrentLinkedDeque<>();
         appendToFile = new ConcurrentLinkedDeque<>();
         fileStatus = new ConcurrentHashMap<>();
+        isInLine = new ConcurrentHashMap<>();
     }
 
     public void addFilesToWrite(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
+            acquire(filePath);
             filesPath.addLast(filePath);
             lines.addLast(toAdd);
             appendToFile.addLast(append);
@@ -45,6 +48,7 @@ public class FilesWriter implements Runnable {
     public void addFilesToWriteAtStart(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
+            acquire(filePath);
             filesPath.addFirst(filePath);
             lines.addFirst(toAdd);
             appendToFile.addFirst(append);
@@ -88,7 +92,6 @@ public class FilesWriter implements Runnable {
             semaphore.release();
 
             // in case the file is being written it will go back to the end of the line
-            acquire(filePath);
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filePath), toAppend));
 
@@ -98,6 +101,7 @@ public class FilesWriter implements Runnable {
             writer.close();
 
             release(filePath);
+
 
         } catch (IOException | InterruptedException e) {
             System.out.println(filePath.substring(filePath.lastIndexOf('\\')+1,filePath.lastIndexOf('.')));

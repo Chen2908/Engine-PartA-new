@@ -19,7 +19,7 @@ public class ObjectWriter {
 
     public ObjectWriter(String directoryPath, int poolSize){
         filesWriter = new FilesWriter();
-        threadPool = Executors.newCachedThreadPool();
+        threadPool = Executors.newFixedThreadPool(poolSize);
         dirPath = directoryPath;
     }
 
