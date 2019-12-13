@@ -7,9 +7,9 @@ import java.util.List;
 
 public class Manager {
 
-    private static final int BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 2000;
     private static final int THRESHOLD = 2 ;
-    private static final int THREAD_POOL_SIZE = 6;
+    private static final int THREAD_POOL_SIZE = 3;
 
     private ReadFile reader;
     private String corpusPath;

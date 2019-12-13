@@ -21,7 +21,6 @@ public class Parse {
     private HashMap<String, String> helpDicMonths;
     private String docNo;
     private Set<Character> delimiters;
-    private Set<Character> smallDelimiters;
     private int textLength;
     private boolean stem;
     HashMap<String, Term> docTerms;
@@ -103,15 +102,12 @@ public class Parse {
      */
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
-        String[] singleWords = StringUtils.split(text, " ;][:\\\"");
+        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
-            if (word.contains("|"))
-                continue;
-            //wouldn't want to keep a single letter
-            if (word.length() < 2)
+            if (word.contains("|") || word.length() < 2)
                 continue;
 
             char firstChar = word.charAt(0);
@@ -137,7 +133,7 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
-                    if (StringUtils.containsAny(word, "?*&<>="))
+                    if (StringUtils.containsAny(word, "?|*&<>=(){}"))
                         continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
@@ -157,28 +153,28 @@ public class Parse {
                 }
                 //entities, between/ phrases/ capital/ date
                 else if (Character.isLetter(firstChar) && !word.contains("-")) {
-                    String[] separatedWords = {word};
-                    if (StringUtils.containsAny(word, "/\\)|")) {
-                        separatedWords = StringUtils.split(word, "/\\)");
-                        enterKey(docTerms, separatedWords[0], i, false);
-                        word = separatedWords[1];
-                    }
+//                    String[] separatedWords = {word};
+//                    if (StringUtils.containsAny(word, "/\\)|")) {
+//                        separatedWords = StringUtils.split(word, "/\\)");
+//                        enterKey(docTerms, separatedWords[0], i, false);
+//                        word = separatedWords[1];
+//                    }
                     //entities - 2 words and above
                     if (Character.isUpperCase(firstChar) && i + 1 < textLength) {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "|/\\)")) {
+                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "|/\\)(")) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
                                 add = removeDeli(add);
-                            if (!StringUtils.containsAny(add, "?|*&<>="))
+                            if (!StringUtils.containsAny(add, "?|*&<>=)("))
                                 temp += " " + add;
                             else
                                 finish = true;
                             //limit the entity size
-                            if (temp.length() >= 6)
+                            if (temp.length() >= 5)
                                 finish = true;
                             curr++;
                             found = true;
@@ -259,7 +255,7 @@ public class Parse {
     private void handle_splitted(String[] splitted, int position) {
         int len = splitted.length - 1;
         for (int i = 0; i < len; i++) {
-            if (!StringUtils.containsAny(splitted[i], "?|*&<>="))
+            if (!StringUtils.containsAny(splitted[i], "?|*&<>=(){}"))
                 handle_1_word_term(docTerms, splitted[i], position);
         }
     }
@@ -377,9 +373,6 @@ public class Parse {
 
 
     private void handle_1_word_term(HashMap<String, Term> docTerms, String word, int position) {
-        //wouldn't want to save a word containing &
-        if (StringUtils.contains(word, '&'))
-            return;
         //$price, number%, first capital, phrase, plain num, plain word with letters
         char firstChar = word.charAt(0);
         //$price
@@ -400,22 +393,22 @@ public class Parse {
                     saveAsNumDollars(docTerms, numberInWord, position);
                 }
             }
-        } else if (Character.isLetter(firstChar) && word.length() > 2) {
+        } else if (Character.isLetter(firstChar)) {
             //phrase - one word
-            if (StringUtils.containsAny(word, "/)(\\")) {
-                String[] wordsSeperated = StringUtils.split(word, "/()\\");
-                for (String sep : wordsSeperated) {
-                    if (!isAStopWord(sep)) {
-                        if (stem) {
-                            sep = stemmedWord(sep);
-                            sep = removeDeli(sep);
-                        }
-                        if (sep.length() > 2)
-                            enterKey(docTerms, sep, position, false);
-                    }
-                }
-                return;
-            }
+//            if (StringUtils.containsAny(word, "/)(\\")) {
+//                String[] wordsSeperated = StringUtils.split(word, "/()\\");
+//                for (String sep : wordsSeperated) {
+//                    if (!isAStopWord(sep)) {
+//                        if (stem) {
+//                            sep = stemmedWord(sep);
+//                            sep = removeDeli(sep);
+//                        }
+//                        if (sep.length() > 2)
+//                            enterKey(docTerms, sep, position, false);
+//                    }
+//                }
+//                return;
+//            }
             if (word.contains("-")) {
                 if (word.contains("--")) //need to split here
                     return;
@@ -451,6 +444,8 @@ public class Parse {
             }
         } else if (Character.isDigit(firstChar)) {
             if (word.contains("-") && firstChar != '-') {
+                if (word.contains("--")) //need to split here
+                    return;
                 Matcher match = PHRASE.matcher(word);
                 if (match.find()) {
                     String[] splittedWord = word.split("-");
@@ -541,21 +536,23 @@ public class Parse {
 
 
     private boolean handle_num_2_words(String word1, String word2, HashMap<String, Term> docTerms, int position) {
-        //first word is a number
-        boolean[] infoOnWord1 = isNumeric(word1);
-        if (infoOnWord1[0]) {
-            String noComma = word1;
-            if (infoOnWord1[1]) {
-                noComma = StringUtils.replace(word1, ",", "");
+        if (!StringUtils.containsAny(word2, "?|*&<>=(){}")) {
+            //first word is a number
+            boolean[] infoOnWord1 = isNumeric(word1);
+            if (infoOnWord1[0]) {
+                String noComma = word1;
+                if (infoOnWord1[1]) {
+                    noComma = StringUtils.replace(word1, ",", "");
+                }
+                String twoWords = noComma + " " + word2;
+                return (checkPrice$(docTerms, word1, noComma, twoWords, position) ||
+                        checkMillionBillion(docTerms, word1, word2, position) ||
+                        checkPercent(docTerms, word1, twoWords, position) ||
+                        checkDDMM(docTerms, word1, twoWords, word2, position) ||
+                        checkTimePattern(docTerms, word1, twoWords, position));
             }
-            String twoWords = noComma + " " + word2;
-            return (checkPrice$(docTerms, word1, noComma, twoWords, position) ||
-                    checkMillionBillion(docTerms, word1, word2, position) ||
-                    checkPercent(docTerms, word1, twoWords, position) ||
-                    checkDDMM(docTerms, word1, twoWords, word2, position) ||
-                    checkTimePattern(docTerms, word1, twoWords, position));
         }
-        return false;
+            return false;
     }
 
     private boolean checkPrice$(HashMap<String, Term> docTerms, String word1, String noComma, String twoWords, int position) {
