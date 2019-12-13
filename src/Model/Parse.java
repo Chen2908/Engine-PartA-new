@@ -107,7 +107,8 @@ public class Parse {
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
-            if (word.contains("|") || word.length() < 2)
+            //wouldn't want to keep single chars
+            if (word.length() < 2)
                 continue;
 
             char firstChar = word.charAt(0);
@@ -139,6 +140,8 @@ public class Parse {
                     continue;
                 }
             } else { //can be a term of more than one word
+                if (StringUtils.containsAny(word, "?|*&<>=(){}"))
+                    continue;
                 //$ price
                 if (firstChar == '$') {
                     String numberInWord = word.substring(1);
