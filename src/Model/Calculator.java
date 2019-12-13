@@ -1,3 +1,5 @@
+package Model;
+
 /** This class does the calculations needed for the retrieval of terms
  * It includes the calculation of Tf-idf, cosine similarity
  */

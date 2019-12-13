@@ -1,0 +1,104 @@
+package Model;
+
+import Model.FilesWriter;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ObjectWriter {
+
+    //<editor-fold des="Fields & Constructor">
+
+    private String dirPath;
+    private FilesWriter filesWriter;
+    private ExecutorService threadPool;
+
+    public ObjectWriter(String directoryPath, int poolSize){
+        filesWriter = new FilesWriter();
+        threadPool = Executors.newCachedThreadPool();
+        dirPath = directoryPath;
+    }
+
+    //</editor-fold>
+
+    //<editor-fold des="Writing Functions">
+
+    //<editor-fold des="OverLoading Functions">
+
+    public void write(IWritable toWrite, String filePath){
+        write(toWrite, filePath, false);
+    }
+
+    public void write(List<String> toWrite, String filePath){
+        write(toWrite, filePath, false);
+    }
+
+    //</editor-fold>
+
+    public void write(IWritable toWrite, String filePath, boolean toAppend){
+        this.filesWriter.addFilesToWrite(filePath, toWrite.toFile(), toAppend);
+        start();
+    }
+
+    public void write(List<String> toWrite, String filePath, boolean toAppend){
+        this.filesWriter.addFilesToWrite(filePath, toWrite, toAppend);
+        start();
+    }
+
+    //</editor-fold>
+
+    //<editor-fold des="Inner Methods">
+
+    private void start(){
+        threadPool.execute(filesWriter);
+    }
+
+    public List<String> readFile(String filePath){
+        List<String> lines = new ArrayList<>();
+
+        try {
+            File file = new File(filePath);
+            if (!file.exists())
+                return lines;
+
+            filesWriter.acquire(filePath);
+
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line = "";
+
+            while ((line = reader.readLine()) != null)
+                lines.add(line);
+
+            reader.close();
+            filesWriter.release(filePath);
+
+            return lines;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void acquire(String filePath){
+        filesWriter.acquire(filePath);
+    }
+
+    public void release(String filePath){
+        filesWriter.release(filePath);
+    }
+
+    public void close(){
+        threadPool.shutdown();
+        while (!threadPool.isTerminated()){}
+    }
+
+    //</editor-fold>
+
+}

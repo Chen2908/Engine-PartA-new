@@ -1,3 +1,5 @@
+package Model;
+
 public class Document {
 
     private String docNo;

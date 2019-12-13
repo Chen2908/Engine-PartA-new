@@ -1,3 +1,8 @@
+package Model;
+
+import Model.Document;
+import Model.IStemmer;
+import Model.Stemmer;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -98,14 +103,17 @@ public class Parse {
      */
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
-        String[] singleWords = StringUtils.split(text, " ;][=<>*:\\?|\"");
+        String[] singleWords = StringUtils.split(text, " ;][:\\\"");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
+            if (word.contains("|"))
+                continue;
             //wouldn't want to keep a single letter
             if (word.length() < 2)
                 continue;
+
             char firstChar = word.charAt(0);
             boolean found = false;
             //if the word contains / need to break it
@@ -129,6 +137,8 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
+                    if (StringUtils.containsAny(word, "?*&<>="))
+                        continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
                 }
@@ -148,7 +158,7 @@ public class Parse {
                 //entities, between/ phrases/ capital/ date
                 else if (Character.isLetter(firstChar) && !word.contains("-")) {
                     String[] separatedWords = {word};
-                    if (StringUtils.contains(word, "/\\)")) {
+                    if (StringUtils.containsAny(word, "/\\)|")) {
                         separatedWords = StringUtils.split(word, "/\\)");
                         enterKey(docTerms, separatedWords[0], i, false);
                         word = separatedWords[1];
@@ -158,12 +168,12 @@ public class Parse {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "/\\)")) {
+                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "|/\\)")) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
                                 add = removeDeli(add);
-                            if (!StringUtils.contains(add, '&'))
+                            if (!StringUtils.containsAny(add, "?|*&<>="))
                                 temp += " " + add;
                             else
                                 finish = true;
@@ -249,7 +259,8 @@ public class Parse {
     private void handle_splitted(String[] splitted, int position) {
         int len = splitted.length - 1;
         for (int i = 0; i < len; i++) {
-            handle_1_word_term(docTerms, splitted[i], position);
+            if (!StringUtils.containsAny(splitted[i], "?|*&<>="))
+                handle_1_word_term(docTerms, splitted[i], position);
         }
     }
 

@@ -1,4 +1,7 @@
+package Model;
+
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -8,11 +11,11 @@ import java.util.concurrent.Semaphore;
 
 public class FilesWriter implements Runnable {
 
-    private static ConcurrentLinkedDeque<List<String>> lines;
-    private static ConcurrentLinkedDeque<String> filesPath;
-    private static ConcurrentLinkedDeque<Boolean> appendToFile;
-    private static ConcurrentHashMap<String,Semaphore> fileStatus;
-    private static Semaphore semaphore = new Semaphore(1);
+    private ConcurrentLinkedDeque<List<String>> lines;
+    private ConcurrentLinkedDeque<String> filesPath;
+    private ConcurrentLinkedDeque<Boolean> appendToFile;
+    private ConcurrentHashMap<String,Semaphore> fileStatus;
+    private Semaphore semaphore = new Semaphore(1);
 
     private static int count = 0;
 
@@ -33,6 +36,18 @@ public class FilesWriter implements Runnable {
             filesPath.addLast(filePath);
             lines.addLast(toAdd);
             appendToFile.addLast(append);
+            semaphore.release();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addFilesToWriteAtStart(String filePath, List<String> toAdd, boolean append){
+        try {
+            semaphore.acquire();
+            filesPath.addFirst(filePath);
+            lines.addFirst(toAdd);
+            appendToFile.addFirst(append);
             semaphore.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -63,18 +78,18 @@ public class FilesWriter implements Runnable {
 
     @Override
     public void run() {
-
+        String filePath = "";
         try {
             semaphore.acquire();
             List<String> toWrite = lines.removeFirst();
-            String filePath = filesPath.removeFirst();
+            filePath = filesPath.removeFirst();
             boolean toAppend = appendToFile.removeFirst();
             semaphore.release();
 
             // in case the file is being written it will go back to the end of the line
             acquire(filePath);
 
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, toAppend));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filePath), toAppend));
 
             for (String line : toWrite)
                 writer.append(line + "\n");
@@ -84,7 +99,8 @@ public class FilesWriter implements Runnable {
             release(filePath);
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            System.out.println(filePath.substring(filePath.lastIndexOf('\\')+1,filePath.lastIndexOf('.')));
+//            e.printStackTrace();
         }
     }
 }

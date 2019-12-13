@@ -1,17 +1,19 @@
+package Model;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
  * Taken from: https://tartarus.org/martin/PorterStemmer/
- * Stemmer, implementing the Porter Stemming Algorithm
+ * Model.Stemmer, implementing the Porter Stemming Algorithm
  *
- * The Stemmer class transforms a word into its root form.  The input
+ * The Model.Stemmer class transforms a word into its root form.  The input
  * word can be provided a character at time (by calling add()), or at once
  * by calling one of the various stem(something) methods.
  */
 
-class Stemmer implements IStemmer{
+class Stemmer implements IStemmer {
 
     private char[] b;
     private int i,     /* offset into b */
@@ -483,7 +485,7 @@ class Stemmer implements IStemmer{
     }
 
     /**
-     * Stem the word placed into the Stemmer buffer through calls to add().
+     * Stem the word placed into the Model.Stemmer buffer through calls to add().
      * Returns true if the stemming process resulted in a word different
      * from the input.  You can retrieve the result with
      * getResultLength()/getResultBuffer() or toString().

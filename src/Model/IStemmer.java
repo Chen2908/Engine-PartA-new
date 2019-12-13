@@ -1,3 +1,5 @@
+package Model;
+
 public interface IStemmer {
 
     //calls steps to stem the words
