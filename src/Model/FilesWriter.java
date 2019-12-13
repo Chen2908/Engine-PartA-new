@@ -14,9 +14,10 @@ public class FilesWriter implements Runnable {
     private ConcurrentLinkedDeque<List<StringBuilder>> lines;
     private ConcurrentLinkedDeque<String> filesPath;
     private ConcurrentLinkedDeque<Boolean> appendToFile;
-    private ConcurrentHashMap<String, Semaphore> isInLine;
     private ConcurrentHashMap<String,Semaphore> fileStatus;
+    private ConcurrentHashMap<String, Boolean> isInLine;
     private Semaphore semaphore = new Semaphore(1);
+    private Semaphore inLine = new Semaphore(1);
 
     private static int count = 0;
 
@@ -35,10 +36,10 @@ public class FilesWriter implements Runnable {
     public void addFilesToWrite(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
-            acquire(filePath);
             filesPath.addLast(filePath);
             lines.addLast(toAdd);
             appendToFile.addLast(append);
+            isInLine.put(filePath, true);
             semaphore.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -48,10 +49,10 @@ public class FilesWriter implements Runnable {
     public void addFilesToWriteAtStart(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
-            acquire(filePath);
             filesPath.addFirst(filePath);
             lines.addFirst(toAdd);
             appendToFile.addFirst(append);
+            isInLine.put(filePath, true);
             semaphore.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -80,9 +81,13 @@ public class FilesWriter implements Runnable {
         fileStatus.get(file).release();
     }
 
+    public boolean isInLine(String filePath){
+        return isInLine.containsKey(filePath);
+    }
+
     @Override
     public void run() {
-        Thread.currentThread().setPriority(2);
+
         String filePath = "";
         try {
             semaphore.acquire();
@@ -91,7 +96,7 @@ public class FilesWriter implements Runnable {
             boolean toAppend = appendToFile.removeFirst();
             semaphore.release();
 
-            // in case the file is being written it will go back to the end of the line
+            acquire(filePath);
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filePath), toAppend));
 
@@ -101,6 +106,7 @@ public class FilesWriter implements Runnable {
             writer.close();
 
             release(filePath);
+            isInLine.remove(filePath);
 
 
         } catch (IOException | InterruptedException e) {

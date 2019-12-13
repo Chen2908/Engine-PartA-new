@@ -58,9 +58,13 @@ public class ObjectWriter {
     }
 
     public List<StringBuilder> readFile(String filePath){
-        List<StringBuilder> lines = new ArrayList<>();
 
+        List<StringBuilder> lines = new ArrayList<>();
         try {
+            while (filesWriter.isInLine(filePath))
+                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
             File file = new File(filePath);
             if (!file.exists())
                 return lines;
