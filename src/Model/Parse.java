@@ -174,7 +174,7 @@ public class Parse {
                             else
                                 finish = true;
                             //limit the entity size
-                            if (temp.length() >= 5)
+                            if (temp.length() >= 7)
                                 finish = true;
                             curr++;
                             found = true;
