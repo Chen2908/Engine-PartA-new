@@ -35,7 +35,7 @@ public class ObjectWriter {
         write(toWrite, filePath, false);
     }
 
-    public void write(List<String> toWrite, String filePath){
+    public void write(List<StringBuilder> toWrite, String filePath){
         write(toWrite, filePath, false);
     }
 
@@ -46,7 +46,7 @@ public class ObjectWriter {
         start();
     }
 
-    public void write(List<String> toWrite, String filePath, boolean toAppend){
+    public void write(List<StringBuilder> toWrite, String filePath, boolean toAppend){
         this.filesWriter.addFilesToWrite(filePath, toWrite, toAppend);
         start();
     }
@@ -59,8 +59,8 @@ public class ObjectWriter {
         threadPool.execute(filesWriter);
     }
 
-    public List<String> readFile(String filePath){
-        List<String> lines = new ArrayList<>();
+    public List<StringBuilder> readFile(String filePath){
+        List<StringBuilder> lines = new ArrayList<>();
 
         try {
             File file = new File(filePath);
@@ -73,7 +73,7 @@ public class ObjectWriter {
             String line = "";
 
             while ((line = reader.readLine()) != null)
-                lines.add(line);
+                lines.add(new StringBuilder(line));
 
             reader.close();
             filesWriter.release(filePath);

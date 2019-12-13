@@ -53,26 +53,28 @@ public class DocCorpusInfo implements IWritable {
 
     //<editor-fold des="Interface Functions">
 
-    @Override
     // add
-    public String toString(){
-        return maxTf + del + numOfUniqTerms + del + sumOfTermsSquare;
+    public StringBuilder toFileString(){
+        return new StringBuilder(maxTf + del + numOfUniqTerms + del + sumOfTermsSquare);
     }
 
     @Override
-    public List<String> toFile() {
-        List<String> toWrite = new ArrayList<String>();
-        toWrite.add(toString());
+    public List<StringBuilder> toFile() {
+        List<StringBuilder> toWrite = new ArrayList<>();
+        toWrite.add(toFileString());
         return toWrite;
     }
 
-    public List<String> update(List<String> toUpdate) {
+    public List<StringBuilder> update(List<String> toUpdate) {
         String[] update = toUpdate.get(0).split(del);
         int updatedMaxTf = maxTf + Integer.parseInt(update[0]);
         int updatedNumOfUniqTerms = numOfUniqTerms + Integer.parseInt(update[1]);
         double updatedSumOfTermsSquare = sumOfTermsSquare + Double.parseDouble(update[2]);
-        List<String> toWrite = new ArrayList<>();
-        toWrite.add(updatedMaxTf + del + updatedNumOfUniqTerms + del + updatedSumOfTermsSquare);
+        List<StringBuilder> toWrite = new ArrayList<>();
+        StringBuilder line = new StringBuilder(updatedMaxTf + del);
+        line.append(updatedNumOfUniqTerms + del);
+        line.append(updatedSumOfTermsSquare);
+        toWrite.add(line);
         return toWrite;
     }
 

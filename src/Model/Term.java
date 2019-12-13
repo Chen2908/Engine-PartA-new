@@ -71,6 +71,17 @@ public class Term implements IWritable {
     /**Amount of docs this term appears in groups of files*/
     public int getDf() { return docs.size(); }
 
+    public boolean isBellowThreshHold(int numOfDocs, int totalNum){
+
+        if(docs.size() > numOfDocs)
+            return false;
+        int tfSum = 0;
+        for(DocTermInfo doc : docs.values())
+            tfSum += doc.getTfi();
+        return tfSum < totalNum;
+
+    }
+
     public String getValue() { return value; }
 
     public boolean isStartsWithCapital() { return startsWithCapital; }
@@ -112,32 +123,32 @@ public class Term implements IWritable {
 
     //<editor-fold des="Interface Functions">
 
-    public String toFileString(){
+    public StringBuilder toFileString(){
         StringBuilder termData = new StringBuilder();
         termData.append(getValue() + "|");
         termData.append(getDf() + "|");
         termData.append(getDocListString());
-        return termData.toString();
+        return termData;
     }
 
     @Override
-    public List<String> toFile() {
-        List<String> toWrite = new ArrayList<>();
+    public List<StringBuilder> toFile() {
+        List<StringBuilder> toWrite = new ArrayList<>();
         toWrite.add(toFileString());
         return toWrite;
     }
 
-    public void update(List<String> toUpdate, int lineNum) {
+    public void update(List<StringBuilder> toUpdate, int lineNum) {
 
-        String termPosting = toUpdate.remove(lineNum);
-        String[] lineSplitToMainSections = StringUtils.split(termPosting, "|");
+        StringBuilder termPosting = toUpdate.remove(lineNum);
+        String[] lineSplitToMainSections = StringUtils.split(termPosting.toString(), "|");
         StringBuilder updatedTermData = new StringBuilder();
 
         updatedTermData.append(getUpdatedValue(lineSplitToMainSections[VALUE_INDEX]) + "|");
         updatedTermData.append(getUpdatedDF(lineSplitToMainSections[DF_INDEX]) + "|");
         updatedTermData.append(getUpdatedDocListString(lineSplitToMainSections[DOCLIST_INDEX]));
 
-        toUpdate.add(lineNum, updatedTermData.toString());
+        toUpdate.add(lineNum, updatedTermData);
     }
 
     private String getUpdatedValue(String prevValue){
@@ -161,10 +172,10 @@ public class Term implements IWritable {
         for(DocTermInfo docInfo: getDocsSortedByName())
 
             if(docInfo.getDocNumPrefix().compareTo(lastFileNumPrefix) == 0)
-                newDocList.append(docInfo.toString());
+                newDocList.append(docInfo.toFileString());
             else {
                 lastFileNumPrefix = docInfo.getDocNumPrefix();
-                newDocList.append(docPrefixDel + lastFileNumPrefix + ":" + docInfo.toString());
+                newDocList.append(docPrefixDel + lastFileNumPrefix + ":" + docInfo.toFileString());
             }
 
         return newDocList;

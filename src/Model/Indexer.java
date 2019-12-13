@@ -85,16 +85,12 @@ public class Indexer {
         while (termsList.size() > 0){
             term = termsList.remove(0);
 
-            if(term.isEntity() && term.getDf() == 1){
-//                this.bellowThreshHold.put(term.getValue(), term);
+            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, 5)){
+                this.bellowThreshHold.put(term.getValue(), term);
                 continue;
             }
-//
-//            if(!dictionary.containsKey(term.getValue()) && !dictionary.containsKey(term.getValue().toLowerCase()) &&
-//                    !dictionary.containsKey(term.getValue().toUpperCase()))
-//                writeNewTerm(term);
-//            else
-                updateFiles(term);
+
+            updateFiles(term);
             
         }
     }
@@ -102,7 +98,7 @@ public class Indexer {
     private void updateFiles(Term term){
 
         String filePath = getPath(termDir, term.getValue());
-        List<String> fileLines = objectWriter.readFile(filePath);
+        List<StringBuilder> fileLines = objectWriter.readFile(filePath);
         List<String> fileTerm = getTermValues(term);
         boolean isNew = false;
         String termLower;
@@ -112,13 +108,16 @@ public class Indexer {
         for(String termValue: fileTerm){
             isNew = false;
 
-            if(terms.get(termValue).isEntity() && terms.get(termValue).getDf() == 1)
+            isNew = false;
+            if(terms.get(termValue).isEntity() && terms.get(termValue).getDf() == 1 || terms.get(termValue).isBellowThreshHold(1, 5)){
+                this.bellowThreshHold.put(term.getValue(), term);
                 continue;
+            }
 
             termLower = termValue.toLowerCase();
             termUpper = termValue.toUpperCase();
 
-            if(termLower.compareTo(termUpper) != 0 && terms.containsKey(termLower) && dictionary.containsKey(termUpper))
+            if(!termLower.equals(termUpper) && terms.containsKey(termLower) && dictionary.containsKey(termUpper))
                 updateDictionary(termValue);
 
             if(dictionary.containsKey(termLower))
@@ -182,12 +181,6 @@ public class Indexer {
     }
 
     private int filesNameHashFunction(String fileName){
-//        int hash = 1;
-//        fileName.hashCode();
-//        fileName = fileName.toLowerCase();
-//
-//        for(int i = 0; i < fileName.length(); i++)
-//            hash *= fileName.charAt(i);
         return Math.abs(fileName.toLowerCase().hashCode()) % HASH_SIZE;
     }
 
@@ -199,5 +192,7 @@ public class Indexer {
         return dictionary;
     }
 
-
+    public HashMap<String, Term> getBellowThreshHold() {
+        return bellowThreshHold;
+    }
 }

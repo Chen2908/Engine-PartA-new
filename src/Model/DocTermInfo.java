@@ -18,7 +18,7 @@ public class DocTermInfo{
     public DocTermInfo(String docNum){
         String[] splitDocNum = docNum.split("-");
         this.docNumPrefix = splitDocNum[0];
-        this.docNumSuffix = splitDocNum[1];
+        this.docNumSuffix = String.format("%X", Integer.parseInt(splitDocNum[1]));
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
     }
@@ -57,10 +57,9 @@ public class DocTermInfo{
 
 
 
-    @Override
     // add Wij
-    public String toString(){
-        return getDocNumSuffix() + del + tfi + endDel;
+    public StringBuilder toFileString(){
+        return new StringBuilder(getDocNumSuffix() + del + tfi + endDel);
     }
 
     //<editor-fold des="Interface Functions">

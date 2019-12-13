@@ -11,7 +11,7 @@ import java.util.concurrent.Semaphore;
 
 public class FilesWriter implements Runnable {
 
-    private ConcurrentLinkedDeque<List<String>> lines;
+    private ConcurrentLinkedDeque<List<StringBuilder>> lines;
     private ConcurrentLinkedDeque<String> filesPath;
     private ConcurrentLinkedDeque<Boolean> appendToFile;
     private ConcurrentHashMap<String,Semaphore> fileStatus;
@@ -30,7 +30,7 @@ public class FilesWriter implements Runnable {
         fileStatus = new ConcurrentHashMap<>();
     }
 
-    public void addFilesToWrite(String filePath, List<String> toAdd, boolean append){
+    public void addFilesToWrite(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
             filesPath.addLast(filePath);
@@ -42,7 +42,7 @@ public class FilesWriter implements Runnable {
         }
     }
 
-    public void addFilesToWriteAtStart(String filePath, List<String> toAdd, boolean append){
+    public void addFilesToWriteAtStart(String filePath, List<StringBuilder> toAdd, boolean append){
         try {
             semaphore.acquire();
             filesPath.addFirst(filePath);
@@ -54,7 +54,7 @@ public class FilesWriter implements Runnable {
         }
     }
 
-    public void addFilesToWrite(String filePath, List<String> lines){
+    public void addFilesToWrite(String filePath, List<StringBuilder> lines){
         addFilesToWrite(filePath, lines, false);
     }
 
@@ -81,7 +81,7 @@ public class FilesWriter implements Runnable {
         String filePath = "";
         try {
             semaphore.acquire();
-            List<String> toWrite = lines.removeFirst();
+            List<StringBuilder> toWrite = lines.removeFirst();
             filePath = filesPath.removeFirst();
             boolean toAppend = appendToFile.removeFirst();
             semaphore.release();
@@ -91,7 +91,7 @@ public class FilesWriter implements Runnable {
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filePath), toAppend));
 
-            for (String line : toWrite)
+            for (StringBuilder line : toWrite)
                 writer.append(line + "\n");
 
             writer.close();
