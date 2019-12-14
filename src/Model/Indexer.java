@@ -12,7 +12,7 @@ public class Indexer {
      * create dictionary
      * create corpus info file
      */
-    private final int HASH_SIZE = 8000;
+    private final int HASH_SIZE = 10000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -35,7 +35,11 @@ public class Indexer {
 
     //</editor-fold>
 
-
+    /**
+     * TODO: add term info writing
+     * add wij
+     *
+     */
 
 
     public Indexer(String outputDirPath, int numOfDocs, int poolSize, int threshHold){

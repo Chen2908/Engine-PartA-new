@@ -100,6 +100,9 @@ public class ObjectWriter {
     }
 
     public void close(){
+        while (filesWriter.numOfFilesToWrite() > 0)
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         threadPool.shutdown();
         while (!threadPool.isTerminated()){}
     }

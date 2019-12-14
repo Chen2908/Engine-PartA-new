@@ -97,10 +97,11 @@ public class FilesWriter implements Runnable {
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         String filePath = "";
         try {
-            if(numOfFilesToWrite() == 0)
-                return;
-
             semaphore.acquire();
+            if(numOfFilesToWrite() == 0) {
+                semaphore.release();
+                return;
+            }
             filePath = filesPath.removeFirst();
             List<StringBuilder> toWrite = lines.remove(filePath);
             boolean toAppend = appendToFile.remove(filePath);
