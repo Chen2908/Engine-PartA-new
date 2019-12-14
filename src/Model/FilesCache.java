@@ -15,9 +15,14 @@ public class FilesCache {
 
     public FilesCache(int size){
         files = new HashMap<>(size);
-        filesQueue = new ArrayBlockingQueue<>(size);
         timeUsed = new HashMap<>(size);
+        if(size > 0)
+            filesQueue = new ArrayBlockingQueue<>(size);
         MaxSize = size;
+    }
+
+    public Queue<String> getFilesQueue(){
+        return filesQueue;
     }
 
     public boolean isInCache(String fileName){
@@ -30,6 +35,10 @@ public class FilesCache {
     }
 
     public List<StringBuilder> add(String fileName, List<StringBuilder> fileLines){
+        if (MaxSize == 0){
+            lastRemovedPath = fileName;
+            return fileLines;
+        }
         List<StringBuilder> toReturn = null;
         if (files.size() == MaxSize)
             toReturn = removeMin();
