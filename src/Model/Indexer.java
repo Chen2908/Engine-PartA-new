@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Indexer {
 
-    private final int HASH_SIZE = 4000;
+    private final int HASH_SIZE = 8000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -198,6 +198,7 @@ public class Indexer {
 
     public void closeWriter(){
         writeCache();
+        System.out.println(filesCache.toString());
         objectWriter.close();
     }
 
