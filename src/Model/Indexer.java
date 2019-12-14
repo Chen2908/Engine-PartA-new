@@ -5,14 +5,7 @@ import java.util.*;
 
 public class Indexer {
 
-    /**
-     * TODO:
-     * finish writing term directory and check it
-     * write Documents info files
-     * create dictionary
-     * create corpus info file
-     */
-    private final int HASH_SIZE = 10000;
+    private final int HASH_SIZE = 4000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -204,7 +197,17 @@ public class Indexer {
     }
 
     public void closeWriter(){
+        writeCache();
         objectWriter.close();
+    }
+
+    private void writeCache(){
+        Queue<String> filesNames = filesCache.getFilesQueue();
+        if(filesNames == null)
+            return;
+        for(String file: filesNames){
+            objectWriter.write(filesCache.getFile(file), file);
+        }
     }
 
     public HashMap<String, Integer> getDictionary(){
