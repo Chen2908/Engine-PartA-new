@@ -153,31 +153,35 @@ public class Parse {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
-                            String add = singleWords[curr];
-                            finish = separatedWord(add);
-                            if (finish)
-                                add = removeDeli(add);
-                            if (StringUtils.containsAny(add, ",.")) {
-                                String [] sep = StringUtils.split(add, ".,");
-                                add = sep[0];
-                                handle_1_word_term(docTerms, sep[1], curr);
-                                finish = true;
-                            }
-                            if (!StringUtils.containsAny(add, "?|*&<>=)("))
-                                temp += " " + add;
-                            else
-                                finish = true;
-                            //limit the entity size
-                            if (temp.length() >= 7)
-                                finish = true;
-                            curr++;
-                            found = true;
-                        }
-                        if (found) {
-                            enterKey(docTerms, temp, i, true);
-                            i = curr - 1;
-                        }
+                       if (! temp.contains(",")) {
+                           while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
+                               String add = singleWords[curr];
+                               finish = separatedWord(add);
+                               if (finish)
+                                   add = removeDeli(add);
+                               if (StringUtils.containsAny(add, ",./")) {
+                                   String[] sep = StringUtils.split(add, ".,/");
+                                   add = sep[0];
+                                   for (int k = 1; k < sep.length; k++) {
+                                       handle_1_word_term(docTerms, sep[k], curr);
+                                   }
+                                   finish = true;
+                               }
+                               if (!StringUtils.containsAny(add, "?|*&<>=)("))
+                                   temp += " " + add;
+                               else
+                                   finish = true;
+                               //limit the entity size
+                               if (temp.length() >= 7)
+                                   finish = true;
+                               curr++;
+                               found = true;
+                           }
+                           if (found) {
+                               enterKey(docTerms, temp, i, true);
+                               i = curr - 1;
+                           }
+                       }
                     }
                     if (!found) {
                         //between - 4 words
@@ -418,13 +422,13 @@ public class Parse {
             if (!isAStopWord(word) && word.length() > 2) {
                 String[] wordsSeparated = {word};
                 //split by comma and handle each word
-                if (word.contains(",")) {
+                if (StringUtils.containsAny(word, ",'")) {
                     wordsSeparated = StringUtils.split(word, ",'");
                 }
                 for (String sep : wordsSeparated) {
                     if (!isAStopWord(sep)) {
+                        sep = removeDeli(sep);
                         if (stem) {
-                            sep = removeDeli(sep);
                             sep = stemmedWord(sep);
                             sep = removeDeli(sep);
                         }
@@ -432,6 +436,7 @@ public class Parse {
                             checkFirstLetter(sep, docTerms, position);
                     }
                 }
+                return;
             }
         } else if (Character.isDigit(firstChar)) {
             if (word.contains("-") && firstChar != '-') {
