@@ -94,7 +94,7 @@ public class FilesWriter implements Runnable {
     @Override
     public void run() {
 
-        Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+        Thread.currentThread().setPriority(3);
         String filePath = "";
         try {
             semaphore.acquire();
