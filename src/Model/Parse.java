@@ -85,10 +85,7 @@ public class Parse {
         return docTerms;
     }
 
-    //init hashmap for each batch
-    private void setDocTerms() {
-        docTerms = new HashMap<>();
-    }
+
 
     /**
      * @param text    - the text of the document
@@ -113,10 +110,10 @@ public class Parse {
                 found = checkFraction(docTerms, word, i);
                 if (found)
                     continue;
-                String[] splitedUntil = StringUtils.split(word, "/");
+                String[] splitedUntil = StringUtils.split(word, "/()");
                 if (splitedUntil.length > 1) {
-                    handle_splitted(splitedUntil, i);   //handle the words after split, not an entity
-                    word = splitedUntil[splitedUntil.length - 1];
+                    handle_splitted(splitedUntil, i);   //handle the words after split
+                    word = splitedUntil[splitedUntil.length - 1]; //stay with the last word
                 }
             }
             boolean separated = separatedWord(word);
@@ -129,13 +126,13 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
-                    if (StringUtils.containsAny(word, "?|*&<>=(){}�"))
+                    if (StringUtils.containsAny(word, "?|*&<>={}�"))
                         continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
                 }
             } else { //can be a term of more than one word
-                if (StringUtils.containsAny(word, "?|*&<>=(){}�"))
+                if (StringUtils.containsAny(word, "?|*&<>={}�"))
                     continue;
                 //$ price
                 if (firstChar == '$') {
@@ -162,7 +159,9 @@ public class Parse {
                             if (finish)
                                 add = removeDeli(add);
                             if (StringUtils.containsAny(add, ",.")) {
-                                add = add.split(".,")[0];
+                                String [] sep = StringUtils.split(add, ".,");
+                                add = sep[0];
+                                handle_1_word_term(docTerms, sep[1], curr);
                                 finish = true;
                             }
                             if (!StringUtils.containsAny(add, "?|*&<>=)("))
@@ -247,7 +246,7 @@ public class Parse {
         return docTerms;
     }
 
-    //reaches here if the original word contained / so each word should be handled
+    //reaches here if the original word contained / or ( or ) so each word should be handled
     private void handle_splitted(String[] splitted, int position) {
         int len = splitted.length - 1;
         for (int i = 0; i < len; i++) {
@@ -425,11 +424,12 @@ public class Parse {
                 for (String sep : wordsSeparated) {
                     if (!isAStopWord(sep)) {
                         if (stem) {
+                            sep = removeDeli(sep);
                             sep = stemmedWord(sep);
                             sep = removeDeli(sep);
                         }
                         if (sep.length() > 2)
-                            checkFirstLetter(word, docTerms, position);
+                            checkFirstLetter(sep, docTerms, position);
                     }
                 }
             }
@@ -521,7 +521,6 @@ public class Parse {
             finalTerm.updatesDocsInfo(docNo, position);
         }
     }
-
 
     private boolean handle_num_2_words(String word1, String word2, HashMap<String, Term> docTerms, int position) {
         if (!StringUtils.containsAny(word2, "?|*&<>=(){}")) {
@@ -720,10 +719,10 @@ public class Parse {
     private String removeDeli(String word) {
         int first = 0;
         int last = word.length() - 1;
-        while (first > last && delimiters.contains(word.charAt(first)))  //prefix
+        while (first > last && (delimiters.contains(word.charAt(first)) || word.charAt(first)==39) ) //prefix
             if (word.charAt(first) != '-')
                 first++;
-        while (last > 0 && delimiters.contains(word.charAt(last)))  //suffix
+        while (last > 0 && (delimiters.contains(word.charAt(last)) || word.charAt(last)==39))  //suffix
             last--;
         return StringUtils.substring(word, first, last + 1);
     }
@@ -798,6 +797,12 @@ public class Parse {
         if (word.length() > 1)
             startWithCapital = (Character.isUpperCase(word.charAt(0)) && !(Character.isUpperCase(word.charAt(1))));
         return startWithCapital;
+    }
+
+
+    //init hashmap for each batch
+    private void setDocTerms() {
+        docTerms = new HashMap<>();
     }
 
     //<editor-fold des="set help dictionaries"
