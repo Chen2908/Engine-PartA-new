@@ -1,9 +1,4 @@
 package Model;
-
-import Model.Document;
-import Model.IStemmer;
-import Model.Stemmer;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
