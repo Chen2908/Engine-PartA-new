@@ -37,7 +37,7 @@ public class FilesCache {
 
     public List<StringBuilder> getFile(String fileName){
         hit++;
-        timeUsed.put(fileName, (int)(timeUsed.get(fileName) + clacSize(files.get(fileName))*2));
+        timeUsed.put(fileName, (int)(timeUsed.get(fileName)*0.5 + clacSize(files.get(fileName))));
         return files.get(fileName);
     }
 
