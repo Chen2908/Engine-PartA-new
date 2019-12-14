@@ -93,7 +93,7 @@ public class Indexer {
         while (termsList.size() > 0){
             term = terms.get(termsList.remove(0));
 
-            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, 5)){
+            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, threshHold)){
                 this.bellowThreshHold.put(term.getValue(), term);
                 continue;
             }
@@ -136,7 +136,7 @@ public class Indexer {
                 bellowThreshHold.remove(termValue.toLowerCase());
             }
 
-            if(terms.get(termValue).isBellowThreshHold(1, 6)){
+            if(terms.get(termValue).isBellowThreshHold(1, threshHold)){
                 bellowThreshHold.put(termValue.toLowerCase(), terms.get(termValue));
                 continue;
             }
