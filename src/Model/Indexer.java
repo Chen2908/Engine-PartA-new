@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Indexer {
 
-    private final int HASH_SIZE = 8000;
+    private final int HASH_SIZE = 5000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -81,7 +81,7 @@ public class Indexer {
         while (termsList.size() > 0){
             term = terms.get(termsList.remove(0));
 
-            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, 5)){
+            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, threshHold)){
                 this.bellowThreshHold.put(term.getValue(), term);
                 continue;
             }
@@ -124,7 +124,7 @@ public class Indexer {
                 bellowThreshHold.remove(termValue.toLowerCase());
             }
 
-            if(terms.get(termValue).isBellowThreshHold(1, 6)){
+            if(terms.get(termValue).isBellowThreshHold(1, threshHold+1)){
                 bellowThreshHold.put(termValue.toLowerCase(), terms.get(termValue));
                 continue;
             }
