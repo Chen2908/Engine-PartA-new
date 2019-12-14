@@ -439,11 +439,21 @@ public class Parse {
             //capital letter word
             //use porter stemmer to stem word
             if (!isAStopWord(word) && word.length() > 2) {
-                if (stem) {
-                    word = stemmedWord(word);
-                    word = removeDeli(word);
+                String[] wordsSeparated = {word};
+                //split by comma and handle each word
+                if (word.contains(",")) {
+                    wordsSeparated = StringUtils.split(word, ",");
                 }
-                checkFirstLetter(word, docTerms, position);
+                for (String sep : wordsSeparated) {
+                    if (!isAStopWord(sep)) {
+                        if (stem) {
+                            sep = stemmedWord(sep);
+                            sep = removeDeli(sep);
+                        }
+                        if (sep.length() > 2)
+                            checkFirstLetter(word, docTerms, position);
+                    }
+                }
             }
         } else if (Character.isDigit(firstChar)) {
             if (word.contains("-") && firstChar != '-') {
@@ -462,7 +472,7 @@ public class Parse {
                     return;
                 }
             } else {
-                if (checkFraction(docTerms, word, position)){
+                if (checkFraction(docTerms, word, position)) {
                     return;
                 }
                 //num%- one word
@@ -497,35 +507,32 @@ public class Parse {
 
     private void checkFirstLetter(String word, HashMap<String, Term> docTerms, int position) {
         if (word.length() > 2) {
-            boolean needToUpdate=false;
-            String originalKey=null;
+            boolean needToUpdate = false;
+            String originalKey = null;
             Term term = docTerms.get(word.toLowerCase());
             Term TERM = docTerms.get(word.toUpperCase());
-            Term finalTerm=null;
-            String format=word.toLowerCase();
+            Term finalTerm = null;
+            String format = word.toLowerCase();
             boolean capital = Character.isUpperCase(word.charAt(0));
-            if (term == null && TERM == null){
+            if (term == null && TERM == null) {
                 if (capital)
                     format = word.toUpperCase();
-            }
-            else if (term!=null){
+            } else if (term != null) {
                 format = word.toLowerCase();
-                originalKey=format;
-                finalTerm=term;
-            }
-            else if (capital && TERM!=null){
+                originalKey = format;
+                finalTerm = term;
+            } else if (capital && TERM != null) {
                 format = word.toUpperCase();
-                finalTerm=TERM;
-            }
-            else if (!capital && TERM!=null){
-                originalKey=word.toUpperCase();
+                finalTerm = TERM;
+            } else if (!capital && TERM != null) {
+                originalKey = word.toUpperCase();
                 format = word.toLowerCase();
-                finalTerm=TERM;
-                needToUpdate=true;
+                finalTerm = TERM;
+                needToUpdate = true;
             }
             if (finalTerm != null) {  //appears in docTerms
                 finalTerm.setValue(format);
-                if (needToUpdate){
+                if (needToUpdate) {
                     docTerms.remove(originalKey);
                     docTerms.put(format, finalTerm);
                 }
@@ -555,7 +562,7 @@ public class Parse {
                         checkTimePattern(docTerms, word1, twoWords, position));
             }
         }
-            return false;
+        return false;
     }
 
     private boolean checkPrice$(HashMap<String, Term> docTerms, String word1, String noComma, String twoWords, int position) {

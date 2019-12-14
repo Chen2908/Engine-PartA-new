@@ -7,9 +7,9 @@ import java.util.List;
 
 public class Manager {
 
-    private static final int BATCH_SIZE = 2000;
-    private static final int THRESHOLD = 2 ;
-    private static final int THREAD_POOL_SIZE = 3;
+    private static final int BATCH_SIZE = 4000;
+    private static final int THRESHOLD = 5 ;
+    private static final int THREAD_POOL_SIZE = 4;
 
     private ReadFile reader;
     private String corpusPath;
@@ -59,7 +59,7 @@ public class Manager {
         double startTime = System.currentTimeMillis();
 
         //keep only this
-        HashMap<String, Term> docTerms=null;
+        HashMap<String, Term> docTerms = null;
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
         while(docs!=null){
             docTerms=parser.parse(docs);

@@ -27,15 +27,13 @@ public class Indexer {
     private List<String> termsList;
     private HashMap<String, DocCorpusInfo> docsIndexInfo;
     private HashMap<String, Term> bellowThreshHold;
-    private FilesCache filesCache;
+    //private FilesCache filesCache;
 
     //<editor-fold des="Read Write">
 
     private ObjectWriter objectWriter;
 
     //</editor-fold>
-
-
 
 
     public Indexer(String outputDirPath, int numOfDocs, int poolSize, int threshHold){
