@@ -66,7 +66,7 @@ public class Parse {
         setHelpDicNum(this.helpDicNumbers);
         this.helpDicMonths = new HashMap<>();
         setHelpDicMon(this.helpDicMonths);
-        this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
+        this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-', '\'',
                 '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�').collect(Collectors.toSet());
     }
 
@@ -719,10 +719,10 @@ public class Parse {
     private String removeDeli(String word) {
         int first = 0;
         int last = word.length() - 1;
-        while (first > last && (delimiters.contains(word.charAt(first)) || word.charAt(first)==39) ) //prefix
+        while (first > last && delimiters.contains(word.charAt(first))) //prefix
             if (word.charAt(first) != '-')
                 first++;
-        while (last > 0 && (delimiters.contains(word.charAt(last)) || word.charAt(last)==39))  //suffix
+        while (last > 0 && delimiters.contains(word.charAt(last)))  //suffix
             last--;
         return StringUtils.substring(word, first, last + 1);
     }
