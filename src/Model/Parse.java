@@ -419,7 +419,7 @@ public class Parse {
                 String[] wordsSeparated = {word};
                 //split by comma and handle each word
                 if (word.contains(",")) {
-                    wordsSeparated = StringUtils.split(word, ",");
+                    wordsSeparated = StringUtils.split(word, ",'");
                 }
                 for (String sep : wordsSeparated) {
                     if (!isAStopWord(sep)) {
