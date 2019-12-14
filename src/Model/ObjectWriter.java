@@ -66,8 +66,10 @@ public class ObjectWriter {
                 if (!tried) {
                     lines = filesWriter.getFileToUpdate(filePath);
                     tried = true;
+                    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
                 }
 
+            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             File file = new File(filePath);
             if (!file.exists() || lines.size() > 0)
                 return lines;
@@ -100,6 +102,13 @@ public class ObjectWriter {
     }
 
     public void close(){
+        boolean firstTime = true;
+        while (filesWriter.numOfFilesToWrite() > 0)
+            if (firstTime) {
+                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+                firstTime = false;
+            }
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         threadPool.shutdown();
         while (!threadPool.isTerminated()){}
     }

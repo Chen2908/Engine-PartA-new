@@ -73,10 +73,10 @@ public class Term implements IWritable {
 
     public boolean isBellowThreshHold(int numOfDocs, int totalNum){
 
-        if(isEntity && docs.size() == 1)
-            return false;
+        if(isEntity && getDf() == 1)
+            return true;
 
-        if(docs.size() > numOfDocs)
+        if(docs.size() > numOfDocs || (isEntity && getDf() > 1))
             return false;
 
         int tfSum = 0;

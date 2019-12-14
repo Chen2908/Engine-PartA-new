@@ -12,7 +12,7 @@ public class Indexer {
      * create dictionary
      * create corpus info file
      */
-    private final int HASH_SIZE = 8000;
+    private final int HASH_SIZE = 10000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -27,13 +27,19 @@ public class Indexer {
     private List<String> termsList;
     private HashMap<String, DocCorpusInfo> docsIndexInfo;
     private HashMap<String, Term> bellowThreshHold;
-    //private FilesCache filesCache;
+    private FilesCache filesCache;
 
     //<editor-fold des="Read Write">
 
     private ObjectWriter objectWriter;
 
     //</editor-fold>
+
+    /**
+     * TODO: add term info writing
+     * add wij
+     *
+     */
 
 
     public Indexer(String outputDirPath, int numOfDocs, int poolSize, int threshHold){
