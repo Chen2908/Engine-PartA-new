@@ -3,6 +3,7 @@ package Model;
 import Model.Document;
 import Model.IStemmer;
 import Model.Stemmer;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -45,10 +46,10 @@ public class Parse {
     private static Pattern MONTHYEAR_LOWER = Pattern.compile("((January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\\s)((1|2)(\\d)(\\d)(\\d)))");
     private static Pattern MONTHYEAR_UPPER = Pattern.compile("((JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\\s)((1|2)(\\d)(\\d)(\\d)))");
     private static Pattern PERCENT2 = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(percent|percentage)");
-    private static Pattern PHRASE = Pattern.compile("(\\w)(\\-)(\\w)|(\\w)(\\-)(\\w)(\\-)(\\w)|(\\w)(\\-)(([1-9][0-9]*)|0)|(([1-9][0-9]*)|0)(\\-)(\\w)|(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)");
+    private static Pattern PHRASEWORD = Pattern.compile("((?<!\\d)(\\w+)(\\-)(\\w+)(?!\\d))|((?<!\\d)(\\w+)(\\-)(\\w+)(\\-)(\\w+)(?!\\d))|((?<!\\d)(\\w+)(\\-)(([1-9][0-9]*)|0)(?!\\w))");
+    private static Pattern PHRASENUM = Pattern.compile("((?<!\\w)(([1-9][0-9]*)|0)(\\-)(\\w+)(?!\\d))|((?<!\\w)(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)(?!\\w))");
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
     private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
-    //private static Pattern MARKS = Pattern.compile("\\w+[\\/\\(\\)\\[\\]]\\w+");
 
     //new laws
     private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
@@ -71,7 +72,7 @@ public class Parse {
         this.helpDicMonths = new HashMap<>();
         setHelpDicMon(this.helpDicMonths);
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-',
-                '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"').collect(Collectors.toSet());
+                '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�').collect(Collectors.toSet());
     }
 
 
@@ -110,7 +111,6 @@ public class Parse {
             //wouldn't want to keep single chars
             if (word.length() < 2)
                 continue;
-
             char firstChar = word.charAt(0);
             boolean found = false;
             //if the word contains / need to break it
@@ -134,13 +134,13 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
-                    if (StringUtils.containsAny(word, "?|*&<>=(){}"))
+                    if (StringUtils.containsAny(word, "?|*&<>=(){}�"))
                         continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
                 }
             } else { //can be a term of more than one word
-                if (StringUtils.containsAny(word, "?|*&<>=(){}"))
+                if (StringUtils.containsAny(word, "?|*&<>=(){}�"))
                     continue;
                 //$ price
                 if (firstChar == '$') {
@@ -156,22 +156,20 @@ public class Parse {
                 }
                 //entities, between/ phrases/ capital/ date
                 else if (Character.isLetter(firstChar) && !word.contains("-")) {
-//                    String[] separatedWords = {word};
-//                    if (StringUtils.containsAny(word, "/\\)|")) {
-//                        separatedWords = StringUtils.split(word, "/\\)");
-//                        enterKey(docTerms, separatedWords[0], i, false);
-//                        word = separatedWords[1];
-//                    }
                     //entities - 2 words and above
                     if (Character.isUpperCase(firstChar) && i + 1 < textLength) {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                        while (!finish && curr < textLength && capitalWord(singleWords[curr]) && !StringUtils.containsAny(singleWords[curr], "|/\\)(")) {
+                        while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
                             String add = singleWords[curr];
                             finish = separatedWord(add);
                             if (finish)
                                 add = removeDeli(add);
+                            if (StringUtils.containsAny(add, ",.")) {
+                                add = add.split(".,")[0];
+                                finish = true;
+                            }
                             if (!StringUtils.containsAny(add, "?|*&<>=)("))
                                 temp += " " + add;
                             else
@@ -332,7 +330,7 @@ public class Parse {
 
 
     private boolean checkPhrases(HashMap<String, Term> docTerms, String word1, int position) {
-        Matcher match2 = PHRASE.matcher(word1);
+        Matcher match2 = PHRASEWORD.matcher(word1);
         if (match2.find()) {
             enterKey(docTerms, word1, position, false);
             return true;
@@ -397,21 +395,6 @@ public class Parse {
                 }
             }
         } else if (Character.isLetter(firstChar)) {
-            //phrase - one word
-//            if (StringUtils.containsAny(word, "/)(\\")) {
-//                String[] wordsSeperated = StringUtils.split(word, "/()\\");
-//                for (String sep : wordsSeperated) {
-//                    if (!isAStopWord(sep)) {
-//                        if (stem) {
-//                            sep = stemmedWord(sep);
-//                            sep = removeDeli(sep);
-//                        }
-//                        if (sep.length() > 2)
-//                            enterKey(docTerms, sep, position, false);
-//                    }
-//                }
-//                return;
-//            }
             if (word.contains("-")) {
                 if (word.contains("--")) //need to split here
                     return;
@@ -459,7 +442,7 @@ public class Parse {
             if (word.contains("-") && firstChar != '-') {
                 if (word.contains("--")) //need to split here
                     return;
-                Matcher match = PHRASE.matcher(word);
+                Matcher match = PHRASENUM.matcher(word);
                 if (match.find()) {
                     String[] splittedWord = word.split("-");
                     String first = splittedWord[0];
