@@ -1,5 +1,6 @@
 package Model;
 
+import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
@@ -7,11 +8,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class FilesCache {
 
+    private static Instrumentation instrumentation;
     private HashMap<String, List<StringBuilder>> files;
     private HashMap<String, Integer> timeUsed;
     private Queue<String> filesQueue;
     private String lastRemovedPath;
     private int MaxSize;
+    private double hit;
+    private double miss;
 
     public FilesCache(int size){
         files = new HashMap<>(size);
@@ -19,6 +23,8 @@ public class FilesCache {
         if(size > 0)
             filesQueue = new ArrayBlockingQueue<>(size);
         MaxSize = size;
+        hit = 0;
+        miss = 0;
     }
 
     public Queue<String> getFilesQueue(){
@@ -30,22 +36,33 @@ public class FilesCache {
     }
 
     public List<StringBuilder> getFile(String fileName){
-        timeUsed.put(fileName, timeUsed.get(fileName)+1);
+        hit++;
+        timeUsed.put(fileName, (int)(timeUsed.get(fileName) + clacSize(files.get(fileName))*2));
         return files.get(fileName);
     }
 
     public List<StringBuilder> add(String fileName, List<StringBuilder> fileLines){
-        if (MaxSize == 0){
+        if(MaxSize == 0){
             lastRemovedPath = fileName;
             return fileLines;
         }
+        if(isInCache(fileName))
+            return null;
         List<StringBuilder> toReturn = null;
         if (files.size() == MaxSize)
             toReturn = removeMin();
         files.put(fileName, fileLines);
-        timeUsed.put(fileName, 1);
+        timeUsed.put(fileName, clacSize(fileLines));
         filesQueue.add(fileName);
+        miss++;
         return toReturn;
+    }
+
+    private int clacSize(List<StringBuilder> lines){
+        int size = 0;
+        for(StringBuilder line: lines)
+            size += line.length();
+        return size;
     }
 
     public String getLastRemovedPath(){
@@ -72,4 +89,12 @@ public class FilesCache {
         lastRemovedPath = removedPath;
     }
 
+    @Override
+    public String toString() {
+        return "Hit: " + hit + "\nMiss: " + miss + "\nHitRate: " + hitRate() + "\n";
+    }
+
+    private double hitRate(){
+        return hit/(hit+miss);
+    }
 }
