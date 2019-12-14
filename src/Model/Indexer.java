@@ -42,9 +42,8 @@ public class Indexer {
      */
 
 
-    public Indexer(String outputDirPath, int numOfDocs, int poolSize, int threshHold){
+    public Indexer(String outputDirPath, int poolSize, int threshHold, int cacheSize){
 
-        this.numOfCorpusDocs = numOfDocs;
         this.threshHold = threshHold;
 
         this.docsIndexInfo = new HashMap<>();
@@ -52,6 +51,7 @@ public class Indexer {
         this.dictionary = new HashMap<>();
         this.bellowThreshHold = new HashMap<>();
 
+        this.filesCache = new FilesCache(cacheSize);
         this.objectWriter = new ObjectWriter(outputDirPath, poolSize);
         this.indexIfCopy = 0;
 
@@ -101,7 +101,7 @@ public class Indexer {
     private void updateFiles(Term term){
 
         String filePath = getPath(termDir, term.getValue());
-        List<StringBuilder> fileLines = objectWriter.readFile(filePath);
+        List<StringBuilder> fileLines = getFileLines(filePath);
         List<String> fileTerm = getTermValues(term);
         boolean isNew;
         String termLower;
@@ -148,7 +148,21 @@ public class Indexer {
                     System.out.println(filePath);
                 }
         }
-        objectWriter.write(fileLines, filePath);
+        List<StringBuilder> toWrite = filesCache.add(filePath, fileLines);
+        if(toWrite != null)
+            objectWriter.write(toWrite, filesCache.getLastRemovedPath());
+    }
+
+    private List<StringBuilder> getFileLines(String filePath){
+
+        List<StringBuilder> fileLines;
+
+        if(filesCache.isInCache(filePath))
+            fileLines = filesCache.getFile(filePath);
+        else
+            fileLines = objectWriter.readFile(filePath);
+
+        return fileLines;
     }
 
     private void updateDictionary(String term){
@@ -186,7 +200,7 @@ public class Indexer {
     }
 
     private int filesNameHashFunction(String fileName){
-        return Math.abs(fileName.toLowerCase().hashCode()) % HASH_SIZE;
+        return (Math.abs(fileName.toLowerCase().hashCode())) % HASH_SIZE;
     }
 
     public void closeWriter(){
@@ -206,7 +220,7 @@ public class Indexer {
         List<String> words = new ArrayList<>(dictionary.keySet());
         words.sort(String::compareTo);
         for(String word: words)
-            dic.append(word + " - " + dictionary.get(word) + "\n");
+            dic.append(word + ":" + dictionary.get(word) + "\n");
         List<StringBuilder> toWrite = new ArrayList<>();
         toWrite.add(dic);
         objectWriter.write(toWrite, outputDir + "\\dictionary.txt");

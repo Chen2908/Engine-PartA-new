@@ -66,7 +66,7 @@ public class ObjectWriter {
                 if (!tried) {
                     lines = filesWriter.getFileToUpdate(filePath);
                     tried = true;
-                    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+                    Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
                 }
 
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
