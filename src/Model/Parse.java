@@ -42,7 +42,7 @@ public class Parse {
     private static Pattern MONTHYEAR_UPPER = Pattern.compile("((JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\\s)((1|2)(\\d)(\\d)(\\d)))");
     private static Pattern PERCENT2 = Pattern.compile("(([1-9][0-9]*)|0)(\\s)(percent|percentage)");
     private static Pattern PHRASEWORD = Pattern.compile("((?<!\\d)(\\w+)(\\-)(\\w+)(?!\\d))|((?<!\\d)(\\w+)(\\-)(\\w+)(\\-)(\\w+)(?!\\d))|((?<!\\d)(\\w+)(\\-)(([1-9][0-9]*)|0)(?!\\w))");
-    private static Pattern PHRASENUM = Pattern.compile("((?<!\\w)(([1-9][0-9]*)|0)(\\-)(\\w+)(?!\\d))|((?<!\\w)(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)(?!\\w))");
+    private static Pattern PHRASENUM = Pattern.compile("((?<!\\w)(([1-9][0-9]*)|0)(\\-)(\\w+)(?!\\d))|((?<!\\w)(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)(?!\\w))|((?<!\\w)(([1-9][0-9]*)|0)(\\-)(([1-9][1-9]*)|0)(\\-)(([1-9][1-9]*)|0)(?!\\w))");
     private static Pattern BETWEEN = Pattern.compile("(\\s)(between)(\\s)(([1-9]([0-9])*)|0)(\\s)(and)(\\s)(([1-9]([0-9])*)|0)(\\s)");
     private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
 
@@ -52,7 +52,7 @@ public class Parse {
     private static Pattern TIMETOTIMEGMT = Pattern.compile("(\\d)(\\d)(\\d)(\\d)(\\-)(\\d)(\\d)(\\d)(\\d)(\\s)(GMT)");
     private static Pattern TIMEAM = Pattern.compile("(\\d)((a.m.)|(A.M.))");
     private static Pattern TIMEPM = Pattern.compile("(\\d)((p.m.)|(P.M.))");
-    private static Pattern PHONENUM = Pattern.compile("(\\()(\\d)(\\d)(\\d)(\\))(\\s)(\\d)(\\d)(\\d)(\\-)(\\d)(\\d)(\\d)(\\d)");
+    private static Pattern PHONENUM = Pattern.compile("((\\()(\\d)(\\d)(\\d)(\\))(\\s)(\\d)(\\d)(\\d)(\\-)(\\d)(\\d)(\\d)(\\d)(?!\\w))");
 
 
     //</editor-fold>
@@ -110,7 +110,7 @@ public class Parse {
                 found = checkFraction(docTerms, word, i);
                 if (found)
                     continue;
-                String[] splitedUntil = StringUtils.split(word, "/()");
+                String[] splitedUntil = StringUtils.split(word, "/");
                 if (splitedUntil.length > 1) {
                     handle_splitted(splitedUntil, i);   //handle the words after split
                     word = splitedUntil[splitedUntil.length - 1]; //stay with the last word
@@ -126,13 +126,13 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
-                    if (StringUtils.containsAny(word, "?|*&<>={}�"))
+                    if (StringUtils.containsAny(word, "?|*&<>={}()�"))
                         continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
                 }
             } else { //can be a term of more than one word
-                if (StringUtils.containsAny(word, "?|*&<>={}�"))
+                if (StringUtils.containsAny(word, "?|*&<>={}()�"))
                     continue;
                 //$ price
                 if (firstChar == '$') {
@@ -153,7 +153,7 @@ public class Parse {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                       if (! temp.contains(",")) {
+                       if (! StringUtils.containsAny(temp, ",.'")) {
                            while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
                                String add = singleWords[curr];
                                finish = separatedWord(add);
@@ -396,20 +396,22 @@ public class Parse {
             if (word.contains("-")) {
                 if (word.contains("--")) //need to split here
                     return;
+                if (word.contains(".")) {
+                    word = StringUtils.replace(word, ".", "");
+                }
                 checkPhrases(docTerms, word, position);
                 return;
             }
-            if (word.contains(".")) {
-                String noDots = StringUtils.replace(word, ".", "");
-                if (!isAStopWord(noDots)) {
-                    if (stem) {
-                        noDots = stemmedWord(noDots);
-                    }
-                    if (noDots.length() > 1)
-                        enterKey(docTerms, noDots, position, false);
-                }
-                return;
-            }
+//                String noDots = StringUtils.replace(word, ".", "");
+//                if (!isAStopWord(noDots)) {
+//                    if (stem) {
+//                        noDots = stemmedWord(noDots);
+//                    }
+//                    if (noDots.length() > 1)
+//                        enterKey(docTerms, noDots, position, false);
+//                }
+//                return;
+            //}
             if (word.contains("@")) {
                 Matcher match = EMAIL.matcher(word);
                 if (match.find()) {
@@ -420,6 +422,9 @@ public class Parse {
             //capital letter word
             //use porter stemmer to stem word
             if (!isAStopWord(word) && word.length() > 2) {
+                if (word.contains(".")) {
+                    word = StringUtils.replace(word, ".", "");
+                }
                 String[] wordsSeparated = {word};
                 //split by comma and handle each word
                 if (StringUtils.containsAny(word, ",'")) {
@@ -452,8 +457,8 @@ public class Parse {
                         enterKey(docTerms, second, position, false);
                     }
                     enterKey(docTerms, removeDeli(word), position, false);
-                    return;
                 }
+                return;
             } else {
                 if (checkFraction(docTerms, word, position)) {
                     return;
