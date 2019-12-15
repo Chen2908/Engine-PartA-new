@@ -28,6 +28,13 @@ public class DocCorpusInfo implements IWritable {
 
     //<editor-fold des="Setters">
 
+    public void updateDoc(int tf){
+        setMaxTf(tf);
+        if(tf == 1)
+            increaseUniqTerms();
+        addToVector(tf);
+    }
+
     public void setMaxTf(int maxTf) {
         if (maxTf > this.maxTf)
             this.maxTf = maxTf;

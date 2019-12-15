@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Indexer {
 
-    private final int HASH_SIZE = 5000;
+    private final int HASH_SIZE = 8000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -20,6 +20,7 @@ public class Indexer {
     private List<String> termsList;
     private HashMap<String, DocCorpusInfo> docsIndexInfo;
     private HashMap<String, Term> bellowThreshHold;
+    private StringBuilder docsInfoString;
     private FilesCache filesCache;
 
     //<editor-fold des="Read Write">
@@ -44,6 +45,7 @@ public class Indexer {
         this.dictionary = new HashMap<>();
         this.bellowThreshHold = new HashMap<>();
 
+        this.docsInfoString = new StringBuilder();
         this.filesCache = new FilesCache(cacheSize);
         this.objectWriter = new ObjectWriter(outputDirPath, poolSize);
         this.indexIfCopy = 0;
@@ -69,7 +71,17 @@ public class Indexer {
 
     public void setTerms(HashMap<String, Term> terms){
         this.terms = terms;
+        addDocsCorpusInfo();
+        docsIndexInfo = new HashMap<>();
         createIndex();
+    }
+
+    private void addDocsCorpusInfo(){
+        List<String> docs = new ArrayList<>(docsIndexInfo.keySet());
+        docs.sort(String::compareTo);
+        for(String docNum: docs){
+            docsInfoString.append(docNum + ":" + docsIndexInfo.get(docNum).toFileString() + "\n");
+        }
     }
 
     public void createIndex(){
@@ -124,7 +136,7 @@ public class Indexer {
                 bellowThreshHold.remove(termValue.toLowerCase());
             }
 
-            if(terms.get(termValue).isBellowThreshHold(1, threshHold+1)){
+            if(terms.get(termValue).isBellowThreshHold(1, threshHold)){
                 bellowThreshHold.put(termValue.toLowerCase(), terms.get(termValue));
                 continue;
             }
@@ -134,12 +146,9 @@ public class Indexer {
                 addToDictionary(termValue);
             }
             else
-                try {
-                    terms.get(termValue).update(fileLines, dictionary.get(dicKey));
-                } catch (IndexOutOfBoundsException e){
-                    System.out.println(termValue);
-                    System.out.println(filePath);
-                }
+                terms.get(termValue).update(fileLines, dictionary.get(dicKey));
+
+            getDocsInfo(terms.get(termValue));
         }
         List<StringBuilder> toWrite = filesCache.add(filePath, fileLines);
         if(toWrite != null)
@@ -196,10 +205,28 @@ public class Indexer {
         return (Math.abs(fileName.toLowerCase().hashCode())) % HASH_SIZE;
     }
 
+    private void getDocsInfo(Term term){
+        for(DocTermInfo doc: term.getDocs().values()){
+            if(!docsIndexInfo.containsKey(doc.getDocNum()))
+                docsIndexInfo.put(doc.getDocNum(), new DocCorpusInfo());
+            docsIndexInfo.get(doc.getDocNum()).updateDoc(doc.getTfi());
+        }
+    }
+
     public void closeWriter(){
         writeCache();
         System.out.println(filesCache.toString());
+        writeDictionary();
+        writeBellowThreshHold();
+        writeDocsInfo();
         objectWriter.close();
+    }
+
+    private void writeDocsInfo(){
+        List<StringBuilder> docInfo = new ArrayList<>(1);
+        docInfo.add(docsInfoString);
+        objectWriter.write(docInfo, docsDir.getAbsolutePath() + "\\docsInfo.txt");
+
     }
 
     private void writeCache(){
@@ -219,7 +246,7 @@ public class Indexer {
         return bellowThreshHold;
     }
 
-    public void writeDictionary(){
+    private void writeDictionary(){
         StringBuilder dic = new StringBuilder();
         List<String> words = new ArrayList<>(dictionary.keySet());
         words.sort(String::compareTo);
@@ -230,7 +257,7 @@ public class Indexer {
         objectWriter.write(toWrite, outputDir + "\\dictionary.txt");
     }
 
-    public void writeBellowThreshHold(){
+    private void writeBellowThreshHold(){
         StringBuilder dic = new StringBuilder();
         List<Term> words = new ArrayList<>(bellowThreshHold.values());
         words.sort(Comparator.comparing(Term::getValue));

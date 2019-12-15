@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Manager {
 
-    private static final int BATCH_SIZE = 2000;
+    private static final int BATCH_SIZE = 4000;
     private static final int THRESHOLD = 2 ;
     private static final int THREAD_POOL_SIZE = 6;
 
@@ -21,6 +21,8 @@ public class Manager {
     private boolean stemming;
     private int corpusSize;
     private Calculator calculator;
+    private int vocabularySize;
+    private double processTime;
 
 
     public Manager(String corpusPath, String postingPath, boolean stemming) {
@@ -31,7 +33,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 0);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 1000);
         this.calculator = new Calculator(corpusSize);
     }
 
@@ -55,6 +57,7 @@ public class Manager {
 
 
     public boolean callReaderAndParser(){
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         //measures
         Runtime runtime = Runtime.getRuntime();
         double usedMemoryBefore = runtime.totalMemory() - runtime.freeMemory();
@@ -75,13 +78,16 @@ public class Manager {
             docs= reader.getNextDocs(BATCH_SIZE);
         }
 
-        callDictionaryBuild();
-
+        //write all dictionaries
         inverter.closeWriter();
 
-        double usedMemoryAfter = runtime.totalMemory() - runtime.freeMemory();
         double endTime = System.currentTimeMillis();
+        setVocabularySize(inverter.getDictionary().size());
+        setProcessTime((endTime - startTime) / 1000);
+
+        double usedMemoryAfter = runtime.totalMemory() - runtime.freeMemory();
         System.out.println("Number Of Words: " + inverter.getDictionary().size());
+        System.out.println("Number Of Words Below Threshold: " + inverter.getBellowThreshHold().size());
         System.out.println("Running Time: " + (endTime - startTime) / 60000 + " Min");
         System.out.println("Parsing Time: " + parsing / 60000 + " Min");
         System.out.println("Indexing Time: " + indexing / 60000 + " Min");
@@ -92,11 +98,6 @@ public class Manager {
 
     private void callIndexBuild(HashMap<String, Term> docTerms){
         this.inverter.setTerms(docTerms);
-    }
-
-
-    private void callDictionaryBuild(){
-        this.inverter.writeDictionary();
     }
 
 
@@ -124,5 +125,24 @@ public class Manager {
         return dir;
     }
 
+    public int getVocabularySize() {
+        return vocabularySize;
+    }
 
+    public double getProcessTime() {
+        return processTime;
+    }
+
+    public void setVocabularySize(int vocabularySize) {
+        this.vocabularySize = vocabularySize;
+    }
+
+    //time in seconds
+    public void setProcessTime(double processTime) {
+        this.processTime = processTime;
+    }
+
+    public int getCorpusSize() {
+        return corpusSize;
+    }
 }

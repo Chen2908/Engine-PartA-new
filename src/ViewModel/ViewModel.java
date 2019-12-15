@@ -6,6 +6,7 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -20,10 +21,11 @@ public class ViewModel extends Observable implements Observer {
     @Override
     public void update(Observable o, Object arg) {
         if (o==model){
-            //functions
+            String args = (String) arg;
             setChanged();
-            notifyObservers(arg);
+            notifyObservers(args);
         }
+
     }
 
 
@@ -58,6 +60,10 @@ public class ViewModel extends Observable implements Observer {
 
     public void parse(String loadingPath, String savingPath, boolean stem){
         model.parse(loadingPath, savingPath, stem);
+    }
+
+    public List<String> showDictionary(){
+        return model.showDictionary();
     }
 
 

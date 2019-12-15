@@ -76,8 +76,6 @@ public class FilesCache {
             if(timeUsed.get(file) < minVal){
                 minVal = timeUsed.get(file);
                 toRemove = file;
-                if(minVal == 1)
-                    break;
             }
         setRemovedPath(toRemove);
         filesQueue.remove(toRemove);

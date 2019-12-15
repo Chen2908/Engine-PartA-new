@@ -7,7 +7,8 @@ public class Calculator {
 
     private static int corpusSize;
 
-    public Calculator(int N) {
+    public Calculator(int N)
+    {
         this.corpusSize = N;
     }
 

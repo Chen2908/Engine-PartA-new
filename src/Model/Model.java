@@ -18,7 +18,15 @@ public class Model extends Observable {
     public void parse(String loadingPath, String savingPath, boolean stem) {
         this.stem=stem;
         setManager(loadingPath, savingPath);
-        manager.callReaderAndParser();
+        boolean done = manager.callReaderAndParser();
+        double time = manager.getProcessTime();
+        int corpusSize = manager.getCorpusSize();
+        int vocabularySize= manager.getVocabularySize();
+        if (done) {
+            String [] notify = {"dictionary done", Double.toString(time), Double.toString(corpusSize), Double.toString(vocabularySize)};
+            setChanged();
+            notifyObservers(notify);
+        }
     }
 
 
