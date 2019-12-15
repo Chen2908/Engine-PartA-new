@@ -108,9 +108,9 @@ public class ObjectWriter {
                 Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
                 firstTime = false;
             }
-        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         threadPool.shutdown();
         while (!threadPool.isTerminated()){}
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
     }
 
     //</editor-fold>

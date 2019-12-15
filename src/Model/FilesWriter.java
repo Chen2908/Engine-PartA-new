@@ -18,7 +18,6 @@ public class FilesWriter implements Runnable {
     private ConcurrentHashMap<String, Semaphore> fileStatus;
     private ConcurrentHashMap<String, Boolean> isInLine;
     private Semaphore semaphore = new Semaphore(1);
-    private Semaphore inLine = new Semaphore(1);
 
     private static int count = 0;
 

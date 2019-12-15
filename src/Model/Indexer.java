@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Indexer {
 
-    private final int HASH_SIZE = 8000;
+    private final int HASH_SIZE = 4000;
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -80,27 +80,32 @@ public class Indexer {
         List<String> docs = new ArrayList<>(docsIndexInfo.keySet());
         docs.sort(String::compareTo);
         for(String docNum: docs){
-            docsInfoString.append(docNum + ":" + docsIndexInfo.get(docNum).toFileString() + "\n");
+            docsInfoString.append(docNum + ";" + docsIndexInfo.get(docNum).toFileString() + "\n");
         }
     }
 
     public void createIndex(){
 
         Term term;
-        termsList = new LinkedList<>(this.terms.keySet());
+        termsList = new ArrayList<>(this.terms.keySet());
         termsList.sort(Comparator.comparing(o -> filesNameHashFunction(o)));
+        addTCacheFutureUse(termsList);
 
         while (termsList.size() > 0){
             term = terms.get(termsList.remove(0));
 
-            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(1, threshHold)){
+            if(term.isEntity() && term.getDf() == 1 || term.isBellowThreshHold(threshHold, threshHold)){
                 this.bellowThreshHold.put(term.getValue(), term);
                 continue;
             }
 
             updateFiles(term);
-            
         }
+    }
+
+    private void addTCacheFutureUse(List<String> terms){
+        for (int i = 0 ; i < terms.size() && !filesCache.isFutureDataFull() ; i++)
+            filesCache.addToFutureUse(getPath(termDir, terms.get(i)));
     }
 
     private void updateFiles(Term term){
@@ -108,14 +113,15 @@ public class Indexer {
         String filePath = getPath(termDir, term.getValue());
         List<StringBuilder> fileLines = getFileLines(filePath);
         List<String> fileTerm = getTermValues(term);
-        boolean isNew;
+        if (filesCache.isFutureEmpty())
+            addTCacheFutureUse(this.termsList);
         String termLower;
         String termUpper;
         String dicKey = null;
 
         for(String termValue: fileTerm){
 
-            isNew = false;
+            boolean isNew = false;
             termLower = termValue.toLowerCase();
             termUpper = termValue.toUpperCase();
 
@@ -150,6 +156,10 @@ public class Indexer {
 
             getDocsInfo(terms.get(termValue));
         }
+        addToCache(filePath, fileLines);
+    }
+
+    private void addToCache(String filePath, List<StringBuilder> fileLines){
         List<StringBuilder> toWrite = filesCache.add(filePath, fileLines);
         if(toWrite != null)
             objectWriter.write(toWrite, filesCache.getLastRemovedPath());
@@ -159,10 +169,9 @@ public class Indexer {
 
         List<StringBuilder> fileLines;
 
-        if(filesCache.isInCache(filePath))
-            fileLines = filesCache.getFile(filePath);
-        else
-            fileLines = objectWriter.readFile(filePath);
+        if(!filesCache.isInCache(filePath))
+            addToCache(filePath, objectWriter.readFile(filePath));
+        fileLines = filesCache.getFile(filePath);
 
         return fileLines;
     }
