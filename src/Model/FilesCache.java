@@ -16,7 +16,7 @@ public class FilesCache {
     private int MaxSize;
     private double hit;
     private double miss;
-    private final double FUTURE_USE_PERCENT = 0.9;
+    private final double FUTURE_USE_PERCENT = 0.7;
 
     public FilesCache(int size){
         files = new HashMap<>(size);
@@ -76,7 +76,7 @@ public class FilesCache {
         return isGoingToBeNeeded.size() >= MaxSize*FUTURE_USE_PERCENT;
     }
 
-    public boolean isFutureHalfFull(){
+    public boolean isFutureEmpty(){
         return isGoingToBeNeeded.size() >= MaxSize*FUTURE_USE_PERCENT/2;
     }
 

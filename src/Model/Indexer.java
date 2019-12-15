@@ -113,7 +113,7 @@ public class Indexer {
         String filePath = getPath(termDir, term.getValue());
         List<StringBuilder> fileLines = getFileLines(filePath);
         List<String> fileTerm = getTermValues(term);
-        if (filesCache.isFutureHalfFull())
+        if (filesCache.isFutureEmpty())
             addTCacheFutureUse(this.termsList);
         String termLower;
         String termUpper;
