@@ -1,15 +1,13 @@
 package Model;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class Manager {
 
-    private static final int BATCH_SIZE = 4000;
-    private static final int THRESHOLD = 2 ;
-    private static final int THREAD_POOL_SIZE = 6;
+    private static final int BATCH_SIZE = 6000;
+    private static final int THRESHOLD = 0 ;
+    private static final int THREAD_POOL_SIZE = 5;
 
     private ReadFile reader;
     private String corpusPath;
@@ -23,7 +21,7 @@ public class Manager {
     private Calculator calculator;
     private int vocabularySize;
     private double processTime;
-
+    private HashMap<String, Term> docTerms;
 
     public Manager(String corpusPath, String postingPath, boolean stemming) {
         this.corpusPath = corpusPath;
@@ -33,7 +31,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 1000);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250);
         this.calculator = new Calculator(corpusSize);
     }
 
@@ -56,7 +54,7 @@ public class Manager {
     }
 
 
-    public boolean callReaderAndParser(){
+    public void callReaderAndParser(){
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         //measures
         Runtime runtime = Runtime.getRuntime();
@@ -66,16 +64,14 @@ public class Manager {
         double indexing=0;
 
         //keep only this
-        HashMap<String, Term> docTerms = null;
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
+        int counter = 0;
         while(docs!=null){
-            double time = System.currentTimeMillis();
-            docTerms=parser.parse(docs);
-            parsing += System.currentTimeMillis()-time;
-            double time2 = System.currentTimeMillis();
+            System.out.println(counter);
+            docTerms = parser.parse(docs);
             callIndexBuild(docTerms);
-            indexing += System.currentTimeMillis()-time2;
-            docs= reader.getNextDocs(BATCH_SIZE);
+            docs = reader.getNextDocs(BATCH_SIZE);
+            counter++;
         }
 
         //write all dictionaries
@@ -89,17 +85,13 @@ public class Manager {
         System.out.println("Number Of Words: " + inverter.getDictionary().size());
         System.out.println("Number Of Words Below Threshold: " + inverter.getBellowThreshHold().size());
         System.out.println("Running Time: " + (endTime - startTime) / 60000 + " Min");
-        System.out.println("Parsing Time: " + parsing / 60000 + " Min");
-        System.out.println("Indexing Time: " + indexing / 60000 + " Min");
         System.out.println("Memory increased: " + (usedMemoryAfter - usedMemoryBefore) / Math.pow(2, 20) + " MB");
-
-        return true;
     }
+
 
     private void callIndexBuild(HashMap<String, Term> docTerms){
         this.inverter.setTerms(docTerms);
     }
-
 
     public String getDictionaryPath(){
         return dictionaryPath;
@@ -125,6 +117,11 @@ public class Manager {
         return dir;
     }
 
+    // term, df
+    public HashMap<String, Integer> getDictionaryToShow(){
+        return inverter.getDictionary();
+    }
+
     public int getVocabularySize() {
         return vocabularySize;
     }
@@ -144,5 +141,13 @@ public class Manager {
 
     public int getCorpusSize() {
         return corpusSize;
+    }
+
+    public void resetObjects() {
+        this.reader = null;
+        this.parser = null;
+        this.inverter = null;
+        this.calculator = null;
+        this.docTerms = null;
     }
 }

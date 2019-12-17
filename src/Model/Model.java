@@ -1,32 +1,36 @@
 package Model;
-
+import javafx.scene.control.Alert;
 import java.io.*;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Observable;
 
 public class Model extends Observable {
 
     private Manager manager;
     private boolean stem;
-
+    private HashMap<String, int[]> terms;
+    private HashMap<String, Integer> termstoShow;
+    private boolean loaded;
+    private ArrayList<String> termsSorted;
+    private ArrayList<Integer> countOfTerms;
 
     public Model() {
 
     }
 
     public void parse(String loadingPath, String savingPath, boolean stem) {
-        this.stem=stem;
+        this.stem = stem;
         setManager(loadingPath, savingPath);
-        boolean done = manager.callReaderAndParser();
+        manager.callReaderAndParser();
         double time = manager.getProcessTime();
         int corpusSize = manager.getCorpusSize();
-        int vocabularySize= manager.getVocabularySize();
-        if (done) {
-            String [] notify = {"dictionary done", Double.toString(time), Double.toString(corpusSize), Double.toString(vocabularySize)};
-            setChanged();
-            notifyObservers(notify);
-        }
+        int vocabularySize = manager.getVocabularySize();
+       // terms= manager.getDictionary();
+        termstoShow = manager.getDictionaryToShow();
+        String[] notify = {"dictionary done", Double.toString(time), Integer.toString(corpusSize), Integer.toString(vocabularySize)};
+        setChanged();
+        notifyObservers(notify);
     }
 
 
@@ -34,29 +38,77 @@ public class Model extends Observable {
         this.manager = new Manager(loadingPath, savingPath, stem);
     }
 
-    public void reset(){
 
-    }
+    public void loadDictionary(String path) {
+        HashMap<String, int[]> terms = new HashMap<>();
+        HashMap<String, Integer> termsToShow = new HashMap<>();
+        ArrayList<String> termsList = new ArrayList<>();
+        ArrayList<Integer> count= new ArrayList<>();
+        String pathFile=path+ "\\dictionary.txt";
 
-    public List<String> showDictionary(){
-        List<String> terms= new LinkedList<>();
-        File dictFile = new File(manager.getDictionaryPath());
-        String term;
-        try{
+        File dictFile = new File(pathFile);
+        try {
             BufferedReader readDict = new BufferedReader(new FileReader(dictFile));
             try {
                 String line = readDict.readLine();
-                while (line != null){
-                    term=(line.split(";"))[0];
-                    terms.add(term);
+                while (line != null) {
+                    if (line.isEmpty()){
+                        line = readDict.readLine();
+                        continue;
+                    }
+                    String[] inLine = line.split(";");
+                    int tf = Integer.parseInt(inLine[1].trim());
+                    int[] val = new int[]{tf, Integer.parseInt(inLine[2].trim())};
+                    String key = inLine[0].trim();
+                    termsList.add(key);
+                    count.add(tf);
+                    terms.put(key, val);
+                    termsToShow.put(key, tf);
+                    line = readDict.readLine();
                 }
-            }catch (IOException e){
-                e.printStackTrace();
+                loaded=true;
+            } catch (IOException e) {
+
             }
-        }catch(FileNotFoundException e){
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            String [] error = {"error in loading"};
+            setChanged();
+            notifyObservers(error);
+            return;
         }
+        this.termsSorted = termsList;
+        this.countOfTerms = count;
+        this.termstoShow = termsToShow;
+        this.terms = terms;
+        String[] notify = {"dictionary loaded"};
+        setChanged();
+        notifyObservers(notify);
+    }
+
+    public ArrayList<String> getTermsSorted() {
+        return termsSorted;
+    }
+
+    public ArrayList<Integer> getCountOfTerms() {
+        return countOfTerms;
+    }
+
+    public HashMap<String, Integer> getDictionaryToShow() {
+        return termstoShow;
+    }
+
+    public HashMap<String, int[]> getDictionary() {
         return terms;
     }
+
+
+    public void resetObjects() {
+        manager.resetObjects();
+        this. manager = null;
+        this.termstoShow= null;
+        this.terms=null;
+
+    }
+
 
 }

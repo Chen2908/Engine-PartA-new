@@ -5,16 +5,18 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="601.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/1.8.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.Controller">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="601.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/1.8.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.Controller">
    <center>
-      <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <Pane style="-fx-background-color: #fefcfc" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" >
          <children>
-            <AnchorPane layoutX="63.0" layoutY="200.0" prefHeight="353.0" prefWidth="524.0">
+            <AnchorPane style="-fx-background-color: #fefcfc" layoutX="63.0" layoutY="200.0" prefHeight="353.0" prefWidth="524.0">
                <children>
                   <ButtonBar layoutX="418.0" layoutY="77.0" prefHeight="40.0" prefWidth="78.0">
                      <buttons>
@@ -35,12 +37,12 @@
                         <Font name="System Bold" size="14.0" />
                      </font>
                   </Label>
-                  <CheckBox fx:id="btnStem" layoutX="200.0" layoutY="150.0" mnemonicParsing="false" text="Enable Stemming" onAction="#btnStemPressed">
+                  <CheckBox fx:id="btnStem" layoutX="200.0" layoutY="150.0" mnemonicParsing="false" onAction="#btnStemPressed" text="Enable Stemming">
                      <font>
                         <Font name="System Bold" size="12.0" />
                      </font>
                   </CheckBox>
-                  <Button fx:id="btnReset" layoutX="14.0" layoutY="304.0" mnemonicParsing="false" prefHeight="35.0" prefWidth="73.0" style="-fx-background-color: #111111;" text="Reset" textFill="#fefcfc">
+                  <Button fx:id="btnReset" layoutX="14.0" layoutY="304.0" mnemonicParsing="false" onAction="#resetAll" prefHeight="35.0" prefWidth="73.0" style="-fx-background-color: #111111;" text="Reset" textFill="#fefcfc">
                      <font>
                         <Font name="Eras Bold ITC" size="14.0" />
                      </font>
@@ -52,28 +54,28 @@
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnStart" layoutX="220.0" layoutY="177.0" mnemonicParsing="false" onAction="#parse" prefHeight="39.0" prefWidth="84.0" style="-fx-background-color: #2988f2;" text="Start">
+                  <Button fx:id="btnStart" layoutX="220.0" layoutY="177.0" mnemonicParsing="false" onAction="#parse" prefHeight="39.0" prefWidth="84.0" style="-fx-background-color: #31a7f2;" text="Start">
                      <font>
                         <Font name="Eras Bold ITC" size="22.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnShowDictionary" layoutX="203.0" layoutY="270.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="116.0" text="Show dictionary">
+                  <Button fx:id="btnShowDictionary" layoutX="203.0" layoutY="270.0" mnemonicParsing="false" onAction="#showDictionary" prefHeight="31.0" prefWidth="116.0" text="Show dictionary">
                      <font>
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnLoadDictionary" layoutX="203.0" layoutY="310.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="117.0" text="Load dictionary">
+                  <Button fx:id="btnLoadDictionary" layoutX="203.0" layoutY="310.0" mnemonicParsing="false" onAction="#loadDictionary" onMouseClicked="#loadClicked" prefHeight="31.0" prefWidth="117.0" text="Load dictionary">
                      <font>
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
                </children>
             </AnchorPane>
-            <Label layoutX="217.0" layoutY="91.0" prefHeight="109.0" prefWidth="247.0" text="Zoogle" textFill="#2968f2">
-               <font>
-                  <Font name="System Bold" size="72.0" />
-               </font>
-            </Label>
+            <ImageView fx:id="boximage" fitHeight="174.0" fitWidth="374.0" layoutX="146.0" layoutY="64.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@Capture1.JPG" />
+               </image>
+            </ImageView>
          </children>
       </Pane>
    </center>

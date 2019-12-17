@@ -67,7 +67,7 @@ public class Parse {
         this.helpDicMonths = new HashMap<>();
         setHelpDicMon(this.helpDicMonths);
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-', '\'',
-                '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�').collect(Collectors.toSet());
+                '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�', '¥').collect(Collectors.toSet());
     }
 
 
@@ -85,8 +85,6 @@ public class Parse {
         return docTerms;
     }
 
-
-
     /**
      * @param text    - the text of the document
      * @param docNo   - the document identifier
@@ -101,8 +99,10 @@ public class Parse {
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
             //wouldn't want to keep single chars
-            if (word.length() < 2)
-                continue;
+            if (word.length() < 2){
+                if (word.length()==1 && !Character.isDigit(word.charAt(0)))
+                    continue;
+            }
             char firstChar = word.charAt(0);
             boolean found = false;
             //if the word contains / need to break it
@@ -112,7 +112,7 @@ public class Parse {
                     continue;
                 String[] splitedUntil = StringUtils.split(word, "/");
                 if (splitedUntil.length > 1) {
-                    handle_splitted(splitedUntil, i);   //handle the words after split
+                    handle_splitted(splitedUntil, 0, splitedUntil.length-1,i);   //handle the words after split
                     word = splitedUntil[splitedUntil.length - 1]; //stay with the last word
                 }
             }
@@ -126,13 +126,13 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
-                    if (StringUtils.containsAny(word, "?|*&<>={}()�"))
+                    if (StringUtils.containsAny(word, "#?|*&<>={}()�¥"))
                         continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
                 }
             } else { //can be a term of more than one word
-                if (StringUtils.containsAny(word, "?|*&<>={}()�"))
+                if (StringUtils.containsAny(word, "#?|*&<>={}()�¥"))
                     continue;
                 //$ price
                 if (firstChar == '$') {
@@ -153,35 +153,35 @@ public class Parse {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                       if (! StringUtils.containsAny(temp, ",.'")) {
-                           while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
-                               String add = singleWords[curr];
-                               finish = separatedWord(add);
-                               if (finish)
-                                   add = removeDeli(add);
-                               if (StringUtils.containsAny(add, ",./")) {
-                                   String[] sep = StringUtils.split(add, ".,/");
-                                   add = sep[0];
-                                   for (int k = 1; k < sep.length; k++) {
-                                       handle_1_word_term(docTerms, sep[k], curr);
-                                   }
-                                   finish = true;
-                               }
-                               if (!StringUtils.containsAny(add, "?|*&<>=)("))
-                                   temp += " " + add;
-                               else
-                                   finish = true;
-                               //limit the entity size
-                               if (temp.length() >= 7)
-                                   finish = true;
-                               curr++;
-                               found = true;
-                           }
-                           if (found) {
-                               enterKey(docTerms, temp, i, true);
-                               i = curr - 1;
-                           }
-                       }
+                        if (! StringUtils.containsAny(temp, ",.'")) {
+                            while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
+                                String add = singleWords[curr];
+                                finish = separatedWord(add);
+                                if (finish)
+                                    add = removeDeli(add);
+                                if (StringUtils.containsAny(add, ",./")) {
+                                    String[] sep = StringUtils.split(add, ".,/");
+                                    add = sep[0];
+                                    for (int k = 1; k < sep.length; k++) {
+                                        handle_1_word_term(docTerms, sep[k], curr);
+                                    }
+                                    finish = true;
+                                }
+                                if (!StringUtils.containsAny(add, "%?#|*&<>=)(¥"))
+                                    temp += " " + add;
+                                else
+                                    finish = true;
+                                //limit the entity size
+                                if (temp.length() >= 7)
+                                    finish = true;
+                                curr++;
+                                found = true;
+                            }
+                            if (found) {
+                                enterKey(docTerms, temp, i, true);
+                                i = curr - 1;
+                            }
+                        }
                     }
                     if (!found) {
                         //between - 4 words
@@ -251,10 +251,9 @@ public class Parse {
     }
 
     //reaches here if the original word contained / or ( or ) so each word should be handled
-    private void handle_splitted(String[] splitted, int position) {
-        int len = splitted.length - 1;
-        for (int i = 0; i < len; i++) {
-            if (!StringUtils.containsAny(splitted[i], "?|*&<>=(){}"))
+    private void handle_splitted(String[] splitted, int start, int end, int position) {
+        for (int i = start; i < end; i++) {
+            if (!StringUtils.containsAny(splitted[i], "#?|*&<>=(){}¥"))
                 handle_1_word_term(docTerms, splitted[i], position);
         }
     }
@@ -302,9 +301,18 @@ public class Parse {
     }
 
     private boolean checkPhoneNum(HashMap<String, Term> docTerms, String word, String word2, int position) {
+        String [] splitted = StringUtils.split(word2, ",./()");
+        if (splitted.length==0)
+            return false;
+        word2= splitted[0];
+        if (splitted.length>1)
+            handle_splitted(splitted, 1, splitted.length, position);
+
         String twoWords = word + " " + word2;
         Matcher match = PHONENUM.matcher(twoWords);
         if (match.find()) {
+            if (word.charAt(0)!='(' || ((word.length() > 1 && word.charAt(0)=='(' && word.charAt(1)=='(')))
+                word = word.substring(1);
             enterKey(docTerms, word + " " + removeDeli(word2), position, false);
             return true;
         }
@@ -330,7 +338,8 @@ public class Parse {
     private boolean checkPhrases(HashMap<String, Term> docTerms, String word1, int position) {
         Matcher match2 = PHRASEWORD.matcher(word1);
         if (match2.find()) {
-            enterKey(docTerms, word1, position, false);
+            if (!StringUtils.containsAny(word1, ".,"))
+                enterKey(docTerms, word1, position, false);
             return true;
         }
         return false;
@@ -396,22 +405,12 @@ public class Parse {
             if (word.contains("-")) {
                 if (word.contains("--")) //need to split here
                     return;
-                if (word.contains(".")) {
-                    word = StringUtils.replace(word, ".", "");
-                }
+//                if (word.contains(".")) {
+//                    word = StringUtils.replace(word, ".", "");
+//                }
                 checkPhrases(docTerms, word, position);
                 return;
             }
-//                String noDots = StringUtils.replace(word, ".", "");
-//                if (!isAStopWord(noDots)) {
-//                    if (stem) {
-//                        noDots = stemmedWord(noDots);
-//                    }
-//                    if (noDots.length() > 1)
-//                        enterKey(docTerms, noDots, position, false);
-//                }
-//                return;
-            //}
             if (word.contains("@")) {
                 Matcher match = EMAIL.matcher(word);
                 if (match.find()) {
@@ -422,13 +421,12 @@ public class Parse {
             //capital letter word
             //use porter stemmer to stem word
             if (!isAStopWord(word) && word.length() > 2) {
-                if (word.contains(".")) {
-                    word = StringUtils.replace(word, ".", "");
-                }
+                if (StringUtils.containsAny(word, "$%"))
+                    return;
                 String[] wordsSeparated = {word};
                 //split by comma and handle each word
-                if (StringUtils.containsAny(word, ",'")) {
-                    wordsSeparated = StringUtils.split(word, ",'");
+                if (StringUtils.containsAny(word, ",'.")) {
+                    wordsSeparated = StringUtils.split(word, ",'.");
                 }
                 for (String sep : wordsSeparated) {
                     if (!isAStopWord(sep)) {

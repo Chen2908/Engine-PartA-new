@@ -5,7 +5,10 @@ import java.util.*;
 
 public class Indexer {
 
-    private final int HASH_SIZE = 4000;
+    private final int HASH_SIZE = 800;
+    private final int TF_INDEX = 0;
+    private final int FILE_LINE_INDEX = 1;
+
     private int numOfCorpusDocs;
     private int indexIfCopy;
     private int threshHold;
@@ -14,7 +17,7 @@ public class Indexer {
     private File termDir;
     private File docsDir;
 
-    private HashMap<String, Integer> dictionary;
+    private HashMap<String, int[]> dictionary;
     private HashMap<String, Integer> fileLastLine;
     private HashMap<String, Term> terms;
     private List<String> termsList;
@@ -28,12 +31,6 @@ public class Indexer {
     private ObjectWriter objectWriter;
 
     //</editor-fold>
-
-    /**
-     * TODO: add term info writing
-     * add wij
-     *
-     */
 
 
     public Indexer(String outputDirPath, int poolSize, int threshHold, int cacheSize){
@@ -113,8 +110,10 @@ public class Indexer {
         String filePath = getPath(termDir, term.getValue());
         List<StringBuilder> fileLines = getFileLines(filePath);
         List<String> fileTerm = getTermValues(term);
+
         if (filesCache.isFutureEmpty())
-            addTCacheFutureUse(this.termsList);
+            addTCacheFutureUse(termsList);
+
         String termLower;
         String termUpper;
         String dicKey = null;
@@ -142,7 +141,7 @@ public class Indexer {
                 bellowThreshHold.remove(termValue.toLowerCase());
             }
 
-            if(terms.get(termValue).isBellowThreshHold(1, threshHold)){
+            if(terms.get(termValue).isBellowThreshHold(threshHold, threshHold)){
                 bellowThreshHold.put(termValue.toLowerCase(), terms.get(termValue));
                 continue;
             }
@@ -152,11 +151,11 @@ public class Indexer {
                 addToDictionary(termValue);
             }
             else
-                terms.get(termValue).update(fileLines, dictionary.get(dicKey));
+                terms.get(termValue).update(fileLines, dictionary.get(dicKey)[FILE_LINE_INDEX]);
 
             getDocsInfo(terms.get(termValue));
         }
-        addToCache(filePath, fileLines);
+//        addToCache(filePath, fileLines);
     }
 
     private void addToCache(String filePath, List<StringBuilder> fileLines){
@@ -191,15 +190,17 @@ public class Indexer {
         return terms;
     }
 
-    private void addToDictionary(String term){
+    private void addToDictionary(String term) {
         String fileName = getFileName(term);
 
-        if(fileLastLine.containsKey(fileName))
-            fileLastLine.put(fileName, fileLastLine.get(fileName)+1);
+        if (fileLastLine.containsKey(fileName))
+            fileLastLine.put(fileName, fileLastLine.get(fileName) + 1);
         else
             fileLastLine.put(fileName, 0);
 
-        dictionary.put(term, fileLastLine.get(fileName));
+        dictionary.put(term, new int[2]);
+        dictionary.get(term)[TF_INDEX] = terms.get(term).getTF();
+        dictionary.get(term)[FILE_LINE_INDEX] = fileLastLine.get(fileName);
     }
 
     private String getPath(File dir, String term){
@@ -248,7 +249,13 @@ public class Indexer {
     }
 
     public HashMap<String, Integer> getDictionary(){
-        return dictionary;
+        HashMap<String, Integer> newDic = new HashMap<>();
+        Iterator it = dictionary.keySet().iterator();
+        while (it.hasNext()){
+            String term = (String) it.next();
+            newDic.put(term, dictionary.get(term)[TF_INDEX]);
+        }
+        return newDic;
     }
 
     public HashMap<String, Term> getBellowThreshHold() {
@@ -260,7 +267,7 @@ public class Indexer {
         List<String> words = new ArrayList<>(dictionary.keySet());
         words.sort(String::compareTo);
         for(String word: words)
-            dic.append(word + ":" + dictionary.get(word) + "\n");
+            dic.append(word + " ; " + dictionary.get(word)[TF_INDEX] + " ; " + dictionary.get(word)[FILE_LINE_INDEX] + "\n");
         List<StringBuilder> toWrite = new ArrayList<>();
         toWrite.add(dic);
         objectWriter.write(toWrite, outputDir + "\\dictionary.txt");

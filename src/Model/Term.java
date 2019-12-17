@@ -12,6 +12,7 @@ public class Term implements IWritable {
     private HashMap<String, DocTermInfo> docs; // hashMap of all the docs that this term appears in
     private boolean startsWithCapital;
     private boolean isEntity;
+    private int TF;
 
     private String lastFileNumPrefix;
     private final String del = ",";
@@ -30,6 +31,7 @@ public class Term implements IWritable {
         docs = new HashMap<>();
         this.isEntity = isEntity;
         lastFileNumPrefix = "";
+        this.TF = 0;
     }
 
     public Term(String value) {
@@ -59,7 +61,7 @@ public class Term implements IWritable {
             curDoc = new DocTermInfo(docNum);
             docs.put(docNum, curDoc);
         }
-
+        TF++;
         curDoc.increaseTfi();
         curDoc.addIndex(index);
     }
@@ -71,6 +73,8 @@ public class Term implements IWritable {
     /**Amount of docs this term appears in groups of files*/
     public int getDf() { return docs.size(); }
 
+    public int getTF(){ return TF;}
+
     public boolean isBellowThreshHold(int numOfDocs, int totalNum){
 
         if(isEntity && getDf() == 1)
@@ -79,10 +83,7 @@ public class Term implements IWritable {
         if(docs.size() > numOfDocs || (isEntity && getDf() > 1))
             return false;
 
-        int tfSum = 0;
-        for(DocTermInfo doc : docs.values())
-            tfSum += doc.getTfi();
-        return tfSum < totalNum;
+        return TF < totalNum;
 
     }
 

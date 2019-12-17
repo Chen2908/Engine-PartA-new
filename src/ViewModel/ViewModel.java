@@ -4,11 +4,8 @@ import Model.Model;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Window;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import java.io.*;
+import java.util.*;
 
 public class ViewModel extends Observable implements Observer {
 
@@ -21,11 +18,9 @@ public class ViewModel extends Observable implements Observer {
     @Override
     public void update(Observable o, Object arg) {
         if (o==model){
-            String args = (String) arg;
             setChanged();
-            notifyObservers(args);
+            notifyObservers(arg);
         }
-
     }
 
 
@@ -62,10 +57,30 @@ public class ViewModel extends Observable implements Observer {
         model.parse(loadingPath, savingPath, stem);
     }
 
-    public List<String> showDictionary(){
-        return model.showDictionary();
+    public void loadDictionary(String path){
+        model.loadDictionary(path);
     }
 
 
+    public HashMap<String, int[]> showDictionary(){
+        return model.getDictionary();
+    }
+
+    public HashMap<String, Integer> showDictionaryToShow(){
+        return model.getDictionaryToShow();
+    }
+
+
+    public void resetObjects() {
+        model.resetObjects();
+    }
+
+    public ArrayList<String> getTermsSorted() {
+        return model.getTermsSorted();
+    }
+
+    public ArrayList<Integer> getCountOfTerms() {
+        return model.getCountOfTerms();
+    }
 }
 

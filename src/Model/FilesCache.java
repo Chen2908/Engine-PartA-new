@@ -16,7 +16,7 @@ public class FilesCache {
     private int MaxSize;
     private double hit;
     private double miss;
-    private final double FUTURE_USE_PERCENT = 0.7;
+    private final double FUTURE_USE_PERCENT = 0.5;
 
     public FilesCache(int size){
         files = new HashMap<>(size);
@@ -77,7 +77,7 @@ public class FilesCache {
     }
 
     public boolean isFutureEmpty(){
-        return isGoingToBeNeeded.size() >= MaxSize*FUTURE_USE_PERCENT/2;
+        return isGoingToBeNeeded.isEmpty();
     }
 
     public String getLastRemovedPath(){
