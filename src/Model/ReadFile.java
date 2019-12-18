@@ -91,6 +91,7 @@ public class ReadFile {
                     isText = false;
                 else if (isText && !isLineContains(line, docPerTagStr)) {
                     text.append(line);
+                    text.append("\n");
                 }
                 else if (line.contains(docTextStr[0]))
                     isText = true;
