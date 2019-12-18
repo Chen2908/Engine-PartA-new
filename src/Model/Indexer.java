@@ -267,7 +267,7 @@ public class Indexer {
     private void writeDictionary(){
         StringBuilder dic = new StringBuilder();
         List<String> words = new ArrayList<>(dictionary.keySet());
-        words.sort(Comparator.comparing(o -> o.toLowerCase()));
+        words.sort(String::compareTo);
         for(String word: words)
             dic.append(word + " ; " + dictionary.get(word)[TF_INDEX] + " ; " + dictionary.get(word)[FILE_LINE_INDEX] + "\n");
         List<StringBuilder> toWrite = new ArrayList<>();
