@@ -346,14 +346,16 @@ public class Parse {
             splitted = StringUtils.split(word1, "-");
             String wo1 = splitted[0];
             String wo2 = splitted[1];
-            if (!StringUtils.containsAny(wo1, ".,')(")) {
+            if (StringUtils.containsAny(wo1, ".,')(")) {
                     splittedBy1 = StringUtils.split(wo1, ".,'()");
                     wo1 = splittedBy1[splittedBy1.length - 1];
-                    handle_splitted(splittedBy1, 0, splittedBy1.length - 1, position);
+                    if (splittedBy1.length>1)
+                        handle_splitted(splittedBy1, 0, splittedBy1.length - 1, position);
             }
-             if (!StringUtils.containsAny(wo2, ".,')(")) {
+             if (StringUtils.containsAny(wo2, ".,')(")) {
                  splittedBy2 = StringUtils.split(wo2, ".,'()");
-                 handle_splitted(splittedBy2, 1, splittedBy2.length , position);
+                 if (splittedBy2.length>1)
+                     handle_splitted(splittedBy2, 1, splittedBy2.length , position);
                  wo2 = splittedBy2[0];
              }
              enterKey(docTerms, wo1+"-"+wo2, position, false);
