@@ -93,7 +93,8 @@ public class Parse {
      */
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
-        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}\n");
+        text=text.replaceAll("\n", " ");
+        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
