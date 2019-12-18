@@ -150,8 +150,10 @@ public class Indexer {
                 fileLines.add(terms.get(termValue).toFileString());
                 addToDictionary(termValue);
             }
-            else
+            else {
                 terms.get(termValue).update(fileLines, dictionary.get(dicKey)[FILE_LINE_INDEX]);
+                dictionary.get(dicKey)[TF_INDEX] += terms.get(termValue).getTF();
+            }
 
             getDocsInfo(terms.get(termValue));
         }
@@ -265,9 +267,9 @@ public class Indexer {
     private void writeDictionary(){
         StringBuilder dic = new StringBuilder();
         List<String> words = new ArrayList<>(dictionary.keySet());
-        words.sort(String::compareTo);
+        words.sort(Comparator.comparing(o -> o.toLowerCase()));
         for(String word: words)
-            dic.append(word + " ; " + dictionary.get(word)[TF_INDEX] + " ; " + dictionary.get(word)[FILE_LINE_INDEX] + "\n");
+            dic.append(word + " - " + dictionary.get(word)[TF_INDEX] + ";" + dictionary.get(word)[FILE_LINE_INDEX] + "\n");
         List<StringBuilder> toWrite = new ArrayList<>();
         toWrite.add(dic);
         objectWriter.write(toWrite, outputDir + "\\dictionary.txt");
@@ -276,7 +278,7 @@ public class Indexer {
     private void writeBellowThreshHold(){
         StringBuilder dic = new StringBuilder();
         List<Term> words = new ArrayList<>(bellowThreshHold.values());
-        words.sort(Comparator.comparing(Term::getValue));
+        words.sort(Comparator.comparing(o -> o.getValue().toLowerCase()));
         for(Term term: words)
             dic.append(term.getValue() + "\n");
         List<StringBuilder> toWrite = new ArrayList<>();
