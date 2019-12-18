@@ -353,8 +353,8 @@ public class Parse {
             }
              if (!StringUtils.containsAny(wo2, ".,')(")) {
                  splittedBy2 = StringUtils.split(wo2, ".,'()");
-                 handle_splitted(splittedBy2, 0, splittedBy2.length - 1, position);
-                 wo2 = splittedBy2[splittedBy2.length - 1];
+                 handle_splitted(splittedBy2, 1, splittedBy2.length , position);
+                 wo2 = splittedBy2[0];
              }
              enterKey(docTerms, wo1+"-"+wo2, position, false);
             return true;
