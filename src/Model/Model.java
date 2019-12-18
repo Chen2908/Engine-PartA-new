@@ -47,8 +47,9 @@ public class Model extends Observable {
         String pathFile=path+ "\\dictionary.txt";
 
         File dictFile = new File(pathFile);
+        BufferedReader readDict;
         try {
-            BufferedReader readDict = new BufferedReader(new FileReader(dictFile));
+            readDict= new BufferedReader(new FileReader(dictFile));
             try {
                 String line = readDict.readLine();
                 while (line != null) {
@@ -66,10 +67,12 @@ public class Model extends Observable {
                     termsToShow.put(key, tf);
                     line = readDict.readLine();
                 }
+                readDict.close();
                 loaded=true;
             } catch (IOException e) {
 
             }
+
         } catch (FileNotFoundException e) {
             String [] error = {"error in loading"};
             setChanged();
@@ -103,11 +106,14 @@ public class Model extends Observable {
 
 
     public void resetObjects() {
-        manager.resetObjects();
-        this. manager = null;
-        this.termstoShow= null;
-        this.terms=null;
-
+        if (manager != null) {
+            manager.resetObjects();
+            this. manager = null;
+            this.termstoShow= null;
+            this.terms=null;
+            this.termsSorted=null;
+            this.countOfTerms=null;
+        }
     }
 
 

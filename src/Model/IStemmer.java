@@ -1,5 +1,8 @@
 package Model;
 
+/**
+ * Interface for different text stemmers
+ */
 public interface IStemmer {
 
     //calls steps to stem the words

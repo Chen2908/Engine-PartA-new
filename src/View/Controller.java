@@ -5,8 +5,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
@@ -15,9 +14,10 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
+//import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -99,10 +99,10 @@ public class Controller implements Observer {
                     btnShowDictionary.setDisable(false);
                     btnReset.setDisable(false);
                     this.loaded = true;
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Your dictionary was loaded");
-                    alert.setHeaderText("Great!");
-                    alert.showAndWait();
-                    alert.close();
+//                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Your dictionary was loaded");
+//                    alert.setHeaderText("Great!");
+//                    alert.showAndWait();
+//                    alert.close();
                     break;
                 case "error in loading":
                     Alert alert2 = new Alert(Alert.AlertType.ERROR);
@@ -196,52 +196,41 @@ public class Controller implements Observer {
     }
 
     public void showDictionary() {
-//            StringBuilder dic = new StringBuilder();
-//            HashMap<String, Integer> dictionary = viewModel.showDictionaryToShow();
-//            ArrayList<String> sortedKeys = new ArrayList<>(dictionary.keySet());
-//            Collections.sort(sortedKeys);
-//            Iterator it = sortedKeys.iterator();
-//            while (it.hasNext()){
-//                String term= (String)it.next();
-//                dic.append(term+ " - " + dictionary.get(term) + '\n');
-//            }
-           if (!loaded)
-               loadDictionary();
-            ArrayList<String> termToShow = viewModel.getTermsSorted();
-            ArrayList<Integer> counts = viewModel.getCountOfTerms();
+        if (!loaded)
+            loadDictionary();
+        ArrayList<String> termToShow = viewModel.getTermsSorted();
+        ArrayList<Integer> counts = viewModel.getCountOfTerms();
 
-            TableView tb = new TableView<>();
-            TableColumn<String, MapView> firstCol = new TableColumn<>("Term");
-            firstCol.setCellValueFactory(new PropertyValueFactory<>("term"));
+        TableView tb = new TableView<>();
 
-            TableColumn<String, MapView> secondCol = new TableColumn<>("Count");
-            firstCol.setCellValueFactory(new PropertyValueFactory<>("count"));
+        TableColumn<String, MapView> firstCol = new TableColumn<>("Term");
+        firstCol.setCellValueFactory(new PropertyValueFactory<>("term"));
+        firstCol.setEditable(true);
+        firstCol.setPrefWidth(200);
+        TableColumn<Integer, MapView> secondCol = new TableColumn<>("Count");
+        secondCol.setCellValueFactory(new PropertyValueFactory<>("count"));
+        secondCol.setEditable(true);
+        secondCol.setPrefWidth(200);
 
-            tb.getColumns().add(firstCol);
-            tb.getColumns().add(secondCol);
+        tb.getColumns().add(firstCol);
+        tb.getColumns().add(secondCol);
+        tb.setEditable(true);
+        tb.getSelectionModel().setCellSelectionEnabled(true);
 
-           for (int i= 0; i<termToShow.size(); i++){
-               int count = counts.get(i);
-               String term = termToShow.get(i);
-               MapView mv = new MapView(term,count);
-               tb.getItems().add(mv);
-           }
-            VBox box =  new VBox();
-            box.getChildren().add(tb);
-            Scene scene = new Scene(box);
-            Stage stage = new Stage();
-            stage.setTitle("Dictionary");
-            stage.setScene(scene);
-            stage.show();
+        for (int i = 0; i < termToShow.size(); i++) {
+            Integer count = counts.get(i);
+            String term = termToShow.get(i);
+            MapView mv = new MapView(term, count);
+            tb.getItems().add( mv );
+        }
 
-//            FXMLLoader fxmlLoader = new FXMLLoader();
-//            Parent root = fxmlLoader.load(getClass().getResource("dictionary.fxml").openStream());
-//            Scene scene = new Scene(root, 610, 650);
-//
-//            stage.initModality(Modality.APPLICATION_MODAL); //Lock the window until it closes
-//            txtArea_dictionary = (javafx.scene.control.TextArea) scene.lookup("#txtArea_dictionary");
-//            txtArea_dictionary.setText(show);
-//
+        StackPane sPane = new StackPane(tb);
+        Scene scene = new Scene(sPane, 600, 800);
+        Stage stage = new Stage();
+        stage.setTitle("Dictionary");
+        stage.setScene(scene);
+        stage.show();
+
     }
 
     public void resetAll() {
@@ -253,54 +242,25 @@ public class Controller implements Observer {
 
         if (dir.exists()) {
             try {
-                boolean delete= deleteDirectory(dir);
-            } catch (Exception e) {
-                e.printStackTrace();
+              //  FileUtils.cleanDirectory(dir);
+                //FileUtils.deleteDirectory(dir);
+            }catch (Exception e){
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot delete directory");
+                alert.showAndWait();
             }
-        }else {
-            Alert alert= new Alert(Alert.AlertType.ERROR, "path for deletion does not exist");
-            alert.showAndWait();
         }
-
         //reset memory
         viewModel.resetObjects();
         btnShowDictionary.setDisable(true);
         btnLoadDictionary.setDisable(true);
     }
 
-    private boolean deleteDirectory(File dir){
-        if (dir.exists()) {
-                if(dir.isDirectory()){
-                    String[] childFiles = dir.list();
-                    if(childFiles == null) {
-                        //Directory is empty. Proceed for deletion
-                        dir.delete();
-                    }
-                    else {
-                        //Directory has other files.
-                        //Need to delete them first
-                        for (String childFilePath :  childFiles) {
-                            File childFile = new File(childFilePath);
-                            //recursive delete the files
-                            deleteDirectory(childFile);
-                        }
-                    }
-                    return true;
-                }
-                else if (dir.isFile()){
-                    dir.delete();
-                }
-            }
-        return false;
-    }
-
-
 
     public static class MapView{
         private SimpleStringProperty term;
         private SimpleIntegerProperty count;
 
-        public MapView(String term, int count){
+        public MapView(String term, Integer count){
             this.term = new SimpleStringProperty(term);
             this.count = new SimpleIntegerProperty(count);
         }
@@ -319,6 +279,14 @@ public class Controller implements Observer {
 
         public int getCount() {
             return count.get();
+        }
+
+        public SimpleStringProperty termProperty() {
+            return term;
+        }
+
+        public SimpleIntegerProperty countProperty() {
+            return count;
         }
 
     }

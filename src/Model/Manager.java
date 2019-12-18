@@ -3,6 +3,11 @@ package Model;
 import java.io.*;
 import java.util.*;
 
+/**
+ * This class represents a corpus manager, which is an objects that controls the whole process of reading the documents
+ * parsing then and indexing the terms.
+ * It holds the following objects for this purpose:  ReadFile, Parser, Indexer, Calculator
+ */
 public class Manager {
 
     private static final int BATCH_SIZE = 6000;
@@ -23,6 +28,13 @@ public class Manager {
     private double processTime;
     private HashMap<String, Term> docTerms;
 
+
+    /**
+     * Constructor with parameters
+     * @param corpusPath - the path where the corpus files and stop words is saved
+     * @param postingPath - the path where to create the posting files in
+     * @param stemming - true if to apply stemming, otherwise false
+     */
     public Manager(String corpusPath, String postingPath, boolean stemming) {
         this.corpusPath = corpusPath;
         this.postingPath = postingPath;
@@ -60,10 +72,7 @@ public class Manager {
         Runtime runtime = Runtime.getRuntime();
         double usedMemoryBefore = runtime.totalMemory() - runtime.freeMemory();
         double startTime = System.currentTimeMillis();
-        double parsing=0;
-        double indexing=0;
 
-        //keep only this
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
         int counter = 0;
         while(docs!=null){
@@ -96,7 +105,6 @@ public class Manager {
     public String getDictionaryPath(){
         return dictionaryPath;
     }
-
 
     private String createIndexFolders() {
         String stem;
