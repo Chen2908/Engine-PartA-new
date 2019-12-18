@@ -665,11 +665,14 @@ public class Parse {
 
     private boolean allSameLetter(String key) {
         char first = key.charAt(0);
-        for(int i=1; i<key.length(); i++){
-            if (key.charAt(i)!=first)
-                return false;
+        if (Character.isLetter(first)) {
+            for (int i = 1; i < key.length(); i++) {
+                if (key.charAt(i) != first)
+                    return false;
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     private void saveAsTimeAM(HashMap<String, Term> docTerms, String word, int position) {
