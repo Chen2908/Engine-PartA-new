@@ -167,6 +167,7 @@ public class Controller implements Observer {
     //being called when clicked start
     public void parse() {
         loaded=false;
+        viewModel.resetObjects();
         if (fieldLoadingPath.getText().isEmpty() || fieldSavingPath.getText().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "Both paths should be selected before clicking the Start button");
             alert.show();
