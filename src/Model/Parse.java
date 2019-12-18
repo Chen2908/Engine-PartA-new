@@ -341,19 +341,20 @@ public class Parse {
         String[] splittedBy1;
         String[] splittedBy2;
 
+
         if (match2.find()) {
             splitted = StringUtils.split(word1, "-");
             String wo1 = splitted[0];
             String wo2 = splitted[1];
-            if (StringUtils.containsAny(wo1, ".,')(") && !StringUtils.containsIgnoreCase(wo1, "U.S")) {
+            if (StringUtils.containsAny(wo1, ".,')(")) {
                     splittedBy1 = StringUtils.split(wo1, ".,'()");
                     wo1 = splittedBy1[splittedBy1.length - 1];
                     if (splittedBy1.length>1)
                         handle_splitted(splittedBy1, 0, splittedBy1.length - 1, position);
             }
-             if (StringUtils.containsAny(wo2, ".,')(") && !StringUtils.containsIgnoreCase(wo2, "U.S")) {
+             if (StringUtils.containsAny(wo2, ".,')(")) {
                  splittedBy2 = StringUtils.split(wo2, ".,'()");
-                 if(splittedBy2.length>1)
+                 if (splittedBy2.length>1)
                      handle_splitted(splittedBy2, 1, splittedBy2.length , position);
                  wo2 = splittedBy2[0];
              }
