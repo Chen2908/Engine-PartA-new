@@ -47,7 +47,6 @@ public class Parse {
     private static Pattern FRACTION = Pattern.compile("(([1-9][0-9]*)|0)(\\/)([1-9][0-9]*)");
 
     //new laws
-    private static Pattern EMAIL = Pattern.compile("\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+");
     private static Pattern TIMEGMT = Pattern.compile("(\\d)(\\d)(\\d)(\\d)(\\s)(GMT)");
     private static Pattern TIMETOTIMEGMT = Pattern.compile("(\\d)(\\d)(\\d)(\\d)(\\-)(\\d)(\\d)(\\d)(\\d)(\\s)(GMT)");
     private static Pattern TIMEAM = Pattern.compile("(\\d)((a.m.)|(A.M.))");
@@ -93,8 +92,8 @@ public class Parse {
      */
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
-        text=text.replaceAll("\n", " ");
-        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}");
+
+        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}\n\r\t");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
@@ -342,7 +341,6 @@ public class Parse {
         String[] splittedBy1;
         String[] splittedBy2;
 
-
         if (match2.find()) {
             splitted = StringUtils.split(word1, "-");
             String wo1 = splitted[0];
@@ -423,20 +421,10 @@ public class Parse {
             }
         } else if (Character.isLetter(firstChar)) {
             if (word.contains("-")) {
-                if (word.contains("--")) //need to split here
+                if (word.contains("--") || StringUtils.containsAny(word, "%$"))
                     return;
-//                if (word.contains(".")) {
-//                    word = StringUtils.replace(word, ".", "");
-//                }
                 checkPhrases(docTerms, word, position);
                 return;
-            }
-            if (word.contains("@")) {
-                Matcher match = EMAIL.matcher(word);
-                if (match.find()) {
-                    enterKey(docTerms, word, position, false);
-                    return;
-                }
             }
             //capital letter word
             //use porter stemmer to stem word
@@ -551,7 +539,7 @@ public class Parse {
     }
 
     private boolean handle_num_2_words(String word1, String word2, HashMap<String, Term> docTerms, int position) {
-        if (!StringUtils.containsAny(word2, "?|*&<>=(){}")) {
+        if (!StringUtils.containsAny(word2, "#?|*&<>={}()�¥")) {
             //first word is a number
             boolean[] infoOnWord1 = isNumeric(word1);
             if (infoOnWord1[0]) {
@@ -663,7 +651,8 @@ public class Parse {
 
     private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
         boolean singleLetters = Character.isLetter(key.charAt(0)) && key.length() < 3;
-        if (!singleLetters) {
+        boolean theSame = allSameLetter(key);
+        if (!singleLetters && !theSame) {
             Term term;
             if (!docTerms.containsKey(key)) {
                 term = new Term(key, isEntity);
@@ -672,6 +661,15 @@ public class Parse {
                 term = docTerms.get(key);
             term.updatesDocsInfo(docNo, position);
         }
+    }
+
+    private boolean allSameLetter(String key) {
+        char first = key.charAt(0);
+        for(int i=1; i<key.length(); i++){
+            if (key.charAt(i)!=first)
+                return false;
+        }
+        return true;
     }
 
     private void saveAsTimeAM(HashMap<String, Term> docTerms, String word, int position) {
