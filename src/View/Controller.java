@@ -15,9 +15,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-//import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -242,8 +241,8 @@ public class Controller implements Observer {
 
         if (dir.exists()) {
             try {
-              //  FileUtils.cleanDirectory(dir);
-                //FileUtils.deleteDirectory(dir);
+               FileUtils.cleanDirectory(dir);
+               FileUtils.deleteDirectory(dir);
             }catch (Exception e){
                 Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot delete directory");
                 alert.showAndWait();

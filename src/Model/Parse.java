@@ -337,9 +337,26 @@ public class Parse {
 
     private boolean checkPhrases(HashMap<String, Term> docTerms, String word1, int position) {
         Matcher match2 = PHRASEWORD.matcher(word1);
+        String[] splitted;
+        String[] splittedBy1;
+        String[] splittedBy2;
+
+
         if (match2.find()) {
-            if (!StringUtils.containsAny(word1, ".,"))
-                enterKey(docTerms, word1, position, false);
+            splitted = StringUtils.split(word1, "-");
+            String wo1 = splitted[0];
+            String wo2 = splitted[1];
+            if (!StringUtils.containsAny(wo1, ".,')(")) {
+                    splittedBy1 = StringUtils.split(wo1, ".,'()");
+                    wo1 = splittedBy1[splittedBy1.length - 1];
+                    handle_splitted(splittedBy1, 0, splittedBy1.length - 1, position);
+            }
+             if (!StringUtils.containsAny(wo2, ".,')(")) {
+                 splittedBy2 = StringUtils.split(wo2, ".,'()");
+                 handle_splitted(splittedBy2, 0, splittedBy2.length - 1, position);
+                 wo2 = splittedBy2[splittedBy2.length - 1];
+             }
+             enterKey(docTerms, wo1+"-"+wo2, position, false);
             return true;
         }
         return false;
@@ -643,7 +660,7 @@ public class Parse {
 
     private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
         boolean singleLetters = Character.isLetter(key.charAt(0)) && key.length() < 3;
-        if (!singleLetters || StringUtils.equalsIgnoreCase(key, "us")) {
+        if (!singleLetters) {
             Term term;
             if (!docTerms.containsKey(key)) {
                 term = new Term(key, isEntity);
