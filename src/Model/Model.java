@@ -67,6 +67,7 @@ public class Model extends Observable {
                     line = readDict.readLine();
                 }
                 loaded=true;
+                readDict.close();
             } catch (IOException e) {
 
             }
@@ -103,11 +104,14 @@ public class Model extends Observable {
 
 
     public void resetObjects() {
-        manager.resetObjects();
-        this. manager = null;
-        this.termstoShow= null;
-        this.terms=null;
-
+        if (manager != null) {
+            manager.resetObjects();
+            this. manager = null;
+            this.termstoShow= null;
+            this.terms=null;
+            this.termsSorted=null;
+            this.countOfTerms=null;
+        }
     }
 
 
