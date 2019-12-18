@@ -93,7 +93,7 @@ public class Parse {
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
 
-        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}\n\r\t");
+        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}\n\r\t=<>");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
@@ -126,13 +126,13 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
-                    if (StringUtils.containsAny(word, "#?|*&<>={}()�¥"))
+                    if (StringUtils.containsAny(word, "#?|*&{}()�¥"))
                         continue;
                     handle_1_word_term(docTerms, word, i);
                     continue;
                 }
             } else { //can be a term of more than one word
-                if (StringUtils.containsAny(word, "#?|*&<>={}()�¥"))
+                if (StringUtils.containsAny(word, "#?|*&{}()�¥"))
                     continue;
                 //$ price
                 if (firstChar == '$') {
@@ -167,7 +167,7 @@ public class Parse {
                                     }
                                     finish = true;
                                 }
-                                if (!StringUtils.containsAny(add, "%?#|*&<>=)(¥"))
+                                if (!StringUtils.containsAny(add, "%?#|*&)(¥"))
                                     temp += " " + add;
                                 else
                                     finish = true;
@@ -253,7 +253,7 @@ public class Parse {
     //reaches here if the original word contained / or ( or ) so each word should be handled
     private void handle_splitted(String[] splitted, int start, int end, int position) {
         for (int i = start; i < end; i++) {
-            if (!StringUtils.containsAny(splitted[i], "#?|*&<>=(){}¥"))
+            if (!StringUtils.containsAny(splitted[i], "#?|*&(){}¥"))
                 handle_1_word_term(docTerms, splitted[i], position);
         }
     }
