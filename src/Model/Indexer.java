@@ -410,7 +410,6 @@ public class Indexer {
      */
     public void closeWriter(){
         writeCache();
-        System.out.println(filesCache.toString());
         writeDictionary();
         writeBellowThreshHold();
         writeDocsInfo();
