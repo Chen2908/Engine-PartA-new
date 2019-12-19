@@ -391,6 +391,17 @@ public class Indexer {
         objectWriter.write(toWrite, outputDir + "\\dictionary.txt");
     }
 
+    private void writeDictionaryCSV(){
+        StringBuilder dic = new StringBuilder();
+        List<String> words = new ArrayList<>(dictionary.keySet());
+        words.sort(String::compareTo);
+        for(String word: words)
+            dic.append(dictionary.get(word)[TF_INDEX] + "\n");
+        List<StringBuilder> toWrite = new ArrayList<>();
+        toWrite.add(dic);
+        objectWriter.write(toWrite, outputDir + "\\dictionary1.csv");
+    }
+
     /**
      * This function writes the bellow threshold terms to a file
      */
@@ -412,6 +423,7 @@ public class Indexer {
         writeCache();
         writeDictionary();
 //        writeBellowThreshHold();
+        writeDictionaryCSV();
         writeDocsInfo();
         objectWriter.close();
     }

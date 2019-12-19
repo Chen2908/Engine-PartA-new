@@ -178,7 +178,7 @@ public class Controller implements Observer {
             alert.show();
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Working on it...");
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Please Press OK to Start the Process");
         alert.setHeaderText("Parsing and indexing takes time!");
         alert.setTitle("Wait");
         alert.setHeight(200);
