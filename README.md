@@ -27,4 +27,4 @@ POST PROCESSING
 2. Load dictionary : will load the term dictionary to memory
 3. Show dictionary : shows all the unique terms in the corpus with this total tf
 
-![Simple example](read.jpg)
+![Simple example](read.JPG)
