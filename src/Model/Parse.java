@@ -92,7 +92,7 @@ public class Parse {
     public HashMap<String, Term> parse(List<Document> docs) {
         setDocTerms();
         for (Document doc : docs) {
-            parse(doc.getText(), doc.getDocNo(), doc.getDate());
+            parse(doc.getText(), doc.getDocNum(), doc.getDate());
         }
         return docTerms;
     }
