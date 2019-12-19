@@ -125,10 +125,10 @@ public class Term implements IWritable {
     }
 
     /**
-     * This method gets another term and marge between the given term and this term
-     * @param term - term to marge
+     * This method gets another term and merge between the given term and this term
+     * @param term - term to merge
      */
-    public void marge(Term term){
+    public void merge(Term term){
         value = getUpdatedValue(term.value);
         docs.putAll(term.getDocs());
     }

@@ -21,7 +21,7 @@ public class FilesCache {
     private int MaxSize;//cache size - number of files saved
     private double hit;//the amount of times the wanted file was found in the cache memory
     private double miss;//the amount of times the file wasn't found in the cache memory
-    private final double FUTURE_USE_PERCENT = 1;//the precentage of the size of the files that going to be used in the close future
+    private final double FUTURE_USE_PERCENT = 1;//the percentage of the size of the files that going to be used in the close future
 
     //</editor-fold>
 
@@ -95,17 +95,20 @@ public class FilesCache {
      * @return the removed file
      */
     public List<StringBuilder> add(String fileName, List<StringBuilder> fileLines){
-        if(MaxSize == 0){
+        if (MaxSize == 0){
             lastRemovedFileName = fileName;
             return fileLines;
         }
-        if(isInCache(fileName))
+        if (isInCache(fileName))
             return null;
         List<StringBuilder> toReturn = null;
         if (files.size() == MaxSize)
             toReturn = removeMin();
         files.put(fileName, fileLines);
-        filesImportance.put(fileName, calcSize(fileLines));
+        if (filesImportance.containsKey(fileName))
+            filesImportance.put(fileName, (int)(filesImportance.get(fileName)*0.5 + calcSize(files.get(fileName))));
+        else
+            filesImportance.put(fileName, calcSize(fileLines));
         filesQueue.add(fileName);
         miss++;
         return toReturn;
@@ -198,7 +201,7 @@ public class FilesCache {
             }
         setRemovedPath(toRemove);
         filesQueue.remove(toRemove);
-        filesImportance.remove(toRemove);//remove and check
+//        filesImportance.remove(toRemove);//remove and check
         return files.remove(toRemove);
     }
 
@@ -208,7 +211,7 @@ public class FilesCache {
      */
     @Override
     public String toString() {
-        return "Hit: " + hit + "\nMiss: " + miss + "\nHitRate: " + hitRate() + "\n";
+        return "Hit: " + hit + "\nMiss: " + miss + "\nHitRate: " + hitRate();
     }
 
 }

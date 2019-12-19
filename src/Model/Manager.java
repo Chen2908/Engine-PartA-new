@@ -72,9 +72,12 @@ public class Manager {
         double startTime = System.currentTimeMillis();
 
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
+
         while(docs!=null){
             docTerms = parser.parse(docs);
             callIndexBuild(docTerms);
+//            System.out.println(i++ + " - " + (System.currentTimeMillis() - lastTime) / 1000);
+//            lastTime = System.currentTimeMillis();
             docs = reader.getNextDocs(BATCH_SIZE);
         }
 
@@ -82,6 +85,8 @@ public class Manager {
         inverter.closeWriter();
 
         double endTime = System.currentTimeMillis();
+//        System.out.println("Total Time: " + (endTime - startTime) / 60000);
+//        System.out.println("Dictionary Size: " + inverter.getDictionary().size());
         setVocabularySize(inverter.getDictionary().size());
         setProcessTime((endTime - startTime) / 1000);
     }

@@ -81,11 +81,11 @@ public class Controller implements Observer {
             switch (args[0]) {
                 case "load":
                     loadingPath = args[1];
-                    fieldLoadingPath.appendText(loadingPath);
+                    fieldLoadingPath.setText(loadingPath);
                     break;
                 case "save":
                     savingPath = args[1];
-                    fieldSavingPath.appendText(savingPath);
+                    fieldSavingPath.setText(savingPath);
                     btnStem.setDisable(false);
                     btnStart.setDisable(false);
                     btnLoadDictionary.setDisable(false);

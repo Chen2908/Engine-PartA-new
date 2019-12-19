@@ -168,7 +168,7 @@ public class Indexer {
             //checks if the term is found in the HashMap that contains the terms that are bellow the threshold
             if(isNew && bellowThreshHold.containsKey(termValue.toLowerCase())) {
                 //marge the term info with the the term that were saved in the HashMap
-                terms.get(termValue).marge(bellowThreshHold.get(termValue.toLowerCase()));
+                terms.get(termValue).merge(bellowThreshHold.get(termValue.toLowerCase()));
                 bellowThreshHold.remove(termValue.toLowerCase());
             }
 
@@ -411,7 +411,7 @@ public class Indexer {
     public void closeWriter(){
         writeCache();
         writeDictionary();
-        writeBellowThreshHold();
+//        writeBellowThreshHold();
         writeDocsInfo();
         objectWriter.close();
     }
