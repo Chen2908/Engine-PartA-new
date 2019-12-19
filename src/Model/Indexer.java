@@ -385,7 +385,7 @@ public class Indexer {
         List<String> words = new ArrayList<>(dictionary.keySet());
         words.sort(String::compareTo);
         for(String word: words)
-            dic.append(word + " - " + dictionary.get(word)[TF_INDEX] + ";" + dictionary.get(word)[FILE_LINE_INDEX] + "\n");
+            dic.append(word + ";" + dictionary.get(word)[TF_INDEX] + ";" + dictionary.get(word)[FILE_LINE_INDEX] + "\n");
         List<StringBuilder> toWrite = new ArrayList<>();
         toWrite.add(dic);
         objectWriter.write(toWrite, outputDir + "\\dictionary.txt");
