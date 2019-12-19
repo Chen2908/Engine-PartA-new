@@ -9,6 +9,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * This class represents a parser object in the corpus processing.
+ * It receives a batch of documents to parse, and deconstructs each on them into terms.
+ * In creates a temporary dictionary of <String, Term> pairs of each batch and returns it.
+ */
 public class Parse {
 
     private static IStemmer porterStemmer;
@@ -19,7 +24,7 @@ public class Parse {
     private Set<Character> delimiters;
     private int textLength;
     private boolean stem;
-    HashMap<String, Term> docTerms;
+    private HashMap<String, Term> docTerms;
 
 
     //<editor-fold des="initiate static variables">
@@ -56,22 +61,27 @@ public class Parse {
 
     //</editor-fold>
 
+    /**
+     * Constructor with parameters
+     * @param stopWordsPath - the path where the stop words file is saved
+     * @param stemming - true if stemming should be applied, otherwise false
+     */
     public Parse(String stopWordsPath, boolean stemming) {
         docTerms = new HashMap<>();
         this.stem = stemming;
         this.stopWords = readStopWords(stopWordsPath);
         this.porterStemmer = new Stemmer();
         this.helpDicNumbers = new HashMap<>();
-        setHelpDicNum(this.helpDicNumbers);
+        setHelpDicNum();
         this.helpDicMonths = new HashMap<>();
-        setHelpDicMon(this.helpDicMonths);
+        setHelpDicMon();
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-', '\'',
                 '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�', '¥').collect(Collectors.toSet());
     }
 
 
     /**
-     * parse cover for batch
+     * parse wrapper for batch
      *
      * @param docs to parse, sends all the necessary parameters to working parse
      * @return hash map of the documents' terms
@@ -107,7 +117,7 @@ public class Parse {
             boolean found = false;
             //if the word contains / need to break it
             if (word.contains("/")) {
-                found = checkFraction(docTerms, word, i);
+                found = checkFraction( word, i);
                 if (found)
                     continue;
                 String[] splitedUntil = StringUtils.split(word, "/");
@@ -120,7 +130,7 @@ public class Parse {
             //the word ends with a separator, can be phone number or a term of one word
             if (separated) {
                 if ((i + 1) < textLength) {
-                    found = checkPhoneNum(docTerms, word, singleWords[i + 1], i);
+                    found = checkPhoneNum(word, singleWords[i + 1], i);
                     if (found)
                         i++;
                 }
@@ -128,7 +138,7 @@ public class Parse {
                     word = removeDeli(word);
                     if (StringUtils.containsAny(word, "#?|*&{}()�¥"))
                         continue;
-                    handle_1_word_term(docTerms, word, i);
+                    handle_1_word_term( word, i);
                     continue;
                 }
             } else { //can be a term of more than one word
@@ -140,7 +150,7 @@ public class Parse {
                     if (isNumeric(numberInWord)[0]) {
                         //the word is in format $number and number>million
                         if (((i + 1) < textLength)) {
-                            found = checkPriceMB(docTerms, word, singleWords[i + 1], i);
+                            found = checkPriceMB(word, singleWords[i + 1], i);
                             if (found)
                                 i++;
                         }
@@ -163,7 +173,7 @@ public class Parse {
                                     String[] sep = StringUtils.split(add, ".,/");
                                     add = sep[0];
                                     for (int k = 1; k < sep.length; k++) {
-                                        handle_1_word_term(docTerms, sep[k], curr);
+                                        handle_1_word_term(sep[k], curr);
                                     }
                                     finish = true;
                                 }
@@ -178,7 +188,7 @@ public class Parse {
                                 found = true;
                             }
                             if (found) {
-                                enterKey(docTerms, temp, i, true);
+                                enterKey(temp, i, true);
                                 i = curr - 1;
                             }
                         }
@@ -187,7 +197,7 @@ public class Parse {
                         //between - 4 words
                         if (word.equals("between") || word.equals("Between")) {
                             if (((i + 3) < textLength)) {
-                                found = checkBetween(docTerms, word, singleWords[i + 1], singleWords[i + 2], singleWords[i + 3], i);
+                                found = checkBetween(word, singleWords[i + 1], singleWords[i + 2], singleWords[i + 3], i);
                                 if (found)
                                     i += 3;
                             }
@@ -196,7 +206,7 @@ public class Parse {
                     if (!found) {
                         if (helpDicMonths.containsKey(word)) {   //word is a month
                             if (i + 1 < textLength) {
-                                found = checkDates(docTerms, word, singleWords[i + 1], i);
+                                found = checkDates(word, singleWords[i + 1], i);
                                 if (found)
                                     i++;
                             }
@@ -209,7 +219,7 @@ public class Parse {
                         if (word.contains("--"))  //need to split here
                             continue;
                         if ((i + 1) < textLength) {
-                            found = checkPhrasesTime(docTerms, word, singleWords[i + 1], i);
+                            found = checkPhrasesTime(word, singleWords[i + 1], i);
                             if (found)
                                 i++;
                         }
@@ -222,13 +232,13 @@ public class Parse {
                         }
                         // 4 words - price U.S
                         if (((i + 3) < textLength)) {
-                            found = checkPriceUS(docTerms, price, singleWords[i + 1], singleWords[i + 2], singleWords[i + 3], i);
+                            found = checkPriceUS(price, singleWords[i + 1], singleWords[i + 2], singleWords[i + 3], i);
                             if (found)
                                 i += 3;
                         }
                         // 3 words
                         if (!found && ((i + 2) < textLength)) {
-                            found = checkPricebn(docTerms, word, price, singleWords[i + 1], i);
+                            found = checkPricebn(word, price, singleWords[i + 1], i);
                             if (found)
                                 i += 2;
                         }
@@ -237,7 +247,7 @@ public class Parse {
                             String lastWord = singleWords[i + 1];
                             if (separatedWord(lastWord))
                                 lastWord = removeDeli(lastWord);
-                            found = handle_num_2_words(word, lastWord, docTerms, i);
+                            found = handle_num_2_words(word, lastWord, i);
                             if (found)
                                 i += 1;
                         }
@@ -245,7 +255,7 @@ public class Parse {
                 }
             }
             if (!found)
-                handle_1_word_term(docTerms, word, i);
+                handle_1_word_term(word, i);
         }
         return docTerms;
     }
@@ -254,33 +264,33 @@ public class Parse {
     private void handle_splitted(String[] splitted, int start, int end, int position) {
         for (int i = start; i < end; i++) {
             if (!StringUtils.containsAny(splitted[i], "#?|*&(){}¥"))
-                handle_1_word_term(docTerms, splitted[i], position);
+                handle_1_word_term(splitted[i], position);
         }
     }
 
-    private boolean checkPriceMB(HashMap<String, Term> docTerms, String word, String word2, int position) {
+    private boolean checkPriceMB(String word, String word2, int position) {
         String twoWords = word + " " + removeDeli(word2);
         Matcher match = $PRICEMB.matcher(twoWords);
         if (match.find()) {
-            saveAsNumMDollars(docTerms, Double.parseDouble(word.substring(1)), position);
+            saveAsNumMDollars(Double.parseDouble(word.substring(1)), position);
             return true;
         }
         return false;
     }
 
-    private boolean checkPriceUS(HashMap<String, Term> docTerms, String word1, String word2, String word3, String word4, int position) {
+    private boolean checkPriceUS(String word1, String word2, String word3, String word4, int position) {
         String lastWord = word4;
         if (separatedWord(lastWord))
             lastWord = removeDeli(lastWord);
         Matcher match = PRICEUS.matcher(word1 + " " + word2 + " " + word3 + " " + lastWord);
         if (match.find()) {
-            saveAsNumMDollars(docTerms, Double.parseDouble(word1) * (helpDicNumbers.get(word2) / MILLION), position);
+            saveAsNumMDollars(Double.parseDouble(word1) * (helpDicNumbers.get(word2) / MILLION), position);
             return true;
         }
         return false;
     }
 
-    private boolean checkPricebn(HashMap<String, Term> docTerms, String word, String word1, String word2, int position) {
+    private boolean checkPricebn(String word, String word1, String word2, int position) {
         // price bn/m dollars
         String lastWord = word2;
         if (separatedWord(lastWord))
@@ -288,19 +298,19 @@ public class Parse {
         String threeWords = word1 + " " + word2 + " " + lastWord;
         Matcher match = PRICEBIG$.matcher(threeWords);
         if (match.find()) {
-            saveAsNumMDollars(docTerms, Double.parseDouble(word1) * (helpDicNumbers.get(word2) / MILLION), position);
+            saveAsNumMDollars(Double.parseDouble(word1) * (helpDicNumbers.get(word2) / MILLION), position);
             return true;
         } else if (Double.parseDouble(word1) < MILLION) {  //price (less than million) fraction dollars
             match = PRICEFRAC.matcher(threeWords);
             if (match.find()) {
-                saveAsNumDollars(docTerms, word + " " + word1, position);
+                saveAsNumDollars(word + " " + word1, position);
                 return true;
             }
         }
         return false;
     }
 
-    private boolean checkPhoneNum(HashMap<String, Term> docTerms, String word, String word2, int position) {
+    private boolean checkPhoneNum(String word, String word2, int position) {
         String [] splitted = StringUtils.split(word2, ",./()");
         if (splitted.length==0)
             return false;
@@ -313,21 +323,21 @@ public class Parse {
         if (match.find()) {
             if (word.charAt(0)!='(' || ((word.length() > 1 && word.charAt(0)=='(' && word.charAt(1)=='(')))
                 word = word.substring(1);
-            enterKey(docTerms, word + " " + removeDeli(word2), position, false);
+            enterKey(word + " " + removeDeli(word2), position, false);
             return true;
         }
         return false;
     }
 
-    private boolean checkBetween(HashMap<String, Term> docTerms, String word1, String word2, String word3, String word4, int position) {
+    private boolean checkBetween(String word1, String word2, String word3, String word4, int position) {
         Matcher match = BETWEEN.matcher(word1 + " " + word2 + " " + word3 + " " + word4);
         if (match.find()) {
             String lastWord = word4;
             if (separatedWord(lastWord))
                 lastWord = removeDeli(lastWord);
-            enterKey(docTerms, word2 + "-" + lastWord, position, false);
-            enterKey(docTerms, word2, position + 1, false);
-            enterKey(docTerms, lastWord, position + 3, false);
+            enterKey(word2 + "-" + lastWord, position, false);
+            enterKey(word2, position + 1, false);
+            enterKey(lastWord, position + 3, false);
             position += 3;
             return true;
         }
@@ -335,7 +345,7 @@ public class Parse {
     }
 
 
-    private boolean checkPhrases(HashMap<String, Term> docTerms, String word1, int position) {
+    private boolean checkPhrases(String word1, int position) {
         Matcher match2 = PHRASEWORD.matcher(word1);
         String[] splitted;
         String[] splittedBy1;
@@ -357,22 +367,22 @@ public class Parse {
                      handle_splitted(splittedBy2, 1, splittedBy2.length , position);
                  wo2 = splittedBy2[0];
              }
-             enterKey(docTerms, wo1+"-"+wo2, position, false);
+             enterKey(wo1+"-"+wo2, position, false);
             return true;
         }
         return false;
     }
 
-    private boolean checkPhrasesTime(HashMap<String, Term> docTerms, String word1, String word2, int position) {
+    private boolean checkPhrasesTime(String word1, String word2, int position) {
         Matcher match = TIMETOTIMEGMT.matcher(word1 + " " + removeDeli(word2));
         if (match.find()) {
-            saveAsTime(docTerms, word1, position);
+            saveAsTime(word1, position);
             return true;
         }
         return false;
     }
 
-    private boolean checkDates(HashMap<String, Term> docTerms, String word1, String word2, int position) {
+    private boolean checkDates(String word1, String word2, int position) {
         //date - 2 words
         String lastWord = word2;
         if (separatedWord(lastWord))
@@ -382,7 +392,7 @@ public class Parse {
         Matcher match1 = MONTHDD_LOWER.matcher(twoWords);
         Matcher match2 = MONTHDD_UPPER.matcher(twoWords);
         if ((match1.find() || match2.find()) && helpDicMonths.containsKey(lastWord)) {
-            saveAsDateMMDD(docTerms, word1, lastWord, position);
+            saveAsDateMMDD(word1, lastWord, position);
             return true;
         }
         //MMYYYY
@@ -390,7 +400,7 @@ public class Parse {
             Matcher match3 = MONTHYEAR_LOWER.matcher(twoWords);
             Matcher match4 = MONTHYEAR_UPPER.matcher(twoWords);
             if ((match3.find() || match4.find()) && helpDicMonths.containsKey(word1)) {
-                saveAsDateMMYYYY(docTerms, word1, lastWord, position);
+                saveAsDateMMYYYY(word1, lastWord, position);
                 return true;
             }
         }
@@ -398,7 +408,7 @@ public class Parse {
     }
 
 
-    private void handle_1_word_term(HashMap<String, Term> docTerms, String word, int position) {
+    private void handle_1_word_term(String word, int position) {
         //$price, number%, first capital, phrase, plain num, plain word with letters
         char firstChar = word.charAt(0);
         //$price
@@ -414,16 +424,16 @@ public class Parse {
                 double num = Double.parseDouble(overMillion);
                 if (num > MILLION) { // $ price over a million number
                     num /= THOUSAND;
-                    saveAsNumMDollars(docTerms, num, position);
+                    saveAsNumMDollars(num, position);
                 } else { //$ price less than million number
-                    saveAsNumDollars(docTerms, numberInWord, position);
+                    saveAsNumDollars(numberInWord, position);
                 }
             }
         } else if (Character.isLetter(firstChar)) {
             if (word.contains("-")) {
                 if (word.contains("--") || StringUtils.containsAny(word, "%$"))
                     return;
-                checkPhrases(docTerms, word, position);
+                checkPhrases(word, position);
                 return;
             }
             //capital letter word
@@ -444,7 +454,7 @@ public class Parse {
                             sep = removeDeli(sep);
                         }
                         if (sep.length() > 2)
-                            checkFirstLetter(sep, docTerms, position);
+                            checkFirstLetter(sep,position);
                     }
                 }
                 return;
@@ -459,20 +469,20 @@ public class Parse {
                     String first = splittedWord[0];
                     String second = splittedWord[1];
                     if (isNumeric(first)[0] && isNumeric(second)[0]) {  //range as num-num
-                        enterKey(docTerms, first, position, false);
-                        enterKey(docTerms, second, position, false);
+                        enterKey(first, position, false);
+                        enterKey(second, position, false);
                     }
-                    enterKey(docTerms, removeDeli(word), position, false);
+                    enterKey(removeDeli(word), position, false);
                 }
                 return;
             } else {
-                if (checkFraction(docTerms, word, position)) {
+                if (checkFraction(word, position)) {
                     return;
                 }
                 //num%- one word
                 if (word.endsWith("%") && isNumeric(word.substring(0, word.length() - 1))[0]) {
                     String numberInWord = word.substring(0, word.length() - 1);
-                    saveAsPercent(docTerms, numberInWord, position);
+                    saveAsPercent(numberInWord, position);
                 } else {
                     boolean[] infoOnWord = isNumeric(word);
                     boolean negative = false;
@@ -485,7 +495,7 @@ public class Parse {
                             word = word.substring(1);
                         }
                         double number = Double.parseDouble(word);
-                        handleNumbers(docTerms, number, position, negative);
+                        handleNumbers(number, position, negative);
                     }
                 }
             }
@@ -499,7 +509,7 @@ public class Parse {
         return porterStemmer.toString();
     }
 
-    private void checkFirstLetter(String word, HashMap<String, Term> docTerms, int position) {
+    private void checkFirstLetter(String word, int position) {
         if (word.length() > 2) {
             boolean needToUpdate = false;
             String originalKey = null;
@@ -538,7 +548,7 @@ public class Parse {
         }
     }
 
-    private boolean handle_num_2_words(String word1, String word2, HashMap<String, Term> docTerms, int position) {
+    private boolean handle_num_2_words(String word1, String word2, int position) {
         if (!StringUtils.containsAny(word2, "#?|*&<>={}()�¥")) {
             //first word is a number
             boolean[] infoOnWord1 = isNumeric(word1);
@@ -548,99 +558,99 @@ public class Parse {
                     noComma = StringUtils.replace(word1, ",", "");
                 }
                 String twoWords = noComma + " " + word2;
-                return (checkPrice$(docTerms, word1, noComma, twoWords, position) ||
-                        checkMillionBillion(docTerms, word1, word2, position) ||
-                        checkPercent(docTerms, word1, twoWords, position) ||
-                        checkDDMM(docTerms, word1, twoWords, word2, position) ||
-                        checkTimePattern(docTerms, word1, twoWords, position));
+                return (checkPrice$(word1, noComma, twoWords, position) ||
+                        checkMillionBillion(word1, word2, position) ||
+                        checkPercent(word1, twoWords, position) ||
+                        checkDDMM(word1, twoWords, word2, position) ||
+                        checkTimePattern(word1, twoWords, position));
             }
         }
         return false;
     }
 
-    private boolean checkPrice$(HashMap<String, Term> docTerms, String word1, String noComma, String twoWords, int position) {
+    private boolean checkPrice$(String word1, String noComma, String twoWords, int position) {
         //price dollars
         Matcher match1 = PRICE$.matcher(twoWords);
         if (match1.find()) {
             double number = Double.parseDouble(noComma);
             if (number > MILLION) { // $ over a million number
                 number = number / THOUSAND;
-                saveAsNumMDollars(docTerms, number, position);
+                saveAsNumMDollars(number, position);
             } else { //$ less than million number
-                saveAsNumDollars(docTerms, word1, position);
+                saveAsNumDollars(word1, position);
             }
             return true;
         }
         return false;
     }
 
-    private boolean checkMillionBillion(HashMap<String, Term> docTerms, String word1, String word2, int position) {
+    private boolean checkMillionBillion(String word1, String word2, int position) {
         boolean found = false;
         if (word2.equals("Million")) {
-            enterKey(docTerms, word1 + "M", position, false);
+            enterKey(word1 + "M", position, false);
             found = true;
         } else if (word2.equals("Billion")) {
-            enterKey(docTerms, word1 + "B", position, false);
+            enterKey(word1 + "B", position, false);
             found = true;
         } else if (word2.equals("Thousand")) {
-            enterKey(docTerms, word1 + "K", position, false);
+            enterKey(word1 + "K", position, false);
             found = true;
         }
         return found;
     }
 
-    private boolean checkPercent(HashMap<String, Term> docTerms, String word1, String twoWords, int position) {
+    private boolean checkPercent(String word1, String twoWords, int position) {
         //percent
         Matcher match1 = PERCENT2.matcher(twoWords);
         if (match1.find()) {
-            saveAsPercent(docTerms, word1, position);
+            saveAsPercent(word1, position);
             return true;
         }
         return false;
     }
 
-    private boolean checkFraction(HashMap<String, Term> docTerms, String word, int position) {
+    private boolean checkFraction(String word, int position) {
         Matcher match = FRACTION.matcher(word);
         if (match.find()) {
             word = removeDeli(word);
             String[] numbers = word.split("/");
             if (isNumeric(numbers[0])[0] && isNumeric(numbers[1])[0]) {
-                enterKey(docTerms, numbers[0] + "/" + numbers[1], position, false);
+                enterKey(numbers[0] + "/" + numbers[1], position, false);
                 return true;
             }
         }
         return false;
     }
 
-    private boolean checkDDMM(HashMap<String, Term> docTerms, String word1, String twoWords, String word2, int position) {
+    private boolean checkDDMM(String word1, String twoWords, String word2, int position) {
         //DD MM
         Matcher match1 = DDMONTH_LOWER.matcher(twoWords);
         Matcher match2 = DDMONTH_UPPER.matcher(twoWords);
         if ((match1.find() || match2.find()) && helpDicMonths.containsKey(word2) && !word1.contains(".")) {
-            saveAsDateMMDD(docTerms, word2, word1, position);
+            saveAsDateMMDD(word2, word1, position);
             return true;
         }
         return false;
     }
 
-    private boolean checkTimePattern(HashMap<String, Term> docTerms, String word1, String twoWords, int position) {
+    private boolean checkTimePattern(String word1, String twoWords, int position) {
         boolean found = false;
         //time GMT
         Matcher match1 = TIMEGMT.matcher(twoWords);
         if (match1.find()) {
-            saveAsTime(docTerms, word1, position);
+            saveAsTime(word1, position);
             found = true;
         } else {
             //time AM
             Matcher match2 = TIMEAM.matcher(twoWords);
             if (match2.find()) {
-                saveAsTimeAM(docTerms, word1, position);
+                saveAsTimeAM(word1, position);
                 found = true;
             } else {
                 //time PM
                 Matcher match3 = TIMEPM.matcher(twoWords);
                 if (match3.find()) {
-                    saveAsTimePM(docTerms, word1, position);
+                    saveAsTimePM(word1, position);
                     found = true;
                 }
             }
@@ -649,7 +659,7 @@ public class Parse {
     }
 
 
-    private void enterKey(HashMap<String, Term> docTerms, String key, int position, boolean isEntity) {
+    private void enterKey(String key, int position, boolean isEntity) {
         boolean singleLetters = Character.isLetter(key.charAt(0)) && key.length() < 3;
         boolean theSame = allSameLetter(key);
         if (!singleLetters && !theSame) {
@@ -675,7 +685,7 @@ public class Parse {
         return false;
     }
 
-    private void saveAsTimeAM(HashMap<String, Term> docTerms, String word, int position) {
+    private void saveAsTimeAM(String word, int position) {
         String time = "";
         int len = word.length();
         if (len == 1) {
@@ -685,44 +695,44 @@ public class Parse {
         } else {
             time = word;
         }
-        enterKey(docTerms, time, position, false);
+        enterKey(time, position, false);
     }
 
-    private void saveAsTimePM(HashMap<String, Term> docTerms, String word, int position) {
+    private void saveAsTimePM(String word, int position) {
         if (isNumeric(word)[0]) {
             int value = Integer.parseInt(word) + AMTOPM;
-            saveAsTimeAM(docTerms, "" + value, position);
+            saveAsTimeAM("" + value, position);
         }
     }
 
-    private void saveAsTime(HashMap<String, Term> docTerms, String word, int position) {
+    private void saveAsTime(String word, int position) {
         //0012-0024
         String time = word.substring(0, 2) + ":" + word.substring(2, 4);
         if (word.length() == 9 && word.charAt(4) == '-') {
             String time2 = word.substring(5, 7) + ":" + word.substring(7);
             time += "-" + time2;
         }
-        enterKey(docTerms, time, position, false);
+        enterKey(time, position, false);
     }
 
     //saving formats
-    private void saveAsNumMDollars(HashMap<String, Term> docTerms, double num, int position) {
+    private void saveAsNumMDollars(double num, int position) {
         DecimalFormat format = new DecimalFormat("0.###");
         String key = format.format(num) + " M Dollars";
-        enterKey(docTerms, key, position, false);
+        enterKey(key, position, false);
     }
 
-    private void saveAsNumDollars(HashMap<String, Term> docTerms, String num, int position) {
+    private void saveAsNumDollars(String num, int position) {
         String key = num + " Dollars";
-        enterKey(docTerms, key, position, false);
+        enterKey(key, position, false);
     }
 
-    private void saveAsPercent(HashMap<String, Term> docTerms, String word, int position) {
+    private void saveAsPercent(String word, int position) {
         String key = word + "%";
-        enterKey(docTerms, key, position, false);
+        enterKey(key, position, false);
     }
 
-    private void saveAsDateMMDD(HashMap<String, Term> docTerms, String month, String day, int position) {
+    private void saveAsDateMMDD(String month, String day, int position) {
         boolean[] infoOnNum = isNumeric(day);
         if (infoOnNum[0] && !infoOnNum[1]) {
             int dayInt = Integer.parseInt(day);
@@ -731,13 +741,13 @@ public class Parse {
             }
             String monthNum = removeDeli(month);
             String key = helpDicMonths.get(monthNum) + "-" + day;
-            enterKey(docTerms, key, position, false);
+            enterKey(key, position, false);
         }
     }
 
-    private void saveAsDateMMYYYY(HashMap<String, Term> docTerms, String month, String year, int position) {
+    private void saveAsDateMMYYYY(String month, String year, int position) {
         String key = year + "-" + helpDicMonths.get(month);
-        enterKey(docTerms, key, position, false);
+        enterKey(key, position, false);
     }
 
     /**
@@ -793,7 +803,7 @@ public class Parse {
      * @param number - a double number to handle
      * @return a string in the format the number d should be saves as
      */
-    private void handleNumbers(HashMap<String, Term> docTerms, double number, int position, boolean negative) {
+    private void handleNumbers(double number, int position, boolean negative) {
         //keep only 3 digits after the point
         String add = "";
         double divideIn = 1.0;
@@ -812,7 +822,7 @@ public class Parse {
         number = number / divideIn;
         String rounded = (new DecimalFormat("##.###")).format(number) + add;
 
-        enterKey(docTerms, "" + rounded, position, false);
+        enterKey("" + rounded, position, false);
     }
 
 
@@ -835,65 +845,68 @@ public class Parse {
     }
 
     //<editor-fold des="set help dictionaries"
-    private void setHelpDicNum(HashMap<String, Double> helpDictionary) {
-        helpDictionary.put("thousand", Math.pow(10, 3));
-        helpDictionary.put("million", Math.pow(10, 6));
-        helpDictionary.put("billion", Math.pow(10, 9));
-        helpDictionary.put("trillion", Math.pow(10, 12));
-        helpDictionary.put("m", Math.pow(10, 6));
-        helpDictionary.put("bn", Math.pow(10, 9));
+
+    private void setHelpDicNum() {
+        this.helpDicNumbers.put("thousand", Math.pow(10, 3));
+        this.helpDicNumbers.put("million", Math.pow(10, 6));
+        this.helpDicNumbers.put("billion", Math.pow(10, 9));
+        this.helpDicNumbers.put("trillion", Math.pow(10, 12));
+        this.helpDicNumbers.put("m", Math.pow(10, 6));
+        this.helpDicNumbers.put("bn", Math.pow(10, 9));
     }
 
-    private void setHelpDicMon(HashMap<String, String> helpDictionary) {
-        helpDictionary.put("JANUARY", "01");
-        helpDictionary.put("JAN", "01");
-        helpDictionary.put("January", "01");
-        helpDictionary.put("Jan", "01");
-        helpDictionary.put("FEBRUARY", "02");
-        helpDictionary.put("February", "02");
-        helpDictionary.put("FEB", "02");
-        helpDictionary.put("Feb", "02");
-        helpDictionary.put("MARCH", "03");
-        helpDictionary.put("March", "03");
-        helpDictionary.put("MAR", "03");
-        helpDictionary.put("Mar", "03");
-        helpDictionary.put("APRIL", "04");
-        helpDictionary.put("April", "04");
-        helpDictionary.put("APR", "04");
-        helpDictionary.put("Apr", "04");
-        helpDictionary.put("MAY", "05");
-        helpDictionary.put("May", "05");
-        helpDictionary.put("JUNE", "06");
-        helpDictionary.put("June", "06");
-        helpDictionary.put("JUN", "06");
-        helpDictionary.put("Jun", "06");
-        helpDictionary.put("JULY", "07");
-        helpDictionary.put("July", "07");
-        helpDictionary.put("JUL", "07");
-        helpDictionary.put("Jul", "07");
-        helpDictionary.put("AUGUST", "08");
-        helpDictionary.put("August", "08");
-        helpDictionary.put("AUG", "08");
-        helpDictionary.put("Aug", "08");
-        helpDictionary.put("SEPTEMBER", "09");
-        helpDictionary.put("September", "09");
-        helpDictionary.put("SEP", "09");
-        helpDictionary.put("Sep", "09");
-        helpDictionary.put("OCTOBER", "10");
-        helpDictionary.put("October", "10");
-        helpDictionary.put("OCT", "10");
-        helpDictionary.put("Oct", "10");
-        helpDictionary.put("NOVEMBER", "11");
-        helpDictionary.put("November", "11");
-        helpDictionary.put("NOV", "11");
-        helpDictionary.put("Nov", "11");
-        helpDictionary.put("DECEMBER", "12");
-        helpDictionary.put("December", "12");
-        helpDictionary.put("DEC", "12");
-        helpDictionary.put("Dec", "12");
+    private void setHelpDicMon() {
+        this.helpDicMonths.put("JANUARY", "01");
+        this.helpDicMonths.put("JAN", "01");
+        this.helpDicMonths.put("January", "01");
+        this.helpDicMonths.put("Jan", "01");
+        this.helpDicMonths.put("FEBRUARY", "02");
+        this.helpDicMonths.put("February", "02");
+        this.helpDicMonths.put("FEB", "02");
+        this.helpDicMonths.put("Feb", "02");
+        this.helpDicMonths.put("MARCH", "03");
+        this.helpDicMonths.put("March", "03");
+        this.helpDicMonths.put("MAR", "03");
+        this.helpDicMonths.put("Mar", "03");
+        this.helpDicMonths.put("APRIL", "04");
+        this.helpDicMonths.put("April", "04");
+        this.helpDicMonths.put("APR", "04");
+        this.helpDicMonths.put("Apr", "04");
+        this.helpDicMonths.put("MAY", "05");
+        this.helpDicMonths.put("May", "05");
+        this.helpDicMonths.put("JUNE", "06");
+        this.helpDicMonths.put("June", "06");
+        this.helpDicMonths.put("JUN", "06");
+        this.helpDicMonths.put("Jun", "06");
+        this.helpDicMonths.put("JULY", "07");
+        this.helpDicMonths.put("July", "07");
+        this.helpDicMonths.put("JUL", "07");
+        this.helpDicMonths.put("Jul", "07");
+        this.helpDicMonths.put("AUGUST", "08");
+        this.helpDicMonths.put("August", "08");
+        this.helpDicMonths.put("AUG", "08");
+        this.helpDicMonths.put("Aug", "08");
+        this.helpDicMonths.put("SEPTEMBER", "09");
+        this.helpDicMonths.put("September", "09");
+        this.helpDicMonths.put("SEP", "09");
+        this.helpDicMonths.put("Sep", "09");
+        this.helpDicMonths.put("OCTOBER", "10");
+        this.helpDicMonths.put("October", "10");
+        this.helpDicMonths.put("OCT", "10");
+        this.helpDicMonths.put("Oct", "10");
+        this.helpDicMonths.put("NOVEMBER", "11");
+        this.helpDicMonths.put("November", "11");
+        this.helpDicMonths.put("NOV", "11");
+        this.helpDicMonths.put("Nov", "11");
+        this.helpDicMonths.put("DECEMBER", "12");
+        this.helpDicMonths.put("December", "12");
+        this.helpDicMonths.put("DEC", "12");
+        this.helpDicMonths.put("Dec", "12");
     }
     //</editor-fold>
 
+
+    //<editor-fold des="read stop words"
     //read all stop words from the given file and add them into an array list
     private HashSet<String> readStopWords(String stopWordsPath) {
         String filePath = stopWordsPath + "\\stop words.txt";
@@ -909,5 +922,7 @@ public class Parse {
         }
         return temp;
     }
+    //</editor-fold>"
+
 
 }

@@ -1,10 +1,13 @@
 package Model;
-import javafx.scene.control.Alert;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
 
+/**
+ * This class represents the connections between the logical part of the search engine and the view
+ * It keep a manager object and uses it to start the parsing and indexing process when start is clicked in the view
+ */
 public class Model extends Observable {
 
     private Manager manager;
@@ -104,7 +107,7 @@ public class Model extends Observable {
         return terms;
     }
 
-
+    //set all living objects to null
     public void resetObjects() {
         if (manager != null) {
             manager.resetObjects();
