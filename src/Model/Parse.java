@@ -25,6 +25,7 @@ public class Parse {
     private int textLength;
     private boolean stem;
     private HashMap<String, Term> docTerms;
+    private HashSet<String> myStopWords;
 
 
     //<editor-fold des="initiate static variables">
@@ -77,6 +78,8 @@ public class Parse {
         setHelpDicMon();
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-', '\'',
                 '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�', '¥').collect(Collectors.toSet());
+        myStopWords= new HashSet<>();
+        setMyStopWords();
     }
 
 
@@ -103,13 +106,13 @@ public class Parse {
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
 
-        String[] singleWords = StringUtils.split(text, " ;][:\\\"{}\n\r\t=<>");
+        String[] singleWords = StringUtils.split(text, " ;:\\\"{}\n\r\t=<>");
         this.textLength = singleWords.length;
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
             //wouldn't want to keep single chars
-            if (word.length() < 2){
+            if (word.length() < 2 ){
                 if (word.length()==1 && !Character.isDigit(word.charAt(0)))
                     continue;
             }
@@ -136,6 +139,8 @@ public class Parse {
                 }
                 if (!found) {
                     word = removeDeli(word);
+                    if (word.isEmpty())
+                        continue;
                     if (StringUtils.containsAny(word, "#?|*&{}()�¥"))
                         continue;
                     handle_1_word_term( word, i);
@@ -163,7 +168,7 @@ public class Parse {
                         boolean finish = false;
                         int curr = i + 1;
                         String temp = word;
-                        if (! StringUtils.containsAny(temp, ",.'")) {
+                        if (! StringUtils.containsAny(temp, ",.'") && capitalWord(temp)) {
                             while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
                                 String add = singleWords[curr];
                                 finish = separatedWord(add);
@@ -756,9 +761,11 @@ public class Parse {
      * @param word a string to clean
      */
     private String removeDeli(String word) {
+        if (word.equals("--"))
+            return "";
         int first = 0;
         int last = word.length() - 1;
-        while (first > last && delimiters.contains(word.charAt(first))) //prefix
+        while (first < last && delimiters.contains(word.charAt(first))) //prefix
             if (word.charAt(first) != '-')
                 first++;
         while (last > 0 && delimiters.contains(word.charAt(last)))  //suffix
@@ -828,7 +835,7 @@ public class Parse {
 
     //checks if the words is a stop word
     private boolean isAStopWord(String word) {
-        return stopWords.contains(word.toLowerCase());
+        return (stopWords.contains(word.toLowerCase()) || myStopWords.contains(word.toUpperCase()));
     }
 
     private boolean capitalWord(String word) {
@@ -902,6 +909,14 @@ public class Parse {
         this.helpDicMonths.put("December", "12");
         this.helpDicMonths.put("DEC", "12");
         this.helpDicMonths.put("Dec", "12");
+    }
+
+    private void setMyStopWords(){
+        this.myStopWords.add("TABLERULE");
+        this.myStopWords.add("TABLECELL");
+        this.myStopWords.add("CELLRULE");
+        this.myStopWords.add("CHJ");
+        this.myStopWords.add("CVJ");
     }
     //</editor-fold>
 

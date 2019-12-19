@@ -118,9 +118,6 @@ public class Manager {
         File mainFolder = new File(dir);
         if (!mainFolder.exists()) {
             mainFolder.mkdir();
-            File indexFolder = new File(dir + "\\Index");
-            if (!indexFolder.exists())
-                indexFolder.mkdir();
         }
         return dir;
     }

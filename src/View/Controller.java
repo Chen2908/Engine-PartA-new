@@ -258,7 +258,6 @@ public class Controller implements Observer {
              }
     }
 
-
     public static class MapView{
         private SimpleStringProperty term;
         private SimpleIntegerProperty count;
