@@ -212,12 +212,11 @@ public class Controller implements Observer {
 
             TableColumn<String, MapView> firstCol = new TableColumn<>("Term");
             firstCol.setCellValueFactory(new PropertyValueFactory<>("term"));
-            firstCol.setEditable(true);
-            firstCol.setPrefWidth(200);
+            firstCol.setPrefWidth(300);
             TableColumn<Integer, MapView> secondCol = new TableColumn<>("Count");
             secondCol.setCellValueFactory(new PropertyValueFactory<>("count"));
             secondCol.setEditable(true);
-            secondCol.setPrefWidth(200);
+            secondCol.setPrefWidth(300);
 
             tb.getColumns().add(firstCol);
             tb.getColumns().add(secondCol);
