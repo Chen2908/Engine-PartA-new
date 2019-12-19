@@ -105,7 +105,6 @@ public class Parse {
      */
     public HashMap<String, Term> parse(String text, String docNo, String docDate) {
         this.docNo = docNo;
-
         String[] singleWords = StringUtils.split(text, " ;:\\\"{}\n\r\t=<>");
         this.textLength = singleWords.length;
         //go over every word in the text
@@ -172,8 +171,11 @@ public class Parse {
                             while (!finish && curr < textLength && capitalWord(singleWords[curr])) {
                                 String add = singleWords[curr];
                                 finish = separatedWord(add);
-                                if (finish)
+                                if (finish) {
                                     add = removeDeli(add);
+                                    if (add.isEmpty())
+                                        continue;
+                                }
                                 if (StringUtils.containsAny(add, ",./")) {
                                     String[] sep = StringUtils.split(add, ".,/");
                                     add = sep[0];
@@ -250,8 +252,11 @@ public class Parse {
                         // 2 words
                         if (!found && ((i + 1) < textLength)) {
                             String lastWord = singleWords[i + 1];
-                            if (separatedWord(lastWord))
+                            if (separatedWord(lastWord)) {
                                 lastWord = removeDeli(lastWord);
+                                if (lastWord.isEmpty())
+                                    continue;
+                            }
                             found = handle_num_2_words(word, lastWord, i);
                             if (found)
                                 i += 1;
@@ -454,12 +459,14 @@ public class Parse {
                 for (String sep : wordsSeparated) {
                     if (!isAStopWord(sep)) {
                         sep = removeDeli(sep);
-                        if (stem) {
-                            sep = stemmedWord(sep);
-                            sep = removeDeli(sep);
+                        if (!sep.isEmpty()) {
+                            if (stem) {
+                                sep = stemmedWord(sep);
+                                sep = removeDeli(sep);
+                            }
+                            if (sep.length() > 2)
+                                checkFirstLetter(sep, position);
                         }
-                        if (sep.length() > 2)
-                            checkFirstLetter(sep,position);
                     }
                 }
                 return;
@@ -477,7 +484,10 @@ public class Parse {
                         enterKey(first, position, false);
                         enterKey(second, position, false);
                     }
-                    enterKey(removeDeli(word), position, false);
+                    String key = removeDeli(word);
+                    if (!key.isEmpty()) {
+                        enterKey(removeDeli(word), position, false);
+                    }
                 }
                 return;
             } else {
@@ -618,10 +628,12 @@ public class Parse {
         Matcher match = FRACTION.matcher(word);
         if (match.find()) {
             word = removeDeli(word);
-            String[] numbers = word.split("/");
-            if (isNumeric(numbers[0])[0] && isNumeric(numbers[1])[0]) {
-                enterKey(numbers[0] + "/" + numbers[1], position, false);
-                return true;
+            if (!word.isEmpty()) {
+                String[] numbers = word.split("/");
+                if (isNumeric(numbers[0])[0] && isNumeric(numbers[1])[0]) {
+                    enterKey(numbers[0] + "/" + numbers[1], position, false);
+                    return true;
+                }
             }
         }
         return false;
@@ -745,8 +757,10 @@ public class Parse {
                 day = "0" + day;
             }
             String monthNum = removeDeli(month);
-            String key = helpDicMonths.get(monthNum) + "-" + day;
-            enterKey(key, position, false);
+            if (!monthNum.isEmpty()) {
+                String key = helpDicMonths.get(monthNum) + "-" + day;
+                enterKey(key, position, false);
+            }
         }
     }
 
@@ -761,16 +775,20 @@ public class Parse {
      * @param word a string to clean
      */
     private String removeDeli(String word) {
-        if (word.equals("--"))
-            return "";
+        boolean startWithMinus=false;
         int first = 0;
         int last = word.length() - 1;
-        while (first < last && delimiters.contains(word.charAt(first))) //prefix
-            if (word.charAt(first) != '-')
-                first++;
+        while (first < last && delimiters.contains(word.charAt(first))) { //prefix
+            if (word.charAt(first) == '-')
+                startWithMinus = true;
+            first++;
+        }
         while (last > 0 && delimiters.contains(word.charAt(last)))  //suffix
             last--;
-        return StringUtils.substring(word, first, last + 1);
+        String wordWithout= StringUtils.substring(word, first, last + 1);
+        if (startWithMinus)
+            wordWithout = '-'+ wordWithout;
+        return wordWithout;
     }
 
     private boolean separatedWord(String word) {

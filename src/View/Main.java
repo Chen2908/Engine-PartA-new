@@ -13,7 +13,9 @@ import javafx.stage.WindowEvent;
 
 import java.util.*;
 
-
+/**
+ * main class, uploads the application
+ */
 public class Main extends Application {
 
     @Override

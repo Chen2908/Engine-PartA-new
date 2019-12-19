@@ -22,6 +22,7 @@ public class Model extends Observable {
 
     }
 
+    //initiates the parsing and indexing process
     public void parse(String loadingPath, String savingPath, boolean stem) {
         this.stem = stem;
         setManager(loadingPath, savingPath);

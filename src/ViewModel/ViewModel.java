@@ -7,6 +7,9 @@ import javafx.stage.Window;
 import java.io.*;
 import java.util.*;
 
+/**
+ * ViewModel class is the layer between the view and the model. It connects them.
+ */
 public class ViewModel extends Observable implements Observer {
 
     private Model model;

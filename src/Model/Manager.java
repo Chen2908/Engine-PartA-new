@@ -28,7 +28,6 @@ public class Manager {
     private double processTime;
     private HashMap<String, Term> docTerms;
 
-
     /**
      * Constructor with parameters
      * @param corpusPath - the path where the corpus files and stop words is saved
@@ -46,7 +45,6 @@ public class Manager {
         this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250);
         this.calculator = new Calculator(corpusSize);
     }
-
 
     private void setPaths() {
         String path = createIndexFolders();
@@ -74,13 +72,10 @@ public class Manager {
         double startTime = System.currentTimeMillis();
 
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
-        int counter = 0;
         while(docs!=null){
-            System.out.println(counter);
             docTerms = parser.parse(docs);
             callIndexBuild(docTerms);
             docs = reader.getNextDocs(BATCH_SIZE);
-            counter++;
         }
 
         //write all dictionaries
@@ -89,12 +84,6 @@ public class Manager {
         double endTime = System.currentTimeMillis();
         setVocabularySize(inverter.getDictionary().size());
         setProcessTime((endTime - startTime) / 1000);
-
-        double usedMemoryAfter = runtime.totalMemory() - runtime.freeMemory();
-        System.out.println("Number Of Words: " + inverter.getDictionary().size());
-        System.out.println("Number Of Words Below Threshold: " + inverter.getBellowThreshHold().size());
-        System.out.println("Running Time: " + (endTime - startTime) / 60000 + " Min");
-        System.out.println("Memory increased: " + (usedMemoryAfter - usedMemoryBefore) / Math.pow(2, 20) + " MB");
     }
 
 

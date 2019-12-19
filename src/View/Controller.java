@@ -24,6 +24,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * This class represents the view layer in MVVM structure. This is the controller of the program.
+ * It controls the UI
+ */
 public class Controller implements Observer {
 
     private ViewModel viewModel;
