@@ -11,16 +11,18 @@ import java.util.concurrent.Executors;
 
 public class ObjectWriter {
 
-    //<editor-fold des="Fields & Constructor">
+    //<editor-fold "Fields & Constructor">
 
-    private String dirPath;
     private FilesWriter filesWriter;
     private ExecutorService threadPool;
 
-    public ObjectWriter(String directoryPath, int poolSize){
+    /**
+     * Constructor
+     * @param poolSize - number of threads
+     */
+    public ObjectWriter(int poolSize){
         filesWriter = new FilesWriter();
         threadPool = Executors.newFixedThreadPool(poolSize);
-        dirPath = directoryPath;
     }
 
     //</editor-fold>
@@ -29,21 +31,45 @@ public class ObjectWriter {
 
     //<editor-fold des="OverLoading Functions">
 
+    /**
+     * This method gets an object to write and a path
+     * and writes the object at the given path
+     * @param toWrite - IWritable
+     * @param filePath - file path
+     */
     public void write(IWritable toWrite, String filePath){
         write(toWrite, filePath, false);
     }
 
+    /**
+     * This method gets a List of Strings to write and a path
+     * and writes the object at the given path
+     * @param toWrite - List of Strings
+     * @param filePath - file path
+     */
     public void write(List<StringBuilder> toWrite, String filePath){
         write(toWrite, filePath, false);
     }
 
     //</editor-fold>
 
+    /**
+     * This method gets an object to write and a path
+     * and writes the object at the given path
+     * @param toWrite - IWritable
+     * @param filePath - file path
+     */
     public void write(IWritable toWrite, String filePath, boolean toAppend){
         this.filesWriter.addFilesToWrite(filePath, toWrite.toFile(), toAppend);
         start();
     }
 
+    /**
+     * This method gets a List of Strings to write and a path
+     * and writes the object at the given path
+     * @param toWrite - List of Strings
+     * @param filePath - file path
+     */
     public void write(List<StringBuilder> toWrite, String filePath, boolean toAppend){
         this.filesWriter.addFilesToWrite(filePath, toWrite, toAppend);
         start();
@@ -53,10 +79,18 @@ public class ObjectWriter {
 
     //<editor-fold des="Inner Methods">
 
+    /**
+     * This method execute a thread that writes a file
+     */
     private void start(){
         threadPool.execute(filesWriter);
     }
 
+    /**
+     * This method returns a list with the given file content
+     * @param filePath - the file path to read
+     * @return the content of the file
+     */
     public List<StringBuilder> readFile(String filePath){
 
         List<StringBuilder> lines = new ArrayList<>();
@@ -66,10 +100,8 @@ public class ObjectWriter {
                 if (!tried) {
                     lines = filesWriter.getFileToUpdate(filePath);
                     tried = true;
-                    Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
                 }
 
-            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             File file = new File(filePath);
             if (!file.exists() || lines.size() > 0)
                 return lines;
@@ -93,14 +125,9 @@ public class ObjectWriter {
         }
     }
 
-    public void acquire(String filePath){
-        filesWriter.acquire(filePath);
-    }
-
-    public void release(String filePath){
-        filesWriter.release(filePath);
-    }
-
+    /**
+     * This method closes the thread pool
+     */
     public void close(){
         boolean firstTime = true;
         while (filesWriter.numOfFilesToWrite() > 0)
