@@ -20,6 +20,7 @@ public class Parse {
     private int textLength;
     private boolean stem;
     HashMap<String, Term> docTerms;
+    private HashSet<String> myStopWords;
 
 
     //<editor-fold des="initiate static variables">
@@ -67,6 +68,8 @@ public class Parse {
         setHelpDicMon(this.helpDicMonths);
         this.delimiters = Stream.of('\'', '(', '[', '{', ')', ']', '}', ',', '.', ';', '/', '\\', '-', '\'',
                 '#', '!', '?', ':', '`', '|', '&', '^', '*', '@', '+', '"', '�', '¥').collect(Collectors.toSet());
+        this.myStopWords = new HashSet<>();
+        setMyStopWords();
     }
 
 
@@ -818,7 +821,7 @@ public class Parse {
 
     //checks if the words is a stop word
     private boolean isAStopWord(String word) {
-        return stopWords.contains(word.toLowerCase());
+        return (stopWords.contains(word.toLowerCase()) || myStopWords.contains(word.toUpperCase()));
     }
 
     private boolean capitalWord(String word) {
@@ -891,6 +894,14 @@ public class Parse {
         helpDictionary.put("December", "12");
         helpDictionary.put("DEC", "12");
         helpDictionary.put("Dec", "12");
+    }
+
+    private void setMyStopWords(){
+        this.myStopWords.add("CELLRULE");
+        this.myStopWords.add("TABLERULE");
+        this.myStopWords.add("TABLECELL");
+        this.myStopWords.add("CHJ");
+        this.myStopWords.add("CVJ");
     }
     //</editor-fold>
 

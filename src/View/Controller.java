@@ -199,61 +199,63 @@ public class Controller implements Observer {
     public void showDictionary() {
         if (!loaded)
             loadDictionary();
-        ArrayList<String> termToShow = viewModel.getTermsSorted();
-        ArrayList<Integer> counts = viewModel.getCountOfTerms();
+        if (loaded) {
+            ArrayList<String> termToShow = viewModel.getTermsSorted();
+            ArrayList<Integer> counts = viewModel.getCountOfTerms();
 
-        TableView tb = new TableView<>();
+            TableView tb = new TableView<>();
 
-        TableColumn<String, MapView> firstCol = new TableColumn<>("Term");
-        firstCol.setCellValueFactory(new PropertyValueFactory<>("term"));
-        firstCol.setEditable(true);
-        firstCol.setPrefWidth(200);
-        TableColumn<Integer, MapView> secondCol = new TableColumn<>("Count");
-        secondCol.setCellValueFactory(new PropertyValueFactory<>("count"));
-        secondCol.setEditable(true);
-        secondCol.setPrefWidth(200);
+            TableColumn<String, MapView> firstCol = new TableColumn<>("Term");
+            firstCol.setCellValueFactory(new PropertyValueFactory<>("term"));
+            firstCol.setEditable(true);
+            firstCol.setPrefWidth(200);
+            TableColumn<Integer, MapView> secondCol = new TableColumn<>("Count");
+            secondCol.setCellValueFactory(new PropertyValueFactory<>("count"));
+            secondCol.setEditable(true);
+            secondCol.setPrefWidth(200);
 
-        tb.getColumns().add(firstCol);
-        tb.getColumns().add(secondCol);
-        tb.setEditable(true);
-        tb.getSelectionModel().setCellSelectionEnabled(true);
+            tb.getColumns().add(firstCol);
+            tb.getColumns().add(secondCol);
+            tb.setEditable(true);
+            tb.getSelectionModel().setCellSelectionEnabled(true);
 
-        for (int i = 0; i < termToShow.size(); i++) {
-            Integer count = counts.get(i);
-            String term = termToShow.get(i);
-            MapView mv = new MapView(term, count);
-            tb.getItems().add( mv );
+            for (int i = 0; i < termToShow.size(); i++) {
+                Integer count = counts.get(i);
+                String term = termToShow.get(i);
+                MapView mv = new MapView(term, count);
+                tb.getItems().add(mv);
+            }
+
+            StackPane sPane = new StackPane(tb);
+            Scene scene = new Scene(sPane, 600, 800);
+            Stage stage = new Stage();
+            stage.setTitle("Dictionary");
+            stage.setScene(scene);
+            stage.show();
         }
-
-        StackPane sPane = new StackPane(tb);
-        Scene scene = new Scene(sPane, 600, 800);
-        Stage stage = new Stage();
-        stage.setTitle("Dictionary");
-        stage.setScene(scene);
-        stage.show();
 
     }
 
     public void resetAll() {
-        File dir;
-        if (stem)
-             dir= new File(savingPath+ "\\With Stemming");
-        else
-            dir = new File(savingPath+ "\\Without Stemming");
-
-        if (dir.exists()) {
-            try {
-               FileUtils.cleanDirectory(dir);
-               FileUtils.deleteDirectory(dir);
-            }catch (Exception e){
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot delete directory");
-                alert.showAndWait();
-            }
-        }
+       deleteDirs(savingPath+ "\\With Stemming");
+       deleteDirs(savingPath+ "\\Without Stemming");
         //reset memory
         viewModel.resetObjects();
         btnShowDictionary.setDisable(true);
         btnLoadDictionary.setDisable(true);
+    }
+
+     private void deleteDirs(String path){
+         File dir= new File(path);
+             if (dir.exists()) {
+                 try {
+                     FileUtils.cleanDirectory(dir);
+                     FileUtils.deleteDirectory(dir);
+                 }catch (Exception e){
+                     Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot delete directory");
+                     alert.showAndWait();
+                 }
+             }
     }
 
 
