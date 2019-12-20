@@ -110,11 +110,7 @@ public class Parse {
         //go over every word in the text
         for (int i = 0; i < textLength; i++) {
             String word = singleWords[i];
-            //wouldn't want to keep single chars
-            if (word.length() < 2 ){
-                if (word.length()==1 && !Character.isDigit(word.charAt(0)))
-                    continue;
-            }
+
             char firstChar = word.charAt(0);
             boolean found = false;
             //if the word contains / need to break it
@@ -279,16 +275,23 @@ public class Parse {
     }
 
     private boolean checkPriceMB(String word, String word2, int position) {
-        String twoWords = word + " " + removeDeli(word2);
+        word2=removeDeli(word2);
+        word = word.replace(",", "");
+        String twoWords = word + " " + word2;
         Matcher match = $PRICEMB.matcher(twoWords);
         if (match.find()) {
-            saveAsNumMDollars(Double.parseDouble(word.substring(1)), position);
+            double num = Double.parseDouble(word.substring(1));
+            if (word2.equals("billion")) {
+                num *= THOUSAND;
+            }
+            saveAsNumMDollars(num, position);
             return true;
         }
         return false;
     }
 
     private boolean checkPriceUS(String word1, String word2, String word3, String word4, int position) {
+        word1 = word1.replace(",", "");
         String lastWord = word4;
         if (separatedWord(lastWord))
             lastWord = removeDeli(lastWord);
@@ -302,17 +305,19 @@ public class Parse {
 
     private boolean checkPricebn(String word, String word1, String word2, int position) {
         // price bn/m dollars
+        word = word.replace(",", "");
         String lastWord = word2;
         if (separatedWord(lastWord))
             lastWord = removeDeli(lastWord);
-        String threeWords = word1 + " " + word2 + " " + lastWord;
+        String threeWords = word + " " + word1 + " " + lastWord;
         Matcher match = PRICEBIG$.matcher(threeWords);
         if (match.find()) {
-            saveAsNumMDollars(Double.parseDouble(word1) * (helpDicNumbers.get(word2) / MILLION), position);
+            saveAsNumMDollars(Double.parseDouble(word) * (helpDicNumbers.get(word1) / MILLION), position);
             return true;
-        } else if (Double.parseDouble(word1) < MILLION) {  //price (less than million) fraction dollars
+        } else if (Double.parseDouble(word) < MILLION) {  //price (less than million) fraction dollars
             match = PRICEFRAC.matcher(threeWords);
             if (match.find()) {
+
                 saveAsNumDollars(word + " " + word1, position);
                 return true;
             }
@@ -436,7 +441,7 @@ public class Parse {
                     num /= THOUSAND;
                     saveAsNumMDollars(num, position);
                 } else { //$ price less than million number
-                    saveAsNumDollars(numberInWord, position);
+                    saveAsNumDollars(""+num, position);
                 }
             }
         } else if (Character.isLetter(firstChar)) {
@@ -497,6 +502,8 @@ public class Parse {
                 //num%- one word
                 if (word.endsWith("%") && isNumeric(word.substring(0, word.length() - 1))[0]) {
                     String numberInWord = word.substring(0, word.length() - 1);
+                    if (numberInWord.contains(","))
+                        numberInWord=StringUtils.replace(numberInWord, ",", "");
                     saveAsPercent(numberInWord, position);
                 } else {
                     boolean[] infoOnWord = isNumeric(word);
@@ -592,7 +599,7 @@ public class Parse {
                 number = number / THOUSAND;
                 saveAsNumMDollars(number, position);
             } else { //$ less than million number
-                saveAsNumDollars(word1, position);
+                saveAsNumDollars(""+number, position);
             }
             return true;
         }
@@ -600,6 +607,8 @@ public class Parse {
     }
 
     private boolean checkMillionBillion(String word1, String word2, int position) {
+        if (word1.contains(","))
+            word1=StringUtils.replace(word1, ",", "");
         boolean found = false;
         if (word2.equals("Million")) {
             enterKey(word1 + "M", position, false);
@@ -734,7 +743,7 @@ public class Parse {
 
     //saving formats
     private void saveAsNumMDollars(double num, int position) {
-        DecimalFormat format = new DecimalFormat("0.###");
+        DecimalFormat format = new DecimalFormat("##.###");
         String key = format.format(num) + " M Dollars";
         enterKey(key, position, false);
     }
@@ -745,6 +754,8 @@ public class Parse {
     }
 
     private void saveAsPercent(String word, int position) {
+        if (word.contains(","))
+            word=StringUtils.replace(word, ",", "");
         String key = word + "%";
         enterKey(key, position, false);
     }
@@ -860,6 +871,8 @@ public class Parse {
         Boolean startWithCapital = false;
         if (word.length() > 1)
             startWithCapital = (Character.isUpperCase(word.charAt(0)) && !(Character.isUpperCase(word.charAt(1))));
+        else if (word.length() == 1)
+            startWithCapital = Character.isUpperCase(word.charAt(0));
         return startWithCapital;
     }
 
@@ -942,7 +955,7 @@ public class Parse {
     //<editor-fold des="read stop words"
     //read all stop words from the given file and add them into an array list
     private HashSet<String> readStopWords(String stopWordsPath) {
-        String filePath = stopWordsPath + "\\stop words.txt";
+        String filePath = stopWordsPath + "\\stop_words.txt";
         HashSet<String> temp = new HashSet<String>();
         File stopWordsFile = new File(filePath);
         try {

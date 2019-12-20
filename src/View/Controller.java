@@ -37,8 +37,6 @@ public class Controller implements Observer {
     private static Stage primaryStage;
     private boolean stem;
     private boolean loaded;
-    private String show;
-
 
 
     @FXML
@@ -51,7 +49,6 @@ public class Controller implements Observer {
     public javafx.scene.control.CheckBox btnStem;
     public javafx.scene.control.TextField fieldLoadingPath;
     public javafx.scene.control.TextField fieldSavingPath;
-    public javafx.scene.control.TextArea txtArea_dictionary;
     public Pane pane;
     public ImageView boximage;
 

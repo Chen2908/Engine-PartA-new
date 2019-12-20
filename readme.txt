@@ -23,6 +23,7 @@ OPERATIONS
 2. Select a corpus path in the first text area by pressing browse
 3. Select a posting files path 
 4. Click start to run processing the corpus 
+5. Click Ok on the alert that pops up
 
 POST PROCESSING 
 ----------------
