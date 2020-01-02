@@ -1,4 +1,6 @@
-package Model;
+package Model.Indexing;
+
+import Model.Model;
 
 import java.util.HashMap;
 import java.util.HashSet;

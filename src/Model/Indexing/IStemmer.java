@@ -1,4 +1,6 @@
-package Model;
+package Model.Indexing;
+
+import Model.Model;
 
 /**
  * Interface for different text stemmers

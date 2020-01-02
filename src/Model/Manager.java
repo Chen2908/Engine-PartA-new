@@ -1,5 +1,7 @@
 package Model;
 
+import Model.Indexing.*;
+
 import java.io.*;
 import java.util.*;
 

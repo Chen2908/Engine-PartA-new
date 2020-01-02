@@ -1,4 +1,6 @@
-package Model;
+package Model.Indexing;
+
+import Model.Model;
 
 /**
  * This object represent a document
