@@ -72,8 +72,9 @@ public class Manager {
         double startTime = System.currentTimeMillis();
 
         List<Document> docs= reader.getNextDocs(BATCH_SIZE);
-
+        int counter=0;
         while(docs!=null){
+            System.out.println(counter++);
             docTerms = parser.parse(docs);
             callIndexBuild(docTerms);
 //            System.out.println(i++ + " - " + (System.currentTimeMillis() - lastTime) / 1000);
