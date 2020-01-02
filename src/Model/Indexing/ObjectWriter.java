@@ -1,4 +1,4 @@
-package Model;
+package Model.Indexing;
 
 import java.io.BufferedReader;
 import java.io.File;

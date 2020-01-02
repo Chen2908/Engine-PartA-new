@@ -1,4 +1,6 @@
-package Model;
+package Model.Indexing;
+
+import Model.Model;
 
 import java.io.BufferedWriter;
 import java.io.File;

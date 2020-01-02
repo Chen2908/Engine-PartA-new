@@ -1,4 +1,4 @@
-package Model;
+package Model.Indexing;
 
 import java.io.*;
 import java.util.ArrayList;

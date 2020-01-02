@@ -1,4 +1,4 @@
-package Model;
+package Model.Retrieval;
 
 public class Searcher {
 }
