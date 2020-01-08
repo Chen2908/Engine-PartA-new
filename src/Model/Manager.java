@@ -88,11 +88,11 @@ public class Manager {
         inverter.closeWriter();
 
         double endTime = System.currentTimeMillis();
-//        System.out.println("Total Time: " + (endTime - startTime) / 60000);
-//        System.out.println("Dictionary Size: " + inverter.getDictionary().size());
         setVocabularySize(inverter.getDictionary().size());
         setProcessTime((endTime - startTime) / 1000);
+        setSumLengthsInCalculator(inverter.getSumLengths());
     }
+
 
 
     private void callIndexBuild(HashMap<String, Term> docTerms){
@@ -117,6 +117,10 @@ public class Manager {
             mainFolder.mkdir();
         }
         return dir;
+    }
+
+    private void setSumLengthsInCalculator(int sumLengths) {
+        this.calculator.setSumLength(sumLengths);
     }
 
     // term, df

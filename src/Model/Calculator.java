@@ -6,17 +6,19 @@ package Model;
 public class Calculator {
 
     private static int corpusSize;
+    private static int sumLength;
 
     public Calculator(int N)
     {
         this.corpusSize = N;
+        this.sumLength = 0;
     }
 
 
     /**
      * Calculate the Tf-idf for each term.
      * @param Df - document frequency, the number of different documents the term appeared in
-     * @param fj - the number of timed the term appear the document j
+     * @param fj - the number of times the term appear the document j
      * @param maxFj - the maximum appearances of a term in document j
      * @return TF-idf
      */
@@ -35,23 +37,29 @@ public class Calculator {
      * @param vector2
      * @return the value of cossim
      */
-    public static double cosineSim(double [] vector1, double [] vector2){
+    public static double cosineSim(double [] vector1, double [] vector2, double vecLen1, double vecLen2){
         if (vector1.length != vector2.length){
             return -1;
         }
         double mult = 0;
-        double vector1Len = 0;
-        double vector2Len = 0;
         double cosSim;
         for (int i = 0; i < vector1.length; i++){
             mult += vector1[i] * vector2[i];
-            vector1Len +=  Math.pow(vector1[i],2);
-            vector2Len +=  Math.pow(vector2[i],2);
         }
-        vector1Len = Math.sqrt(vector1Len);
-        vector2Len = Math.sqrt(vector2Len);
-        cosSim = mult / (vector1Len * vector2Len);
+        cosSim = mult / (Math.sqrt(vecLen1) * Math.sqrt(vecLen2));
         return cosSim;
     }
 
+
+    public static void setSumLength(int sum) {
+       sumLength = sum;
+    }
+
+    public static double averageDocLength(){
+        return sumLength/corpusSize;
+    }
+
+    public static int getCorpusSize() {
+        return corpusSize;
+    }
 }
