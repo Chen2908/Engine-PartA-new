@@ -7,6 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import javafx.util.Pair;
+
 import java.net.*;
 import java.io.*;
 
@@ -26,8 +28,8 @@ public class Semantics implements Serializable {
      * @param term - the term to search similar words to
      * @return an ArrayList containing 5 most similar in meaning word to term
      */
-    public ArrayList<String> termWithSimilarMeaning(String term) {
-        ArrayList<String> similarTerms = new ArrayList<>();
+    public ArrayList<Pair<String, Integer>> termWithSimilarMeaning(String term) {
+        ArrayList<Pair<String, Integer>> similarTerms = new ArrayList<>();
         StringBuilder readTerms = new StringBuilder();
         String text;
         try {
@@ -47,7 +49,7 @@ public class Semantics implements Serializable {
             //retrieve only the term
             for (JsonElement s : terms) {
                 JsonObject jterms = (JsonObject) (s);
-                similarTerms.add(jterms.get("word").getAsString());
+                similarTerms.add(new Pair(jterms.get("word").getAsString(), jterms.get("score").getAsString()));
             }
 
         } catch (Exception e) {
@@ -61,7 +63,7 @@ public class Semantics implements Serializable {
         Semantics testSemantics = new Semantics();
         //test.rank(null, null);
         double startTime = System.currentTimeMillis();
-        ArrayList<String> print = testSemantics.termWithSimilarMeaning("sport");
+        ArrayList<Pair<String, Integer>> print = testSemantics.termWithSimilarMeaning("ship");
         System.out.println("sport: " + (System.currentTimeMillis()-startTime)/1000 + " seconds");
         System.out.println(print);
 
