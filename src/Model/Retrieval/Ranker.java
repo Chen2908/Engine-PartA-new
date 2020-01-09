@@ -8,6 +8,7 @@ import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Ranker {
 
@@ -38,7 +39,7 @@ public class Ranker {
      * @param semanticTerms
      * @return 50 document numbers in which the terms given appeared in, ranked.
      */
-    public ArrayList<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Integer>> semanticTerms) {
+    public List<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Integer>> semanticTerms) {
         if (semanticTerms == null)
             this.semantics = false;
 
@@ -119,7 +120,7 @@ public class Ranker {
      * @param docNumTermFirstIndex
      * @return 50 pair of (docNum,score), sorted by score
      */
-    private ArrayList<Pair<String, Double>> rankDocs(HashMap<String, Double> docNumBM25Query, HashMap<String, Double> docNumBM25Semantics, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex) {
+    private List<Pair<String, Double>> rankDocs(HashMap<String, Double> docNumBM25Query, HashMap<String, Double> docNumBM25Semantics, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex) {
         ArrayList<Pair<String, Double>> rankedDocs = new ArrayList<>();
         HashMap<String, Double> hashToWordOn;
         if (semantics)
@@ -145,7 +146,7 @@ public class Ranker {
         //sort docs according to weight
         rankedDocs.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
         int minLength = Math.min(rankedDocs.size(), MAX_DOCS_TO_RETURN);
-        return (ArrayList)rankedDocs.subList(0, minLength);
+        return rankedDocs.subList(0, minLength);
     }
 
 
