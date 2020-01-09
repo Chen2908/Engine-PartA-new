@@ -104,7 +104,7 @@ public class ViewModel extends Observable implements Observer {
         }
     }
 
-    public ArrayList<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
+    public List<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
         return model.search(queryText, stemming, semantics);
     }
 

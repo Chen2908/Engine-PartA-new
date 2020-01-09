@@ -50,7 +50,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250, 800);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 5000, 10000);
         this.calculator = new Calculator(corpusSize);
     }
 
@@ -61,7 +61,7 @@ public class Manager {
      */
     public Manager (String postingPath, boolean stemming, boolean semantics){
         String stopWordsPath = postingPath+"/stop_words.txt";
-        //this.searcher = new Searcher(postingPath, stopWordsPath, HASHSIZE, stemming, semantics);
+        this.searcher = new Searcher(postingPath, stopWordsPath, HASHSIZE, stemming, semantics);
         this.postingPath = postingPath;
         this.calculator = new Calculator(0);
     }
@@ -182,7 +182,7 @@ public class Manager {
         this.docTerms = null;
     }
 
-    public ArrayList<Pair<String, Double>> search(String queryText) {
+    public List<Pair<String, Double>> search(String queryText) {
        return searcher.search(queryText);
     }
 }
