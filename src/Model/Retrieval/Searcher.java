@@ -4,6 +4,7 @@ import Model.Indexing.DocCorpusInfo;
 import Model.Indexing.Parse;
 import Model.Indexing.Term;
 import javafx.util.Pair;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class Searcher {
     private final int DOC_NUM_INDEX = 0;
 
     private final String DOCSINFO_SUB_PATH = "\\Docs\\DocsInfo.txt";
-    private final String POSTING_FILES_SUB_PATH = "\\Docs\\DocsInfo.txt";
+    private final String POSTING_FILES_SUB_PATH = "\\Terms";
     private final String DIC_SUB_PATH = "\\dictionary.txt";
     private final String SEM_DIC_SUB_PATH = "\\semanticDic.txt";
 
@@ -92,7 +93,7 @@ public class Searcher {
             return;
         String[] splitLine;
         for(String line : dictionaryFile){
-            splitLine = line.split(del);
+            splitLine = StringUtils.split(line, ",");
             List<Pair<String,Integer>> semList = new ArrayList<>();
             for (int i = 1; i < splitLine.length; i += 2)
                 semList.add(new Pair<>(splitLine[i], Integer.parseInt(splitLine[i+1])));
@@ -101,7 +102,7 @@ public class Searcher {
     }
     
     public List<Pair<String, Double>> search(String query){
-        HashMap<String, Term> queryTermsMap = this.parser.parse(query, "", "");
+        HashMap<String, Term> queryTermsMap = this.parser.parse(query, "A-1", "");
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
         HashMap<String, Integer> semTerms = null;
