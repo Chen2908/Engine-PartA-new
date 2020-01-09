@@ -39,7 +39,7 @@ public class Ranker {
      * @param semanticTerms
      * @return 50 document numbers in which the terms given appeared in, ranked.
      */
-    public List<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Integer>> semanticTerms) {
+    public List<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Double>> semanticTerms) {
         if (semanticTerms == null)
             this.semantics = false;
 
@@ -57,14 +57,13 @@ public class Ranker {
         }
         if (semantics) {
             docNumBM25QueryPlusSemantics.putAll(docNumBM25Query);
-            for (Pair<Term, Integer> semanticPair : semanticTerms) {
+            for (Pair<Term, Double> semanticPair : semanticTerms) {
                 Term term = semanticPair.getKey();
                 HashMap<String, DocTermInfo> trmDocs = term.getDocs(); //string= docNum
-                int termScore = semanticPair.getValue();
-                double normalizedScore = termScore / 120000;
+                double termScore = semanticPair.getValue();
                 //for each doc
                 for (String docNum : trmDocs.keySet()) {
-                    putDocNumBM(trmDocs.get(docNum), docNum, docNumBM25QueryPlusSemantics, trmDocs.size(), normalizedScore);
+                    putDocNumBM(trmDocs.get(docNum), docNum, docNumBM25QueryPlusSemantics, trmDocs.size(), termScore);
                     int firstIndex = trmDocs.get(docNum).getTermFirstIndex();
                     putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
                 }
