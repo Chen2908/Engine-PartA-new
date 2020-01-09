@@ -82,6 +82,9 @@ public class Parse {
         setMyStopWords();
     }
 
+    public HashSet<String> getStopWords() {
+        return stopWords;
+    }
 
     /**
      * parse wrapper for batch
