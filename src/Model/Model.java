@@ -40,7 +40,6 @@ public class Model extends Observable {
        // terms= manager.getDictionary();
         termstoShow = manager.getDictionaryToShow();
         this.dicPath = manager.getDictionaryPath();
-        this.indexPath = savingPath;
         String[] notify = {"dictionary done", Double.toString(time), Integer.toString(corpusSize), Integer.toString(vocabularySize)};
         setChanged();
         notifyObservers(notify);
@@ -57,6 +56,7 @@ public class Model extends Observable {
 
 
     public void loadDictionary(String path) {
+        this.indexPath = path;
         HashMap<String, int[]> terms = new HashMap<>();
         HashMap<String, Integer> termsToShow = new HashMap<>();
         ArrayList<String> termsList = new ArrayList<>();
