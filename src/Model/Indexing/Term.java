@@ -44,14 +44,30 @@ public class Term implements IWritable {
 
     /**
      * Constructor
-     * @param value - term Value
+     * @param termInfo - term information
      */
-    public Term(String value) {
-        setValue(value);
+    public Term(String termInfo) {
+
         docs = new HashMap<>();
         this.isEntity = false;
         lastFileNumPrefix = "";
-        TF = 0;
+
+        String[] splitByMainDel = StringUtils.split(termInfo, mainDel, 3);
+        setValue(splitByMainDel[VALUE_INDEX]);
+
+        addDocsInfo(splitByMainDel[DOCLIST_INDEX]);
+    }
+
+    private void addDocsInfo(String docInfoString){
+        for (String docsPerPrefix: docInfoString.split(docPrefixDel)){
+            String[] prefixInfoSplit = docsPerPrefix.split(":");
+            lastFileNumPrefix = prefixInfoSplit[0];
+            for (String docInfo: prefixInfoSplit[1].split(";")){
+                DocTermInfo docTermInfo = new DocTermInfo(lastFileNumPrefix, docInfo);
+                docs.put(docTermInfo.getDocNum(), docTermInfo);
+            }
+
+        }
     }
 
     //</editor-fold>

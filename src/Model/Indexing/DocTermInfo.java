@@ -1,6 +1,6 @@
 package Model.Indexing;
 
-import Model.Model;
+import org.apache.commons.lang3.StringUtils;
 
 public class DocTermInfo{
 
@@ -27,6 +27,13 @@ public class DocTermInfo{
         this.docNumSuffix = String.format("%X", Integer.parseInt(splitDocNum[1]));
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
+    }
+
+    public DocTermInfo(String prefix, String docInfo){
+        String[] docInfoSplit = docInfo.split(del);
+        docNumPrefix = prefix;
+        docNumSuffix = docInfoSplit[0];
+        tfi = Integer.parseInt(docInfoSplit[1]);
     }
 
     //</editor-fold>
@@ -98,7 +105,12 @@ public class DocTermInfo{
      * @return StingBuilder of the document information
      */
     public StringBuilder toFileString(){
-        return new StringBuilder(getDocNumSuffix() + del + tfi + endDel);
+        return new StringBuilder(getDocNumSuffix() + del + tfi + del + getTermFirstIndex() + endDel);
     }
 
+    public int getTermFirstIndex() {
+        if (termIndexes != null && termIndexes.length() > 0)
+            return Integer.parseInt(StringUtils.split(termIndexes.toString(), del)[0]);
+        return -1;
+    }
 }

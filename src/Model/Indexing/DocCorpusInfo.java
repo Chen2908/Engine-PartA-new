@@ -1,5 +1,8 @@
 package Model.Indexing;
 
+import org.apache.commons.lang3.Pair;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +15,10 @@ public class DocCorpusInfo implements IWritable {
     private int numOfTerms;//the amount of term in the document
     private int numOfUniqTerms; // number of terms that appears one time in the doc
     private double sumOfTermsSquare; // the doc vector size square
-    private final String del = ",";
+    private List<Pair<String, Integer>> mostFreqEntities;
+    private int numOfEntities;
+    private final String entDel = ",";
+    private final String del = ";";
 
     //</editor-fold>
 
@@ -26,6 +32,26 @@ public class DocCorpusInfo implements IWritable {
         this.numOfUniqTerms = 0;
         this.sumOfTermsSquare = 0;
         this.numOfTerms = 0;
+        this.numOfEntities = 0;
+        this.mostFreqEntities = new ArrayList<>(5);
+    }
+
+    public DocCorpusInfo(String docInfo){
+        this.mostFreqEntities = new ArrayList<>(5);
+        String[] splitInfo = StringUtils.split(docInfo, del);
+        this.maxTf = Integer.parseInt(splitInfo[0]);
+        this.numOfTerms = Integer.parseInt(splitInfo[1]);
+        this.numOfUniqTerms = Integer.parseInt(splitInfo[2]);
+        this.sumOfTermsSquare = Double.parseDouble(splitInfo[3]);
+        setEntitiesFromString(splitInfo[4]);
+    }
+
+    private void setEntitiesFromString(String entities){
+        if (entities.length() < 1)
+            return;
+        String[] splitEnt = StringUtils.split(entities, entDel);
+        for (int i = 0; i < splitEnt.length; i += 2)
+            this.mostFreqEntities.add(new Pair(splitEnt[i], Integer.parseInt(splitEnt[i+1])));
     }
 
     //</editor-fold>
@@ -35,13 +61,35 @@ public class DocCorpusInfo implements IWritable {
     /**
      * This function get term frequency and update the objects fields:
      * max term frequency, num of uniq terms, file vector size (sigma tf square)
-     * @param tf - term frequency
+     * @param term - term
      */
-    public void updateDoc(int tf){
-        setMaxTf(tf);
+    public void updateDoc(Term term){
+        setMaxTf(term.getTF());
         increaseUniqTerms();
-        addToVector(tf);
-        this.numOfTerms += tf;
+        addToVector(term.getTF());
+        this.numOfTerms += term.getTF();
+        if (term.isEntity())
+            addEntity(term);
+    }
+
+    private void addEntity(Term term){
+        if (this.mostFreqEntities.size() < 5) {
+            this.mostFreqEntities.add(new Pair<>(term.getValue(), term.getTF()));
+            return;
+        }
+        //finds min frequent entity
+        Integer minTF = 0;
+        Pair<String, Integer> minEntity = null;
+        for (Pair<String, Integer> entity: this.mostFreqEntities)
+            if (entity.right < minTF){
+                minTF = entity.right;
+                minEntity = entity;
+            }
+        //replace min entity with the current entity
+        if (term.getTF() < minTF) {
+            this.mostFreqEntities.remove(minEntity);
+            this.mostFreqEntities.add(new Pair<>(term.getValue(), term.getTF()));
+        }
     }
 
     /**
@@ -88,6 +136,9 @@ public class DocCorpusInfo implements IWritable {
      */
     public double getSumOfTermsSquare() { return sumOfTermsSquare; }
 
+
+    public int getNumOfTerms() { return numOfTerms; }
+
     //</editor-fold>
 
     //<editor-fold des="Interface Functions">
@@ -97,7 +148,15 @@ public class DocCorpusInfo implements IWritable {
      * @return StringBuilder of the object information
      */
     public StringBuilder toFileString(){
-        return new StringBuilder(maxTf + del + numOfTerms + del + numOfUniqTerms + del + sumOfTermsSquare);
+        return new StringBuilder(maxTf + del + numOfTerms + del + numOfUniqTerms + del + sumOfTermsSquare +
+                del + entitiesToString());
+    }
+
+    private StringBuilder entitiesToString(){
+        StringBuilder entities = new StringBuilder();
+        for (Pair<String, Integer> entity: this.mostFreqEntities)
+            entities.append(entity.left + entDel + entity.right + entDel);
+        return entities;
     }
 
     /**
@@ -128,6 +187,7 @@ public class DocCorpusInfo implements IWritable {
         toWrite.add(line);
         return toWrite;
     }
+
 
     //</editor-fold>
 
