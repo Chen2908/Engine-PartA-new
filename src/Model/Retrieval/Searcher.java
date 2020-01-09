@@ -3,6 +3,7 @@ package Model.Retrieval;
 import Model.Indexing.DocCorpusInfo;
 import Model.Indexing.Parse;
 import Model.Indexing.Term;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,11 +19,11 @@ public class Searcher {
     private Parse parser;
     private Ranker ranker;
     private HashMap<String, Integer> dictionary;
-    private HashMap<String, List<String>> semanticDictionary;
+    private HashMap<String, List<Pair<String, Integer>>> semanticDictionary;
     private HashMap<String, DocCorpusInfo> docsInfo;
 
     private long sumOfDocsLength;
-    private int numOfDocs;
+    private boolean isSemanticSearch;
 
     private final String del = ";";
     private final int DIC_TERM_INDEX = 0;
@@ -38,26 +39,26 @@ public class Searcher {
 
 
     public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming, boolean semantics){
-        this.numOfDocs = 0;
         this.sumOfDocsLength = 0;
+        this.isSemanticSearch = semantics;
         this.docsInfo = new HashMap<>();
         this.dictionary = new HashMap<>();
+        this.semanticDictionary = new HashMap<>();
 
         this.indexDir = new File(indexDirPath);
         this.fileReader = new FileContentReader();
 
-        this.ranker = new Ranker(docsInfo);
         this.parser = new Parse(stopWordPath, stemming);
 
         readDictionary();
         readDocsInfoDic();
 
+        this.ranker = new Ranker(docsInfo, sumOfDocsLength);
         this.postingReader = new PostingReader(dictionary,
                 indexDir.getAbsolutePath() + POSTING_FILES_SUB_PATH, numOfPosting);
 
         if (semantics) {
             this.semanticModel = new Semantics();
-            this.semanticDictionary = new HashMap<>();
             readSemanticDictionary();
         }
 
@@ -71,15 +72,15 @@ public class Searcher {
             DocCorpusInfo doc = new DocCorpusInfo(splitLine[1]);
             this.docsInfo.put(splitLine[DOC_NUM_INDEX], doc);
             this.sumOfDocsLength += doc.getNumOfTerms();
-            this.numOfDocs++;
         }
     }
 
     private void readDictionary(){
         List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + DIC_SUB_PATH);
         String[] splitLine;
-        for(String line : dictionaryFile){
-            splitLine = line.split(del);
+
+        for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i) != ""; i++){
+            splitLine = dictionaryFile.get(i).split(del);
             this.dictionary.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_LINE_NUM_INDEX]));
         }
     }
@@ -91,15 +92,47 @@ public class Searcher {
         String[] splitLine;
         for(String line : dictionaryFile){
             splitLine = line.split(del);
-            List<String> semList = new ArrayList<>();
-            for (int i = 1; i < splitLine.length; i++)
-                semList.add(splitLine[i]);
+            List<Pair<String,Integer>> semList = new ArrayList<>();
+            for (int i = 1; i < splitLine.length; i += 2)
+                semList.add(new Pair<>(splitLine[i], Integer.parseInt(splitLine[i+1])));
             this.semanticDictionary.put(splitLine[0], semList);
         }
     }
     
-    public void handelQuery(String query){
-        HashMap<String, Term> queryTerms = this.parser.parse(query, "","");
+    public ArrayList<Pair<String, Double>> handelQuery(String query){
+        HashMap<String, Term> queryTermsMap = this.parser.parse(query, "", "");
+        ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
+        ArrayList<String> allTerms = new ArrayList<>(queryTerms);
+        HashMap<String, Integer> semTerms = null;
+        if (this.isSemanticSearch)
+            semTerms = getSemTerm(allTerms);
+        HashMap<String, Term> termsPosting = postingReader.getTermsPosting(allTerms);
+        ArrayList<Term> queryTermPosting = new ArrayList<>();
+        ArrayList<Pair<Term, Integer>> semTermPosting = new ArrayList<>();
+        for (String term: allTerms){
+            if (queryTermsMap.containsKey(term))
+                queryTermPosting.add(termsPosting.get(term));
+            else
+                semTermPosting.add(new Pair(termsPosting.get(term), semTerms.get(term)));
+        }
+        return this.ranker.rank(queryTermPosting, semTermPosting);
+    }
+
+    private HashMap<String, Integer> getSemTerm(List<String> queryTerms){
+        HashMap<String, Integer> semTerms = new HashMap<>();
+        List<Pair<String, Integer>> semTermList;
+        for (String term: queryTerms){
+            if (this.semanticDictionary.containsKey(term))
+                semTermList = this.semanticDictionary.get(term);
+            else
+                semTermList = semanticModel.termWithSimilarMeaning(term);
+            for (Pair<String, Integer> pair: semTermList)
+                semTerms.put(pair.getKey(), pair.getValue());
+        }
+        for (String term: semTerms.keySet())
+            queryTerms.add(term);
+
+        return semTerms;
     }
 
     public HashMap<String, Integer> getDictionary() {
