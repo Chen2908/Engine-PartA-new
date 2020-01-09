@@ -17,7 +17,7 @@ public class Manager {
     private static final int BATCH_SIZE = 6000;
     private static final int THRESHOLD = 0 ;
     private static final int THREAD_POOL_SIZE = 5;
-    private static final int HASHSIZE = 800;
+    private static final int HASHSIZE = 10000;
 
     private ReadFile reader;
     private String corpusPath;
@@ -50,7 +50,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250, 800);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 10000, HASHSIZE);
         this.calculator = new Calculator(corpusSize);
     }
 
@@ -61,7 +61,13 @@ public class Manager {
      */
     public Manager (String postingPath, boolean stemming, boolean semantics){
         String stopWordsPath = postingPath+"/stop_words.txt";
-        //this.searcher = new Searcher(postingPath, stopWordsPath, HASHSIZE, stemming, semantics);
+        String indexPath;
+        if(stemming)
+            indexPath = postingPath + "/With Stemming/Index";
+        else
+            indexPath = postingPath + "/With Stemming/Index";
+
+        this.searcher = new Searcher(indexPath, stopWordsPath, HASHSIZE, stemming, semantics);
         this.postingPath = postingPath;
         this.calculator = new Calculator(0);
     }
@@ -183,6 +189,7 @@ public class Manager {
     }
 
     public ArrayList<Pair<String, Double>> search(String queryText) {
-       return searcher.search(queryText);
+       //return searcher.search(queryText);
+        return null;
     }
 }
