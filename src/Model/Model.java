@@ -22,6 +22,7 @@ public class Model extends Observable {
     private ArrayList<String> termsSorted;
     private ArrayList<Integer> countOfTerms;
     private String dicPath;
+    private String indexPath;
 
     public Model() {
 
@@ -29,6 +30,7 @@ public class Model extends Observable {
 
     //initiates the parsing and indexing process
     public void parse(String loadingPath, String savingPath, boolean stem) {
+        this.indexPath = savingPath;
         this.stem = stem;
         setManagerParsing(loadingPath, savingPath);
         manager.callReaderAndParser();
@@ -38,6 +40,7 @@ public class Model extends Observable {
        // terms= manager.getDictionary();
         termstoShow = manager.getDictionaryToShow();
         this.dicPath = manager.getDictionaryPath();
+        this.indexPath = savingPath;
         String[] notify = {"dictionary done", Double.toString(time), Integer.toString(corpusSize), Integer.toString(vocabularySize)};
         setChanged();
         notifyObservers(notify);
@@ -132,7 +135,7 @@ public class Model extends Observable {
 
 
     public List<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
-        setManagerSearching(this.dicPath, stemming, semantics);
+        setManagerSearching(this.indexPath, stemming, semantics);
         return manager.search(queryText);
     }
 }
