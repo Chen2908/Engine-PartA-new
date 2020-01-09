@@ -13,6 +13,7 @@ public class Indexer {
     private int indexIfCopy;
     private int threshHold;
     private int numOfPostingFiles = 800;
+    private long sumOfDocsLength;
 
     //<editor-fold des="Directory Files">
 
@@ -212,8 +213,9 @@ public class Indexer {
     private void addDocsCorpusInfo(){
         List<String> docs = new ArrayList<>(docsCorpusInfo.keySet());
         docs.sort(String::compareTo);
-        for(String docNum: docs)
+        for(String docNum: docs) {
             docsInfoString.append(docNum + ";" + docsCorpusInfo.get(docNum).toFileString() + "\n");
+        }
     }
 
     /**
@@ -315,7 +317,7 @@ public class Indexer {
         for(DocTermInfo doc: term.getDocs().values()){
             if(!docsCorpusInfo.containsKey(doc.getDocNum()))
                 docsCorpusInfo.put(doc.getDocNum(), new DocCorpusInfo());
-            docsCorpusInfo.get(doc.getDocNum()).updateDoc(doc.getTfi());
+            docsCorpusInfo.get(doc.getDocNum()).updateDoc(term);
         }
     }
 
