@@ -56,19 +56,11 @@ public class Manager {
 
     /**
      * Constructor with parameters for searching
-     * @param postingPath - the path where to create the posting files in
+     * @param indexPath - the path where to create the posting files in
      * @param semantics - true if to apply semantics, otherwise false
      */
-    public Manager (String postingPath, boolean stemming, boolean semantics){
-        String stopWordsPath = postingPath+"/stop_words.txt";
-        String indexPath;
-        if(stemming)
-            indexPath = postingPath + "/With Stemming/Index";
-        else
-            indexPath = postingPath + "/With Stemming/Index";
-
-        this.searcher = new Searcher(indexPath, stopWordsPath, HASHSIZE, stemming, semantics);
-        this.postingPath = postingPath;
+    public Manager (String indexPath, boolean stemming, boolean semantics){
+        this.searcher = new Searcher(indexPath, indexPath, HASHSIZE, stemming, semantics);
         this.calculator = new Calculator(0);
     }
 
@@ -120,7 +112,12 @@ public class Manager {
 
     private void writeStopWordsFile(HashSet<String> stopWords) {
         try {
-            File file = new File(postingPath + "/stop_words.txt");
+            String path;
+            if (stemming)
+                path = postingPath + "With Stemming/stop_words.txt";
+            else
+                path = postingPath + "Without Stemming/stop_words.txt";
+            File file = new File(path);
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
             for(String st: stopWords){
                 bf.write(st+ "\n");
