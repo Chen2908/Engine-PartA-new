@@ -68,7 +68,6 @@ public class Searcher {
     private void readDocsInfoDic(){
         List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + DOCSINFO_SUB_PATH);
         String[] splitLine;
-
         for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i).compareTo("") != 0; i++){
             splitLine = dictionaryFile.get(i).split(del);
             DocCorpusInfo doc = new DocCorpusInfo(splitLine);

@@ -28,7 +28,6 @@ public class Manager {
     private String indexPath;
     private boolean stemming;
     private int corpusSize;
-    private Calculator calculator;
     private int vocabularySize;
     private double processTime;
     private HashMap<String, Term> docTerms;
@@ -51,7 +50,7 @@ public class Manager {
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
         this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250, HASHSIZE);
-        this.calculator = new Calculator(corpusSize);
+        Calculator.setCorpusSize(this.corpusSize);
     }
 
     /**
@@ -61,7 +60,6 @@ public class Manager {
      */
     public Manager (String indexPath, boolean stemming, boolean semantics){
         this.searcher = new Searcher(indexPath, indexPath, HASHSIZE, stemming, semantics);
-        this.calculator = new Calculator(0);
     }
 
 
@@ -181,7 +179,6 @@ public class Manager {
         this.reader = null;
         this.parser = null;
         this.inverter = null;
-        this.calculator = null;
         this.docTerms = null;
     }
 

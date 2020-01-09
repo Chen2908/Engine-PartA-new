@@ -23,9 +23,9 @@ public class Ranker {
      *
      * @param docsDictionary
      */
-    public Ranker(HashMap<String, DocCorpusInfo> docsDictionary, long sumLengths) {
+    public Ranker(HashMap<String, DocCorpusInfo> docsDictionary, long sumLengths, int cospusSize) {
         this.docsDictionary = docsDictionary;  //docNum, docLength, sumOfTermsSquare (doc normal) and possibly date
-        Calculator.setCorpusSize(docsDictionary.size());
+        Calculator.setCorpusSize(cospusSize);
         Calculator.setSumLength(sumLengths);
         this.semantics = true;
     }
@@ -156,7 +156,7 @@ public class Ranker {
      * @return idf for term
      */
     private double getIdfForBM25(int numOfDocsForTerm) {
-        double up = Calculator.getCorpusSize() - numOfDocsForTerm + 0.5;
+        double up = Calculator.corpusSize - numOfDocsForTerm + 0.5;
         double down = numOfDocsForTerm + 0.5;
         return Math.log(up / down) / Math.log(2);
     }
@@ -170,8 +170,10 @@ public class Ranker {
      * @return idf * up / down;
      */
     private double calculateBM25PerTerm(int numOfOccurrecnes, int docLength, double idf) {
+        long sumLengths = Calculator.sumLength;
+        int cospusSize = Calculator.corpusSize;
         double up = numOfOccurrecnes * (K + 1);
-        double down = numOfOccurrecnes + (K * (1 - B + (B * docLength / Calculator.averageDocLength())));
+        double down = numOfOccurrecnes + (K * (1 - B + (B * docLength / Calculator.averageDocLength(sumLengths,cospusSize))));
         return idf * up / down;
     }
 
