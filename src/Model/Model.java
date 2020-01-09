@@ -1,4 +1,6 @@
 package Model;
+import javafx.util.Pair;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ public class Model extends Observable {
     private boolean loaded;
     private ArrayList<String> termsSorted;
     private ArrayList<Integer> countOfTerms;
+    private String dicPath;
 
     public Model() {
 
@@ -25,21 +28,26 @@ public class Model extends Observable {
     //initiates the parsing and indexing process
     public void parse(String loadingPath, String savingPath, boolean stem) {
         this.stem = stem;
-        setManager(loadingPath, savingPath);
+        setManagerParsing(loadingPath, savingPath);
         manager.callReaderAndParser();
         double time = manager.getProcessTime();
         int corpusSize = manager.getCorpusSize();
         int vocabularySize = manager.getVocabularySize();
        // terms= manager.getDictionary();
         termstoShow = manager.getDictionaryToShow();
+        this.dicPath = manager.getDictionaryPath();
         String[] notify = {"dictionary done", Double.toString(time), Integer.toString(corpusSize), Integer.toString(vocabularySize)};
         setChanged();
         notifyObservers(notify);
     }
 
 
-    private void setManager(String loadingPath, String savingPath) {
+    private void setManagerParsing(String loadingPath, String savingPath) {
         this.manager = new Manager(loadingPath, savingPath, stem);
+    }
+
+    private void setManagerSearching(String postingPath, boolean stemming, boolean semantics) {
+        this.manager = new Manager(postingPath, stemming, semantics);
     }
 
 
@@ -49,7 +57,7 @@ public class Model extends Observable {
         ArrayList<String> termsList = new ArrayList<>();
         ArrayList<Integer> count= new ArrayList<>();
         String pathFile=path+ "\\dictionary.txt";
-
+        this.dicPath = pathFile;
         File dictFile = new File(pathFile);
         BufferedReader readDict;
         try {
@@ -121,4 +129,8 @@ public class Model extends Observable {
     }
 
 
+    public ArrayList<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
+        setManagerSearching(this.dicPath, stemming, semantics);
+        return manager.search(queryText);
+    }
 }

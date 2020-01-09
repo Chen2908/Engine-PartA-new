@@ -1,6 +1,8 @@
 package Model;
 
 import Model.Indexing.*;
+import Model.Retrieval.Searcher;
+import javafx.util.Pair;
 
 import java.io.*;
 import java.util.*;
@@ -15,6 +17,7 @@ public class Manager {
     private static final int BATCH_SIZE = 6000;
     private static final int THRESHOLD = 0 ;
     private static final int THREAD_POOL_SIZE = 5;
+    private static final int HASHSIZE = 800;
 
     private ReadFile reader;
     private String corpusPath;
@@ -30,8 +33,11 @@ public class Manager {
     private double processTime;
     private HashMap<String, Term> docTerms;
 
+    //partB
+    private Searcher searcher;
+
     /**
-     * Constructor with parameters
+     * Constructor with parameters for parsing
      * @param corpusPath - the path where the corpus files and stop words is saved
      * @param postingPath - the path where to create the posting files in
      * @param stemming - true if to apply stemming, otherwise false
@@ -47,6 +53,19 @@ public class Manager {
         this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250, 800);
         this.calculator = new Calculator(corpusSize);
     }
+
+    /**
+     * Constructor with parameters for searching
+     * @param postingPath - the path where to create the posting files in
+     * @param semantics - true if to apply semantics, otherwise false
+     */
+    public Manager (String postingPath, boolean stemming, boolean semantics){
+        String stopWordsPath = postingPath+"/stop_words.txt";
+        //this.searcher = new Searcher(postingPath, stopWordsPath, HASHSIZE, stemming, semantics);
+        this.postingPath = postingPath;
+        this.calculator = new Calculator(0);
+    }
+
 
     private void setPaths() {
         String path = createIndexFolders();
@@ -90,10 +109,20 @@ public class Manager {
         double endTime = System.currentTimeMillis();
         setVocabularySize(inverter.getDictionary().size());
         setProcessTime((endTime - startTime) / 1000);
-        setSumLengthsInCalculator(inverter.getSumLengths());
+        writeStopWordsFile(parser.getStopWords());
     }
 
-
+    private void writeStopWordsFile(HashSet<String> stopWords) {
+        try {
+            File file = new File(postingPath + "/stop_words.txt");
+            BufferedWriter bf = new BufferedWriter(new FileWriter(file));
+            for(String st: stopWords){
+                bf.write(st+ "\n");
+            }
+            bf.close();
+        }catch(IOException e){
+        }
+    }
 
     private void callIndexBuild(HashMap<String, Term> docTerms){
         this.inverter.setTerms(docTerms);
@@ -117,10 +146,6 @@ public class Manager {
             mainFolder.mkdir();
         }
         return dir;
-    }
-
-    private void setSumLengthsInCalculator(int sumLengths) {
-        this.calculator.setSumLength(sumLengths);
     }
 
     // term, df
@@ -155,5 +180,9 @@ public class Manager {
         this.inverter = null;
         this.calculator = null;
         this.docTerms = null;
+    }
+
+    public ArrayList<Pair<String, Double>> search(String queryText) {
+       return searcher.search(queryText);
     }
 }

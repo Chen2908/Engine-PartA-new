@@ -1,6 +1,7 @@
 package View;
 
 import ViewModel.ViewModel;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.embed.swing.SwingFXUtils;
@@ -15,15 +16,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
+import java.io.*;
+import java.util.*;
 
 /**
  * This class represents the view layer in MVVM structure. This is the controller of the program.
@@ -34,10 +33,19 @@ public class Controller implements Observer {
     private ViewModel viewModel;
     private String loadingPath;
     private String savingPath;
+    private String queryPath;
+    private String queryText;
+    private String saveQueryResultsPath;
     private static Stage primaryStage;
     private boolean stem;
+    private boolean semantics;
+    private boolean clickstream;
     private boolean loaded;
-
+    private boolean parsed;
+    private ArrayList<Pair<String, String>> queriesFromFileText;
+    private HashMap<String, ArrayList<Pair<String, Double>>> resultsPerQuery;
+    private ArrayList<String> queryResultsIncludingIdDocs;
+    private  ArrayList<Double> queryResultsIncludingIdScore;
 
     @FXML
     public javafx.scene.control.Button btnStart;
@@ -49,6 +57,15 @@ public class Controller implements Observer {
     public javafx.scene.control.CheckBox btnStem;
     public javafx.scene.control.TextField fieldLoadingPath;
     public javafx.scene.control.TextField fieldSavingPath;
+    public javafx.scene.control.TextField fieldLoadingQuery;
+    public javafx.scene.control.TextField fieldTypingQuery;
+    public javafx.scene.control.CheckBox btnSemantics;
+    public javafx.scene.control.CheckBox btnClickstream;
+    public javafx.scene.control.Button btnBrowseQuery;
+    public javafx.scene.control.Button btnSaveResults;
+    public javafx.scene.control.Button btnShowResults;
+    public javafx.scene.control.Button btnStartS;
+
     public Pane pane;
     public ImageView boximage;
 
@@ -58,8 +75,17 @@ public class Controller implements Observer {
         this.primaryStage = primaryStage;
         loadingPath = "";
         savingPath = "";
+        queryPath = "";
+        queryText = "";
+        saveQueryResultsPath = "";
+        queriesFromFileText = new ArrayList<>();
         stem = false;
-        disableAllButtonsButBrowseAndStart();
+        semantics = false;
+        clickstream = false;
+        loaded = false;
+        parsed = false;
+        disableAllButtonsButBrowseResetAndStart();
+        resultsPerQuery = new HashMap<>();
 
         try {
             BufferedImage bufferedImage;
@@ -86,6 +112,17 @@ public class Controller implements Observer {
                     btnStem.setDisable(false);
                     btnStart.setDisable(false);
                     btnLoadDictionary.setDisable(false);
+                    break;
+                case "query":
+                    queryPath = args[1];
+                    fieldLoadingQuery.setText(queryPath);
+                    readQueryFromFile();
+                    btnStartS.setDisable(false);
+                    break;
+                case "saveQuery":
+                    saveQueryResultsPath = args[1];
+                    btnShowResults.setDisable(false);
+                    writeResultsToFile();
                     break;
                 case "dictionary done":
                     enableButtons();
@@ -114,6 +151,29 @@ public class Controller implements Observer {
         }
     }
 
+    private void readQueryFromFile() {
+        String queryNum = "";
+        String filePath = queryPath;
+        StringBuilder text = new StringBuilder();
+        File queryFile = new File(filePath);
+        try {
+            Scanner sc = new Scanner(queryFile);
+            while (sc.hasNext()) {
+                String line = sc.nextLine();
+                if (line.contains("<num>")){
+                    queryNum = line.substring(14);
+                }
+                if (line.contains("<title>")){
+                    queriesFromFileText.add(new Pair(queryNum, line.substring(8)));
+                }
+                text.append(line + "\n");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        queryText = text.toString();
+    }
+
     private void showInfoOnIndex(double time, int corpusSize, int vocabularySize) {
         String info = "Corpus size: " + corpusSize + " documents"+
                 '\n' + "Running time: " + time + " seconds"+
@@ -124,13 +184,14 @@ public class Controller implements Observer {
         alert.showAndWait();
     }
 
-    public void loadPath() throws IOException, ClassNotFoundException {
+    public void loadPath()  {
         viewModel.selectPathForLoading();
     }
 
-    public void savePath() throws IOException, ClassNotFoundException {
+    public void savePath(){
         viewModel.selectPathForSaving();
     }
+
 
     public void btnStemPressed()
     {
@@ -138,18 +199,21 @@ public class Controller implements Observer {
     }
 
 
-    public void disableAllButtonsButBrowseAndStart() {
-        btnReset.setDisable(true);
+    public void disableAllButtonsButBrowseResetAndStart() {
         fieldSavingPath.setDisable(true);
         btnLoadDictionary.setDisable(true);
         btnShowDictionary.setDisable(true);
         fieldLoadingPath.setDisable(true);
+        fieldLoadingQuery.setDisable(true);
+        btnSaveResults.setDisable(true);
+        btnShowResults.setDisable(true);
     }
 
     public void disableStartButton() {
         btnStart.setDisable(true);
         btnStem.setDisable(true);
         btnReset.setDisable(true);
+        btnStartS.setDisable(true);
     }
 
     public void disableBrowseButtons() {
@@ -180,10 +244,11 @@ public class Controller implements Observer {
         alert.setTitle("Wait");
         alert.setHeight(200);
         alert.setWidth(250);
-        disableAllButtonsButBrowseAndStart();
+        disableAllButtonsButBrowseResetAndStart();
         disableStartButton();
         disableBrowseButtons();
         alert.showAndWait();
+        this.parsed = true;
         viewModel.parse(loadingPath, savingPath, stem);
     }
 
@@ -238,6 +303,11 @@ public class Controller implements Observer {
     }
 
     public void resetAll() {
+        if (! parsed){
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Nothing to delete");
+            alert.showAndWait();
+            return;
+        }
        deleteDirs(savingPath+ "\\With Stemming");
        deleteDirs(savingPath+ "\\Without Stemming");
         //reset memory
@@ -259,6 +329,128 @@ public class Controller implements Observer {
              }
     }
 
+    //partB
+
+    public void browseQuery() {
+        viewModel.selectPathForQuery();
+    }
+
+
+    public void saveResults(){
+        viewModel.saveResults();
+    }
+
+    private void writeResultsToFile(){
+        try {
+            File file = new File(this.saveQueryResultsPath + "/queryResults" + stem + ".txt");
+            BufferedWriter bf = new BufferedWriter(new FileWriter(file));
+            for (String queryNum : resultsPerQuery.keySet()){
+                for (Pair<String, Double> pair: resultsPerQuery.get(queryNum)){
+                    bf.write(queryNum + " 0 " +pair.getKey() + " 1" +  " 0.0" + " mt" + "\n");
+                }
+            }
+            bf.close();
+        }catch (IOException e){
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot write results to file");
+            alert.showAndWait();
+        }
+    }
+
+    public void showResults(){
+        //show results
+        TableView tableView = new TableView<>();
+
+        TableColumn<String, MapViewDouble> firstColumn = new TableColumn<>("Query : DocNO");
+        firstColumn.setCellValueFactory(new PropertyValueFactory<>("query : DocNo"));
+        firstColumn.setPrefWidth(300);
+        TableColumn<Double, MapViewDouble> secondColumn = new TableColumn<>("Score");
+        secondColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
+        secondColumn.setPrefWidth(300);
+        tableView.getColumns().add(firstColumn);
+        tableView.getColumns().add(secondColumn);
+        tableView.getSelectionModel().setCellSelectionEnabled(true);
+
+        for (int i = 0; i < this.queryResultsIncludingIdDocs.size(); i++) {
+            double score = this.queryResultsIncludingIdScore.get(i);
+            String docNo = this.queryResultsIncludingIdDocs.get(i);
+            MapViewDouble mv = new MapViewDouble(docNo, score);
+            tableView.getItems().add(mv);
+        }
+        StackPane sPane = new StackPane(tableView);
+        Scene sceneQuery = new Scene(sPane, 600, 800);
+        Stage stageQuery = new Stage();
+        stageQuery.setTitle("Query Results");
+        stageQuery.setScene(sceneQuery);
+        stageQuery.show();
+    }
+
+
+
+    public void search() {
+        if (!this.loaded && !this.parsed) {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "No dictionary loaded, cannot run query");
+            alert.show();
+            return;
+        }
+
+        ArrayList<Pair<String, Double>> queryResults;
+        ArrayList<String> queryResultsIncludingIdDocs = new ArrayList<>();
+        ArrayList<Double> queryResultsIncludingIdScore = new ArrayList<>();
+        HashMap<String, ArrayList<Pair<String, Double>>> resultsPerQuery = new HashMap<>();
+
+        if (fieldTypingQuery.getText() != null && fieldLoadingQuery.getText() != null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "You can choose either a query file or a text query, not both");
+            alert.show();
+            return;
+        }
+
+        else if (fieldTypingQuery.getText() != null) {
+            queryText = fieldTypingQuery.getText();
+            queryResults = viewModel.search(queryText, stem, semantics);
+            for (Pair<String, Double> pair : queryResults) {
+                queryResultsIncludingIdDocs.add("query 000: " + pair.getKey());
+                queryResultsIncludingIdScore.add(pair.getValue());
+            }
+            resultsPerQuery.put("000", queryResults);
+
+        } else if (fieldLoadingQuery.getText() != null) {
+            //call search with each query from file
+            for (Pair<String, String> queryPair : queriesFromFileText) {
+                queryResults = viewModel.search(queryPair.getValue(), stem, semantics);
+                for (Pair<String, Double> pair : queryResults) {
+                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + pair.getKey());
+                    queryResultsIncludingIdScore.add(pair.getValue());
+                }
+                resultsPerQuery.put(queryPair.getKey(), queryResults);
+            }
+        }
+        this.resultsPerQuery = resultsPerQuery;
+        this.queryResultsIncludingIdDocs = queryResultsIncludingIdDocs;
+        this.queryResultsIncludingIdScore = queryResultsIncludingIdScore;
+
+        //the user should now be able to view and save the results
+        btnShowResults.setDisable(false);
+        btnSaveResults.setDisable(false);
+
+        //let the user know he can view the results
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText("Query run is done");
+        alert.setContentText("Your query results are ready. To view them click on 'Show Results'");
+        alert.showAndWait();
+    }
+
+
+    public void btnSemanticsPressed(){
+        this.semantics = btnSemantics.isSelected();
+    }
+
+    public void btnClickstreamPressed(){
+        this.clickstream = btnClickstream.isSelected();
+    }
+
+
+
+    //for table view
     public static class MapView{
         private SimpleStringProperty term;
         private SimpleIntegerProperty count;
@@ -291,7 +483,41 @@ public class Controller implements Observer {
         public SimpleIntegerProperty countProperty() {
             return count;
         }
+    }
 
+    //for table view
+    public static class MapViewDouble{
+        private SimpleStringProperty docNo;
+        private SimpleDoubleProperty score;
+
+        public MapViewDouble(String docNo, double score){
+            this.docNo = new SimpleStringProperty(docNo);
+            this.score = new SimpleDoubleProperty(score);
+        }
+
+        public void setScore(int count) {
+            this.score.set(count);
+        }
+
+        public void setTerm(String term) {
+            this.docNo.set(term);
+        }
+
+        public String getDocNo() {
+            return docNo.get();
+        }
+
+        public double getScore() {
+            return score.get();
+        }
+
+        public SimpleStringProperty docNoProperty() {
+            return docNo;
+        }
+
+        public SimpleDoubleProperty scoreProperty() {
+            return score;
+        }
     }
 
 }

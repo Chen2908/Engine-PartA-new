@@ -1,12 +1,14 @@
 package Model;
 
+import java.math.BigDecimal;
+
 /** This class does the calculations needed for the retrieval of terms
  * It includes the calculation of Tf-idf, cosine similarity
  */
 public class Calculator {
 
     private static int corpusSize;
-    private static int sumLength;
+    private static long sumLength;
 
     public Calculator(int N)
     {
@@ -51,7 +53,7 @@ public class Calculator {
     }
 
 
-    public static void setSumLength(int sum) {
+    public static void setSumLength(long sum) {
        sumLength = sum;
     }
 
@@ -61,5 +63,9 @@ public class Calculator {
 
     public static int getCorpusSize() {
         return corpusSize;
+    }
+
+    public static void setCorpusSize(int corpusSize) {
+        Calculator.corpusSize = corpusSize;
     }
 }

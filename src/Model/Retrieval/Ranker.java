@@ -22,20 +22,20 @@ public class Ranker {
      *
      * @param docsDictionary
      */
-    public Ranker(HashMap<String, DocCorpusInfo> docsDictionary) {
+    public Ranker(HashMap<String, DocCorpusInfo> docsDictionary, long sumLengths) {
         this.docsDictionary = docsDictionary;  //docNum, docLength, sumOfTermsSquare (doc normal) and possibly date
+        Calculator.setCorpusSize(docsDictionary.size());
+        Calculator.setSumLength(sumLengths);
         this.semantics = true;
     }
 
 
     /**
-     * This method receives queryTerms, a hashmap of term objects, according to their relevancy to the query.
-     * The hashmap key is a integer from 0 to 5 and the value of each is an arrayList containing terms,
-     * where the values of 0 are terms that appeared in the query.
-     * If semantics is required: the values of i, i=1..5, are the ith terms similar in meaning to each term in the query.
-     * For example, the value of 1 is an arrayList of the 1st similar word to each term in the query.
-     *
+     * This method receives queryTerms, an arrayList of term objects, that appeared the query, and semanticTerms,
+     * an arrayList of terms that are closed to the terms in queryTerms, and their score.
+     * The method ranks the documents these terms appeared in and returns 50 first documents.
      * @param queryTerms
+     * @param semanticTerms
      * @return 50 document numbers in which the terms given appeared in, ranked.
      */
     public ArrayList<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Integer>> semanticTerms) {
@@ -49,26 +49,9 @@ public class Ranker {
         for (Term term : queryTerms) {
             HashMap<String, DocTermInfo> termDocs = term.getDocs(); //string= docNum
             for (String docNum : termDocs.keySet()) {
-                double bmVal = 0;
-                DocTermInfo value = termDocs.get(docNum);
-                int firstIndex = value.getTermFirstIndex();
-                double bm25 = calculateBM25PerTerm(value.getTfi(), docsDictionary.get(docNum).getNumOfTerms(), getIdfForBM25(termDocs.size()));
-                if (docNumBM25Query.containsKey(docNum)) {
-                    bmVal = docNumBM25Query.get(docNum) + bm25;
-                } else {
-                    bmVal = bm25;
-                }
-                docNumBM25Query.put(docNum, bmVal);
-
-                HashMap<Term,Integer> index;
-                if (docNumTermFirstIndex.containsKey(docNum)){
-                    index = docNumTermFirstIndex.get(docNum);
-                }
-                else {
-                    index = new HashMap<>();
-                }
-                index.put(term, firstIndex);
-                docNumTermFirstIndex.put(docNum, index);
+                putDocNumBM(termDocs.get(docNum), docNum, docNumBM25Query, termDocs.size(),1);
+                int firstIndex = termDocs.get(docNum).getTermFirstIndex();
+                putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
             }
         }
         if (semantics) {
@@ -80,33 +63,62 @@ public class Ranker {
                 double normalizedScore = termScore / 120000;
                 //for each doc
                 for (String docNum : trmDocs.keySet()) {
-                    double bmSemantics;
-                    DocTermInfo value = trmDocs.get(docNum);
-                    double bm25 = calculateBM25PerTerm(value.getTfi(), docsDictionary.get(docNum).getNumOfTerms(), getIdfForBM25(trmDocs.size()));
-                    //doc exists
-                    if (!docNumBM25QueryPlusSemantics.containsKey(docNum)) {
-                        bmSemantics = bm25 * normalizedScore;
-                    } else {
-                        bmSemantics = docNumBM25QueryPlusSemantics.get(docNum) + bm25 * normalizedScore;
-                    }
-                    docNumBM25QueryPlusSemantics.put(docNum, bmSemantics);
-                    int firstIndex = value.getTermFirstIndex();
-                    HashMap<Term,Integer> index;
-                    if (!docNumTermFirstIndex.containsKey(docNum)){
-                        index = new HashMap<>();
-                    }
-                    else {
-                        index = docNumTermFirstIndex.get(docNum);
-                    }
-                    index.put(term, firstIndex);
-                    docNumTermFirstIndex.put(docNum, index);
+                    putDocNumBM(trmDocs.get(docNum), docNum, docNumBM25QueryPlusSemantics, trmDocs.size(), normalizedScore);
+                    int firstIndex = trmDocs.get(docNum).getTermFirstIndex();
+                    putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
                 }
-
             }
         }
         return rankDocs(docNumBM25Query, docNumBM25QueryPlusSemantics,docNumTermFirstIndex);
     }
 
+
+    /**
+     * Puts pairs of docNum, BM25 score in the hashmap
+     * @param value - DocTermInfo object
+     * @param docNum
+     * @param docNumBM25Query  - insert hashmap
+     * @param size - number of documents that term appeared in
+     * @param weight  - 1 if it is a term that appeared in the query, normalized score if it is a semantic term
+     */
+    private void putDocNumBM(DocTermInfo value, String docNum, HashMap<String, Double> docNumBM25Query, int size, double weight){
+        double bmVal = 0;
+        int firstIndex = value.getTermFirstIndex();
+        double bm25 = calculateBM25PerTerm(value.getTfi(), docsDictionary.get(docNum).getNumOfTerms(), getIdfForBM25(size));
+        if (docNumBM25Query.containsKey(docNum)) {
+            bmVal = docNumBM25Query.get(docNum) + bm25 * weight;
+        } else {
+            bmVal = bm25 * weight;
+        }
+        docNumBM25Query.put(docNum, bmVal);
+    }
+
+    /**
+     * Puts docNum, <Term, first index> in hashmap
+     * @param term
+     * @param docNum
+     * @param firstIndex
+     * @param docNumTermFirstIndex - insert hashmap
+     */
+    private void putDocNumIndex(Term term, String docNum, int firstIndex, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex){
+        HashMap<Term,Integer> index;
+        if (docNumTermFirstIndex.containsKey(docNum)){
+            index = docNumTermFirstIndex.get(docNum);
+        }
+        else {
+            index = new HashMap<>();
+        }
+        index.put(term, firstIndex);
+        docNumTermFirstIndex.put(docNum, index);
+    }
+
+    /**
+     * Rank documents according to ranking formula
+     * @param docNumBM25Query
+     * @param docNumBM25Semantics
+     * @param docNumTermFirstIndex
+     * @return 50 pair of (docNum,score), sorted by score
+     */
     private ArrayList<Pair<String, Double>> rankDocs(HashMap<String, Double> docNumBM25Query, HashMap<String, Double> docNumBM25Semantics, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex) {
         ArrayList<Pair<String, Double>> rankedDocs = new ArrayList<>();
         HashMap<String, Double> hashToWordOn;
@@ -132,7 +144,8 @@ public class Ranker {
 
         //sort docs according to weight
         rankedDocs.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
-        return (ArrayList)rankedDocs.subList(0, MAX_DOCS_TO_RETURN);
+        int minLength = Math.min(rankedDocs.size(), MAX_DOCS_TO_RETURN);
+        return (ArrayList)rankedDocs.subList(0, minLength);
     }
 
 
@@ -161,6 +174,8 @@ public class Ranker {
         double down = numOfOccurrecnes + (K * (1 - B + (B * docLength / Calculator.averageDocLength())));
         return idf * up / down;
     }
+
+    //cossim?
 
 
 }

@@ -2,7 +2,9 @@ package ViewModel;
 
 import Model.Model;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import javafx.util.Pair;
 
 import java.io.*;
 import java.util.*;
@@ -28,7 +30,7 @@ public class ViewModel extends Observable implements Observer {
 
 
     //browse path from where to load stopwords and data set
-    public void selectPathForLoading() throws IOException, ClassNotFoundException {
+    public void selectPathForLoading()  {
         DirectoryChooser dc = new DirectoryChooser();
         dc.setTitle("Data set and stopwords path");
         Window primaryStage = null;
@@ -43,7 +45,7 @@ public class ViewModel extends Observable implements Observer {
 
 
     //browse path where to save the posting files and dictionary
-    public void selectPathForSaving() throws IOException, ClassNotFoundException {
+    public void selectPathForSaving() {
         DirectoryChooser dc = new DirectoryChooser();
         dc.setTitle("Choose where to save dictionary and posting files");
         Window primaryStage = null;
@@ -84,6 +86,39 @@ public class ViewModel extends Observable implements Observer {
 
     public ArrayList<Integer> getCountOfTerms() {
         return model.getCountOfTerms();
+    }
+
+
+    public void selectPathForQuery() {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Choose your query path");
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Text files", "*.txt");
+        fc.getExtensionFilters().add(extFilter);
+        Window primaryStage = null;
+        File file = fc.showOpenDialog(primaryStage);
+        if (file!=null){
+            String path = file.getPath();
+            setChanged();
+            String[] pathToUpdate = {"query", path};
+            notifyObservers(pathToUpdate);
+        }
+    }
+
+    public ArrayList<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
+        return model.search(queryText, stemming, semantics);
+    }
+
+    public void saveResults() {
+        DirectoryChooser dc = new DirectoryChooser();
+        dc.setTitle("Choose where to save your query results");
+        Window primaryStage = null;
+        File queryFile = dc.showDialog(primaryStage);
+        if (queryFile != null){
+            String queryPath = queryFile.getPath();
+            setChanged();
+            String[] pathToUpdate = {"saveQuery", queryPath};
+            notifyObservers(pathToUpdate);
+        }
     }
 }
 

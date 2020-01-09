@@ -5,6 +5,8 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.effect.Glow?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -12,70 +14,135 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="601.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/1.8.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.Controller">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="601.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/1.8.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.Controller">
    <center>
-      <Pane style="-fx-background-color: #fefcfc" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" >
+      <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #fefcfc" BorderPane.alignment="CENTER">
          <children>
-            <AnchorPane style="-fx-background-color: #fefcfc" layoutX="63.0" layoutY="200.0" prefHeight="353.0" prefWidth="524.0">
+            <AnchorPane layoutX="31.0" layoutY="140.0" prefHeight="446.0" prefWidth="618.0" style="-fx-background-color: #fefcfc">
                <children>
-                  <ButtonBar layoutX="418.0" layoutY="77.0" prefHeight="40.0" prefWidth="78.0">
-                     <buttons>
-                        <Button fx:id="btnBrowseSave" mnemonicParsing="false" onAction="#savePath" prefHeight="26.0" prefWidth="77.0" text="Browse">
-                           <font>
-                              <Font name="Eras Bold ITC" size="12.0" />
-                           </font>
-                        </Button>
-                     </buttons>
-                  </ButtonBar>
-                  <Label layoutX="10.0" layoutY="40.0" prefHeight="17.0" prefWidth="109.0" text="Data set path">
+                  <ButtonBar layoutX="418.0" layoutY="77.0" prefHeight="40.0" prefWidth="78.0" />
+                  <Label layoutX="10.0" layoutY="40.0" prefHeight="17.0" prefWidth="109.0" text="Data set path :">
                      <font>
                         <Font name="System Bold" size="14.0" />
                      </font>
                   </Label>
-                  <Label layoutX="10.0" layoutY="85.0" prefHeight="17.0" prefWidth="109.0" text="Index path">
+                  <Label layoutX="10.0" layoutY="85.0" prefHeight="17.0" prefWidth="109.0" text="Index path :">
                      <font>
                         <Font name="System Bold" size="14.0" />
                      </font>
                   </Label>
-                  <CheckBox fx:id="btnStem" layoutX="200.0" layoutY="150.0" mnemonicParsing="false" onAction="#btnStemPressed" text="Enable Stemming">
+                  <CheckBox fx:id="btnStem" layoutX="253.0" layoutY="140.0" mnemonicParsing="false" onAction="#btnStemPressed" text="Enable Stemming">
                      <font>
                         <Font name="System Bold" size="12.0" />
                      </font>
+                     <effect>
+                        <Glow />
+                     </effect>
                   </CheckBox>
-                  <Button fx:id="btnReset" layoutX="14.0" layoutY="304.0" mnemonicParsing="false" onAction="#resetAll" prefHeight="35.0" prefWidth="73.0" style="-fx-background-color: #111111;" text="Reset" textFill="#fefcfc">
+                  <TextField fx:id="fieldLoadingPath" layoutX="132.0" layoutY="36.0" prefHeight="25.0" prefWidth="351.0" />
+                  <TextField fx:id="fieldSavingPath" layoutX="133.0" layoutY="83.0" prefHeight="25.0" prefWidth="350.0" />
+                  <Button fx:id="btnBrowseLoad" layoutX="495.0" layoutY="37.0" mnemonicParsing="false" onAction="#loadPath" prefHeight="27.0" prefWidth="77.0" text="Browse">
+                     <font>
+                        <Font name="Eras Bold ITC" size="12.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="btnStart" layoutX="247.0" layoutY="163.0" mnemonicParsing="false" onAction="#parse" prefHeight="35.0" prefWidth="132.0" style="-fx-background-color: #31a7f2;" text="Start Indexing" textFill="#f7f1f1">
                      <font>
                         <Font name="Eras Bold ITC" size="14.0" />
                      </font>
+                     <effect>
+                        <Glow />
+                     </effect>
                   </Button>
-                  <TextField fx:id="fieldLoadingPath" layoutX="113.0" layoutY="36.0" prefHeight="25.0" prefWidth="301.0" />
-                  <TextField fx:id="fieldSavingPath" layoutX="112.0" layoutY="83.0" prefHeight="25.0" prefWidth="301.0" />
-                  <Button fx:id="btnBrowseLoad" layoutX="426.0" layoutY="33.0" mnemonicParsing="false" onAction="#loadPath" prefHeight="27.0" prefWidth="77.0" text="Browse">
+                  <Button fx:id="btnShowDictionary" layoutX="456.0" layoutY="153.0" mnemonicParsing="false" onAction="#showDictionary" prefHeight="21.0" prefWidth="116.0" text="Show dictionary">
                      <font>
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnStart" layoutX="220.0" layoutY="177.0" mnemonicParsing="false" onAction="#parse" prefHeight="39.0" prefWidth="84.0" style="-fx-background-color: #31a7f2;" text="Start">
-                     <font>
-                        <Font name="Eras Bold ITC" size="22.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="btnShowDictionary" layoutX="203.0" layoutY="270.0" mnemonicParsing="false" onAction="#showDictionary" prefHeight="31.0" prefWidth="116.0" text="Show dictionary">
+                  <Button fx:id="btnLoadDictionary" layoutX="455.0" layoutY="182.0" mnemonicParsing="false" onAction="#loadDictionary" onMouseClicked="#loadClicked" prefHeight="22.0" prefWidth="117.0" text="Load dictionary">
                      <font>
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnLoadDictionary" layoutX="203.0" layoutY="310.0" mnemonicParsing="false" onAction="#loadDictionary" onMouseClicked="#loadClicked" prefHeight="31.0" prefWidth="117.0" text="Load dictionary">
+                  <Button fx:id="btnBrowseSave" layoutX="495.0" layoutY="83.0" mnemonicParsing="false" onAction="#savePath" prefHeight="26.0" prefWidth="77.0" text="Browse">
                      <font>
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
+                  <Button fx:id="btnReset" layoutX="148.0" layoutY="164.0" mnemonicParsing="false" onAction="#resetAll" prefHeight="32.0" prefWidth="79.0" style="-fx-background-color: #111111;" text="Reset" textFill="#fefcfc">
+                     <font>
+                        <Font name="Eras Bold ITC" size="14.0" />
+                     </font>
+                     <effect>
+                        <Glow />
+                     </effect>
+                  </Button>
+                  <TextField fx:id="fieldLoadingQuery" layoutX="134.0" layoutY="282.0" prefHeight="25.0" prefWidth="350.0" />
+                  <TextField fx:id="fieldTypingQuery" layoutX="134.0" layoutY="326.0"  prefHeight="25.0" prefWidth="349.0" />
+                  <Label layoutX="9.0" layoutY="282.0" prefHeight="20.0" prefWidth="80.0" text="Query file :">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="btnBrowseQuery" layoutX="495.0" layoutY="281.0" mnemonicParsing="false" onAction="#browseQuery" prefHeight="27.0" prefWidth="77.0" text="Browse">
+                     <font>
+                        <Font name="Eras Bold ITC" size="12.0" />
+                     </font>
+                  </Button>
+                  <Label layoutX="5.0" layoutY="325.0" prefHeight="25.0" prefWidth="122.0" text="Type your query :">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="btnStartS" layoutX="248.0" layoutY="389.0" mnemonicParsing="false" onAction="#search" prefHeight="35.0" prefWidth="132.0" style="-fx-background-color: #31a7f2;" text="Run query" textFill="#f7f1f1">
+                     <font>
+                        <Font name="Eras Bold ITC" size="14.0" />
+                     </font>
+                     <effect>
+                        <Glow />
+                     </effect>
+                  </Button>
+                  <CheckBox fx:id="btnSemantics" layoutX="310.0" layoutY="364.0" mnemonicParsing="false" onAction="#btnSemanticsPressed" text="Include Semantics">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                     <effect>
+                        <Glow />
+                     </effect>
+                  </CheckBox>
+                  <Button fx:id="btnShowResults" layoutX="455.0" layoutY="401.0" mnemonicParsing="false" onAction="#showResults" prefHeight="18.0" prefWidth="116.0" text="Show Results">
+                     <font>
+                        <Font name="Eras Bold ITC" size="12.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="btnSaveResults" layoutX="454.0" layoutY="369.0" mnemonicParsing="false" onAction="#saveResults" prefHeight="18.0" prefWidth="116.0" text="Save Results">
+                     <font>
+                        <Font name="Eras Bold ITC" size="12.0" />
+                     </font>
+                  </Button>
+                  <CheckBox fx:id="btnClickstream" layoutX="207.0" layoutY="365.0" mnemonicParsing="false" onAction="#btnClickstreamPressed" text="Clickstream">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                     <effect>
+                        <Glow />
+                     </effect>
+                  </CheckBox>
                </children>
             </AnchorPane>
-            <ImageView fx:id="boximage" fitHeight="174.0" fitWidth="374.0" layoutX="146.0" layoutY="64.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="boximage" fitHeight="174.0" fitWidth="374.0" layoutX="146.0" layoutY="16.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@Capture1.JPG" />
                </image>
             </ImageView>
+            <Label layoutX="39.0" layoutY="443.0" prefHeight="20.0" prefWidth="28.0" text="OR" textFill="#e81e1e">
+               <font>
+                  <Font name="System Bold" size="18.0" />
+               </font>
+               <effect>
+                  <DropShadow color="#ffa8c8" />
+               </effect>
+            </Label>
          </children>
       </Pane>
    </center>
