@@ -36,14 +36,15 @@ public class DocCorpusInfo implements IWritable {
         this.mostFreqEntities = new ArrayList<>(5);
     }
 
-    public DocCorpusInfo(String docInfo){
+    public DocCorpusInfo(String[] splitInfo){
         this.mostFreqEntities = new ArrayList<>(5);
-        String[] splitInfo = StringUtils.split(docInfo, del);
-        this.maxTf = Integer.parseInt(splitInfo[0]);
-        this.numOfTerms = Integer.parseInt(splitInfo[1]);
-        this.numOfUniqTerms = Integer.parseInt(splitInfo[2]);
-        this.sumOfTermsSquare = Double.parseDouble(splitInfo[3]);
-        setEntitiesFromString(splitInfo[4]);
+//        String[] splitInfo = StringUtils.split(docInfo, del);
+        this.maxTf = Integer.parseInt(splitInfo[1]);
+        this.numOfTerms = Integer.parseInt(splitInfo[2]);
+        this.numOfUniqTerms = Integer.parseInt(splitInfo[3]);
+        this.sumOfTermsSquare = Double.parseDouble(splitInfo[4]);
+        if (splitInfo.length == 6)
+            setEntitiesFromString(splitInfo[5]);
     }
 
     private void setEntitiesFromString(String entities){

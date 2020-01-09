@@ -67,9 +67,10 @@ public class Searcher {
     private void readDocsInfoDic(){
         List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + DOCSINFO_SUB_PATH);
         String[] splitLine;
-        for(String line : dictionaryFile){
-            splitLine = line.split(del);
-            DocCorpusInfo doc = new DocCorpusInfo(splitLine[1]);
+
+        for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i).compareTo("") != 0; i++){
+            splitLine = dictionaryFile.get(i).split(del);
+            DocCorpusInfo doc = new DocCorpusInfo(splitLine);
             this.docsInfo.put(splitLine[DOC_NUM_INDEX], doc);
             this.sumOfDocsLength += doc.getNumOfTerms();
         }
@@ -79,7 +80,7 @@ public class Searcher {
         List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + DIC_SUB_PATH);
         String[] splitLine;
 
-        for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i) != ""; i++){
+        for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i).compareTo("") != 0; i++){
             splitLine = dictionaryFile.get(i).split(del);
             this.dictionary.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_LINE_NUM_INDEX]));
         }
