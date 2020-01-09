@@ -99,7 +99,7 @@ public class Searcher {
         }
     }
     
-    public ArrayList<Pair<String, Double>> handelQuery(String query){
+    public ArrayList<Pair<String, Double>> search(String query){
         HashMap<String, Term> queryTermsMap = this.parser.parse(query, "", "");
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
