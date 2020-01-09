@@ -98,15 +98,14 @@ public class Term implements IWritable {
      * @param index - the index of the term in the given document
      */
     public void updatesDocsInfo(String docNum, int index){
-        DocTermInfo curDoc = docs.get(docNum);
-        if (curDoc == null) {
-            // creates a new document info object
-            curDoc = new DocTermInfo(docNum);
-            docs.put(docNum, curDoc);
-        }
+        DocTermInfo doc = new DocTermInfo(docNum);
+        if (!docs.containsKey(doc.getDocNum()))
+            docs.put(doc.getDocNum(), doc);
+        doc = docs.get(doc.getDocNum());
+
         TF++;
-        curDoc.increaseTfi();
-        curDoc.addIndex(index);
+        doc.increaseTfi();
+        doc.addIndex(index);
     }
 
     //</editor-fold>
@@ -146,6 +145,7 @@ public class Term implements IWritable {
      */
     public void merge(Term term){
         value = getUpdatedValue(term.value);
+        this.TF += term.getTF();
         docs.putAll(term.getDocs());
     }
 

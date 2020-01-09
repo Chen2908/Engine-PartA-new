@@ -63,18 +63,18 @@ public class DocCorpusInfo implements IWritable {
      * max term frequency, num of uniq terms, file vector size (sigma tf square)
      * @param term - term
      */
-    public void updateDoc(Term term){
-        setMaxTf(term.getTF());
+    public void updateDoc(String docNum, Term term){
+        setMaxTf(term.getDocTfi(docNum));
         increaseUniqTerms();
-        addToVector(term.getTF());
-        this.numOfTerms += term.getTF();
+        addToVector(term.getDocTfi(docNum));
+        this.numOfTerms += term.getDocTfi(docNum);
         if (term.isEntity())
-            addEntity(term);
+            addEntity(docNum, term);
     }
 
-    private void addEntity(Term term){
+    private void addEntity(String docNum, Term term){
         if (this.mostFreqEntities.size() < 5) {
-            this.mostFreqEntities.add(new Pair<>(term.getValue(), term.getTF()));
+            this.mostFreqEntities.add(new Pair<>(term.getValue(), term.getDocTfi(docNum)));
             return;
         }
         //finds min frequent entity

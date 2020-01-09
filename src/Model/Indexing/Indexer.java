@@ -317,7 +317,7 @@ public class Indexer {
         for(DocTermInfo doc: term.getDocs().values()){
             if(!docsCorpusInfo.containsKey(doc.getDocNum()))
                 docsCorpusInfo.put(doc.getDocNum(), new DocCorpusInfo());
-            docsCorpusInfo.get(doc.getDocNum()).updateDoc(term);
+            docsCorpusInfo.get(doc.getDocNum()).updateDoc(doc.getDocNum(), term);
         }
     }
 

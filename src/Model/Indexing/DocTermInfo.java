@@ -34,6 +34,7 @@ public class DocTermInfo{
         docNumPrefix = prefix;
         docNumSuffix = docInfoSplit[0];
         tfi = Integer.parseInt(docInfoSplit[1]);
+        termIndexes.append(docInfoSplit[2]);
     }
 
     //</editor-fold>
