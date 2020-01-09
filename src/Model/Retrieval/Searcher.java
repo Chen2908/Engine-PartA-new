@@ -37,22 +37,30 @@ public class Searcher {
     private final String SEM_DIC_SUB_PATH = "\\semanticDic.txt";
 
 
-    public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming){
+    public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming, boolean semantics){
         this.numOfDocs = 0;
         this.sumOfDocsLength = 0;
         this.docsInfo = new HashMap<>();
+        this.dictionary = new HashMap<>();
+
         this.indexDir = new File(indexDirPath);
         this.fileReader = new FileContentReader();
-        this.semanticModel = new Semantics();
+
+        this.ranker = new Ranker(docsInfo);
         this.parser = new Parse(stopWordPath, stemming);
-        this.dictionary = new HashMap<>();
-        this.semanticDictionary = new HashMap<>();
+
         readDictionary();
         readDocsInfoDic();
-        readSemanticDictionary();
+
         this.postingReader = new PostingReader(dictionary,
                 indexDir.getAbsolutePath() + POSTING_FILES_SUB_PATH, numOfPosting);
-        this.ranker = new Ranker(docsInfo);
+
+        if (semantics) {
+            this.semanticModel = new Semantics();
+            this.semanticDictionary = new HashMap<>();
+            readSemanticDictionary();
+        }
+
     }
 
     private void readDocsInfoDic(){
