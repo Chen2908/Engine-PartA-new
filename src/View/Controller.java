@@ -404,7 +404,7 @@ public class Controller implements Observer {
             return;
         }
 
-        else if (fieldTypingQuery.getText() != null) {
+        else if (!fieldTypingQuery.getText().isEmpty()) {
             queryText = fieldTypingQuery.getText();
             queryResults = viewModel.search(queryText, stem, semantics);
             for (Pair<String, Double> pair : queryResults) {

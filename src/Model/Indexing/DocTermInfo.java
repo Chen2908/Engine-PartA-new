@@ -30,6 +30,7 @@ public class DocTermInfo{
     }
 
     public DocTermInfo(String prefix, String docInfo){
+        this.termIndexes = new StringBuilder();
         String[] docInfoSplit = docInfo.split(del);
         docNumPrefix = prefix;
         docNumSuffix = docInfoSplit[0];
