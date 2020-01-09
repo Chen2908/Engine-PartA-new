@@ -398,7 +398,7 @@ public class Controller implements Observer {
         List<Double> queryResultsIncludingIdScore = new ArrayList<>();
         HashMap<String, List<Pair<String, Double>>> resultsPerQuery = new HashMap<>();
 
-        if (!fieldTypingQuery.getText().isEmpty() && fieldLoadingQuery.getText() != null) {
+        if (!fieldTypingQuery.getText().isEmpty() && !fieldLoadingQuery.getText().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "You can choose either a query file or a text query, not both");
             alert.show();
             return;
@@ -413,7 +413,7 @@ public class Controller implements Observer {
             }
             resultsPerQuery.put("000", queryResults);
 
-        } else if (fieldLoadingQuery.getText() != null) {
+        } else {
             //call search with each query from file
             for (Pair<String, String> queryPair : queriesFromFileText) {
                 queryResults = viewModel.search(queryPair.getValue(), stem, semantics);

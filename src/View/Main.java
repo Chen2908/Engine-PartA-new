@@ -27,11 +27,11 @@ public class Main extends Application {
         primaryStage.setTitle("Zoogle, your one and only search engine");
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("scene.fxml"));
         Parent root = fxmlLoader.load();
-        Scene scene1 = new Scene(root, 680, 600);
+        Scene scene1 = new Scene(root, 680, 650);
         //scene1.getStylesheets().add(getClass().getResource("ViewStyle.css").toExternalForm());
         primaryStage.setScene(scene1);
         primaryStage.show();
-        primaryStage.setMinHeight(550.0);
+        primaryStage.setMinHeight(600.0);
         primaryStage.setMinWidth(500.0);
 
         //--------------
