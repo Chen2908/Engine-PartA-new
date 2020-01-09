@@ -42,10 +42,10 @@ public class Controller implements Observer {
     private boolean clickstream;
     private boolean loaded;
     private boolean parsed;
-    private ArrayList<Pair<String, String>> queriesFromFileText;
-    private HashMap<String, ArrayList<Pair<String, Double>>> resultsPerQuery;
-    private ArrayList<String> queryResultsIncludingIdDocs;
-    private  ArrayList<Double> queryResultsIncludingIdScore;
+    private List<Pair<String, String>> queriesFromFileText;
+    private HashMap<String, List<Pair<String, Double>>> resultsPerQuery;
+    private List<String> queryResultsIncludingIdDocs;
+    private List<Double> queryResultsIncludingIdScore;
 
     @FXML
     public javafx.scene.control.Button btnStart;
@@ -393,12 +393,12 @@ public class Controller implements Observer {
             return;
         }
 
-        ArrayList<Pair<String, Double>> queryResults;
-        ArrayList<String> queryResultsIncludingIdDocs = new ArrayList<>();
-        ArrayList<Double> queryResultsIncludingIdScore = new ArrayList<>();
-        HashMap<String, ArrayList<Pair<String, Double>>> resultsPerQuery = new HashMap<>();
+        List<Pair<String, Double>> queryResults;
+        List<String> queryResultsIncludingIdDocs = new ArrayList<>();
+        List<Double> queryResultsIncludingIdScore = new ArrayList<>();
+        HashMap<String, List<Pair<String, Double>>> resultsPerQuery = new HashMap<>();
 
-        if (fieldTypingQuery.getText() != null && fieldLoadingQuery.getText() != null) {
+        if (!fieldTypingQuery.getText().isEmpty() && fieldLoadingQuery.getText() != null) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "You can choose either a query file or a text query, not both");
             alert.show();
             return;

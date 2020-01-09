@@ -1,9 +1,11 @@
 package Model;
+
 import javafx.util.Pair;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Observable;
 
 /**
@@ -129,7 +131,7 @@ public class Model extends Observable {
     }
 
 
-    public ArrayList<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
+    public List<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
         setManagerSearching(this.dicPath, stemming, semantics);
         return manager.search(queryText);
     }
