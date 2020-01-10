@@ -23,6 +23,7 @@ public class Model extends Observable {
     private ArrayList<Integer> countOfTerms;
     private String dicPath;
     private String indexPath;
+    private HashMap <String, List<String>> entitiesPerDoc;
 
     public Model() {
 
@@ -50,12 +51,12 @@ public class Model extends Observable {
         this.manager = new Manager(loadingPath, savingPath, stem);
     }
 
-    private void setManagerSearching(String postingPath, boolean stemming, int semanticsNum) {
-        this.manager = new Manager(postingPath, stemming, semanticsNum);
+    private void setManagerSearching(String postingPath, boolean stemming) {
+        this.manager = new Manager(postingPath, stemming);
     }
 
 
-    public void loadDictionary(String path) {
+    public void loadDictionary(String path, boolean stemming) {
         this.indexPath = path;
         HashMap<String, int[]> terms = new HashMap<>();
         HashMap<String, Integer> termsToShow = new HashMap<>();
@@ -96,10 +97,15 @@ public class Model extends Observable {
             notifyObservers(error);
             return;
         }
+
         this.termsSorted = termsList;
         this.countOfTerms = count;
         this.termstoShow = termsToShow;
         this.terms = terms;
+
+        //set manager for searching
+        setManagerSearching(this.indexPath, stemming);
+
         String[] notify = {"dictionary loaded"};
         setChanged();
         notifyObservers(notify);
@@ -135,7 +141,15 @@ public class Model extends Observable {
 
 
     public List<Pair<String, Double>> search(String queryText, boolean stemming, int semanticsNum) {
-        setManagerSearching(this.indexPath, stemming, semanticsNum);
-        return manager.search(queryText);
+        manager.setSearcherSemantics(semanticsNum);
+        List<Pair<String, Double>> searched = manager.search(queryText);
+        if (entitiesPerDoc == null)
+            entitiesPerDoc = manager.getEntities();
+        return searched;
+    }
+
+
+    public List<String> getEntities(String realdocNo) {
+        return entitiesPerDoc.get(realdocNo);
     }
 }

@@ -262,9 +262,9 @@ public class Controller implements Observer {
 
     public void loadDictionary() {
         if(stem)
-             viewModel.loadDictionary(savingPath+ "\\With Stemming\\Index");
+             viewModel.loadDictionary(savingPath+ "\\With Stemming\\Index", true);
         else
-            viewModel.loadDictionary(savingPath+ "\\Without Stemming\\Index");
+            viewModel.loadDictionary(savingPath+ "\\Without Stemming\\Index", false);
     }
 
     public void showDictionary() {
@@ -346,7 +346,12 @@ public class Controller implements Observer {
 
     private void writeResultsToFile(){
         try {
-            File file = new File(this.saveQueryResultsPath + "/queryResults" + stem + ".txt");
+            String stemming;
+            if (stem)
+                stemming = "with stemming";
+            else
+                stemming = "without stemming";
+            File file = new File(this.saveQueryResultsPath + "/queryResults_" + stemming + "_.txt");
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
             List<String> quriesNumbers = new ArrayList<>(resultsPerQuery.keySet());
             quriesNumbers.sort(String::compareTo);
@@ -420,7 +425,7 @@ public class Controller implements Observer {
     public String showEntitiesForDoc (String docNo){
         String [] splitted = StringUtils.split(docNo, ':');
         String realdocNo = splitted [1];
-        return "check entities for " + realdocNo;
+        return viewModel.getEntities(realdocNo).toString();
     }
 
     public void search() {

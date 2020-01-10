@@ -31,6 +31,7 @@ public class Manager {
     private int vocabularySize;
     private double processTime;
     private HashMap<String, Term> docTerms;
+    private HashMap<String, List<String>> entities;
 
     //partB
     private Searcher searcher;
@@ -56,10 +57,14 @@ public class Manager {
     /**
      * Constructor with parameters for searching
      * @param indexPath - the path where to create the posting files in
-     * @param semanticsNum - 0 id no semantics, 1 for the wordsToVec model, 2 for thr API model
      */
-    public Manager (String indexPath, boolean stemming, int semanticsNum){
-        this.searcher = new Searcher(indexPath, indexPath, HASHSIZE, stemming, semanticsNum);
+    public Manager (String indexPath, boolean stemming){
+        this.searcher = new Searcher(indexPath, indexPath, HASHSIZE, stemming);
+    }
+
+
+    public void setSearcherSemantics(int semanticsNum) {
+        this.searcher.setSemanticModel(semanticsNum);
     }
 
 
@@ -183,6 +188,15 @@ public class Manager {
     }
 
     public List<Pair<String, Double>> search(String queryText) {
-       return searcher.search(queryText);
+        List<Pair<String, Double>> searched= searcher.search(queryText);
+        if (entities == null)
+            entities = searcher.getEntities();
+        return searched;
     }
+
+    public HashMap<String, List<String>> getEntities(){
+        return entities;
+    }
+
+
 }

@@ -62,8 +62,8 @@ public class ViewModel extends Observable implements Observer {
         model.parse(loadingPath, savingPath, stem);
     }
 
-    public void loadDictionary(String path){
-        model.loadDictionary(path);
+    public void loadDictionary(String path, boolean stemming){
+        model.loadDictionary(path, stemming);
     }
 
 
@@ -119,6 +119,10 @@ public class ViewModel extends Observable implements Observer {
             String[] pathToUpdate = {"saveQuery", queryPath};
             notifyObservers(pathToUpdate);
         }
+    }
+
+    public List<String> getEntities(String realdocNo) {
+        return model.getEntities(realdocNo);
     }
 }
 
