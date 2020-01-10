@@ -365,8 +365,8 @@ public class Controller implements Observer {
         //show results
         TableView tableView = new TableView<>();
 
-        TableColumn<String, MapViewDouble> firstColumn = new TableColumn<>("Query : DocNO");
-        firstColumn.setCellValueFactory(new PropertyValueFactory<>("query : DocNo"));
+        TableColumn<String, MapViewDouble> firstColumn = new TableColumn<>("Query : DocNo");
+        firstColumn.setCellValueFactory(new PropertyValueFactory<>("docNo"));
         firstColumn.setPrefWidth(200);
         TableColumn<Double, MapViewDouble> secondColumn = new TableColumn<>("Score");
         secondColumn.setCellValueFactory(new PropertyValueFactory<>("score"));

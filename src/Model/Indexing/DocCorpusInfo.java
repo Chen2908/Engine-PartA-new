@@ -195,6 +195,13 @@ public class DocCorpusInfo implements IWritable {
         return docNumSplit[0] + "-" + docNumSuffix;
     }
 
+    public List<String> getMostFreqEntities() {
+        List<String> entities = new ArrayList();
+        for (Pair<String, Integer> entity : mostFreqEntities){
+            entities.add(entity.left);
+        }
+        return entities;
+    }
 
     //</editor-fold>
 

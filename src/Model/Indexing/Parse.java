@@ -195,6 +195,11 @@ public class Parse {
                             }
                             if (found) {
                                 enterKey(temp, i, true);
+                                //handle each word
+                                String[] splittedTemp = StringUtils.split(temp, " ");
+                                for(int k=0; k<splittedTemp.length; k++) {
+                                    handle_1_word_term(splittedTemp[k], i+k);
+                                }
                                 i = curr - 1;
                             }
                         }

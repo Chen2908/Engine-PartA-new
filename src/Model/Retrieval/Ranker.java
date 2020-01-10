@@ -17,7 +17,7 @@ public class Ranker {
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
-//    private HashMap <String, entitiesPerDoc
+    private HashMap <String, List<String>> entitiesPerDoc;
 
     /**
      * constructor
@@ -28,7 +28,7 @@ public class Ranker {
         this.docsDictionary = docsDictionary;  //docNum, docLength, sumOfTermsSquare (doc normal) and possibly date
         Calculator.setCorpusSize(docsDictionary.size());
         Calculator.setSumLength(sumLengths);
-        this.semantics = true;
+        entitiesPerDoc = new HashMap<>();
     }
 
 
@@ -142,10 +142,10 @@ public class Ranker {
                 sumWeightForDoc += tfidf * (1 - normalizedIndex);
             }
 //            double rank = Math.sqrt(score) + sumWeightForDoc;
-            double rank = score + sumWeightForDoc;
+            double rank = 0.85 * score + 0.15 * sumWeightForDoc;
             String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
+            entitiesPerDoc.put(realNum, docsDictionary.get(docNum).getMostFreqEntities());
             rankedDocs.add(new Pair(realNum, rank));
-
         }
 
         //sort docs according to weight
@@ -181,6 +181,10 @@ public class Ranker {
         double up = numOfOccurrecnes * (K + 1);
         double down = numOfOccurrecnes + (K * (1 - B + (B * docLength / Calculator.averageDocLength(sumLengths,cospusSize))));
         return idf * up / down;
+    }
+
+    public HashMap<String, List<String>> getEntitiesPerDoc() {
+        return entitiesPerDoc;
     }
 
     //cossim?
