@@ -50,10 +50,9 @@ public class Ranker {
         for (Term term : queryTerms) {
             HashMap<String, DocTermInfo> termDocs = term.getDocs(); //string= docNum
             for (String docNum : termDocs.keySet()) {
-                String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
-                putDocNumBM(termDocs.get(docNum), docNum, realNum, docNumBM25Query, termDocs.size(),1);
+                putDocNumBM(termDocs.get(docNum), docNum, docNumBM25Query, termDocs.size(),1);
                 int firstIndex = termDocs.get(docNum).getTermFirstIndex();
-                putDocNumIndex(term, docNum, realNum, firstIndex,docNumTermFirstIndex);
+                putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
             }
         }
         if (semantics) {
@@ -64,10 +63,9 @@ public class Ranker {
                 double termScore = semanticPair.getValue();
                 //for each doc
                 for (String docNum : trmDocs.keySet()) {
-                    String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
-                    putDocNumBM(trmDocs.get(docNum), docNum, realNum, docNumBM25QueryPlusSemantics, trmDocs.size(), termScore);
+                    putDocNumBM(trmDocs.get(docNum), docNum, docNumBM25QueryPlusSemantics, trmDocs.size(), termScore);
                     int firstIndex = trmDocs.get(docNum).getTermFirstIndex();
-                    putDocNumIndex(term, docNum, realNum, firstIndex,docNumTermFirstIndex);
+                    putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
                 }
             }
         }
@@ -83,19 +81,19 @@ public class Ranker {
      * @param size - number of documents that term appeared in
      * @param weight  - 1 if it is a term that appeared in the query, normalized score if it is a semantic term
      */
-    private void putDocNumBM(DocTermInfo value, String docNum, String realNum, HashMap<String, Double> docNumBM25Query, int size, double weight){
+    private void putDocNumBM(DocTermInfo value, String docNum, HashMap<String, Double> docNumBM25Query, int size, double weight){
         double bmVal = 0;
         int firstIndex = value.getTermFirstIndex();
         int Tfi= value.getTfi();
         int numOfTerms = docsDictionary.get(docNum).getNumOfTerms();
         double idf = getIdfForBM25(size);
         double bm25 = calculateBM25PerTerm(Tfi,numOfTerms,idf);
-        if (docNumBM25Query.containsKey(realNum)) {
-            bmVal = docNumBM25Query.get(realNum) + bm25 * weight;
+        if (docNumBM25Query.containsKey(docNum)) {
+            bmVal = docNumBM25Query.get(docNum) + bm25 * weight;
         } else {
             bmVal = bm25 * weight;
         }
-        docNumBM25Query.put(realNum, bmVal);
+        docNumBM25Query.put(docNum, bmVal);
     }
 
     /**
@@ -106,16 +104,16 @@ public class Ranker {
      * @param firstIndex
      * @param docNumTermFirstIndex - insert hashmap
      */
-    private void putDocNumIndex(Term term, String docNum, String realNum, int firstIndex, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex){
+    private void putDocNumIndex(Term term, String docNum, int firstIndex, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex){
         HashMap<Term,Integer> index;
-        if (docNumTermFirstIndex.containsKey(realNum)){
-            index = docNumTermFirstIndex.get(realNum);
+        if (docNumTermFirstIndex.containsKey(docNum)){
+            index = docNumTermFirstIndex.get(docNum);
         }
         else {
             index = new HashMap<>();
         }
         index.put(term, firstIndex);
-        docNumTermFirstIndex.put(realNum, index);
+        docNumTermFirstIndex.put(docNum, index);
     }
 
     /**
@@ -145,7 +143,8 @@ public class Ranker {
             }
 //            double rank = Math.sqrt(score) + sumWeightForDoc;
             double rank = score + sumWeightForDoc;
-            rankedDocs.add(new Pair(docNum, rank));
+            String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
+            rankedDocs.add(new Pair(realNum, rank));
         }
 
         //sort docs according to weight
