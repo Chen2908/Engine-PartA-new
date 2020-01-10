@@ -1,16 +1,16 @@
 package View;
 
+import Model.Indexing.DocCorpusInfo;
 import ViewModel.ViewModel;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.control.*;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -442,7 +442,7 @@ public class Controller implements Observer {
             queryText = fieldTypingQuery.getText();
             queryResults = viewModel.search(queryText, stem, semanticsNum);
             for (Pair<String, Double> pair : queryResults) {
-                queryResultsIncludingIdDocs.add("query 000: " + pair.getKey());
+                queryResultsIncludingIdDocs.add("query 000: " + DocCorpusInfo.getDocDecimalNum(pair.getKey()));
                 queryResultsIncludingIdScore.add(pair.getValue());
             }
             resultsPerQuery.put("000", queryResults);
@@ -452,7 +452,7 @@ public class Controller implements Observer {
             for (Pair<String, String> queryPair : queriesFromFileText) {
                 queryResults = viewModel.search(queryPair.getValue(), stem, semanticsNum);
                 for (Pair<String, Double> pair : queryResults) {
-                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + pair.getKey());
+                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + DocCorpusInfo.getDocDecimalNum(pair.getKey()));
                     queryResultsIncludingIdScore.add(pair.getValue());
                 }
                 resultsPerQuery.put(queryPair.getKey(), queryResults);
