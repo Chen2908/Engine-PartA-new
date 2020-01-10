@@ -112,9 +112,9 @@ public class Manager {
         try {
             String path;
             if (stemming)
-                path = postingPath + "With Stemming/stop_words.txt";
+                path = postingPath + "With Stemming/Index/stop_words.txt";
             else
-                path = postingPath + "Without Stemming/stop_words.txt";
+                path = postingPath + "Without Stemming/Index/stop_words.txt";
             File file = new File(path);
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
             for(String st: stopWords){
