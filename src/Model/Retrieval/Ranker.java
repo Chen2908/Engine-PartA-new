@@ -12,12 +12,11 @@ import java.util.List;
 
 public class Ranker {
 
-    private final double K = 1.25;
-    private final double B = 0.75;
+    private final double K = 0.01;
+    private final double B = 0.1;
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
-    private HashMap <String, List<String>> entitiesPerDoc;
 
     /**
      * constructor
@@ -28,7 +27,6 @@ public class Ranker {
         this.docsDictionary = docsDictionary;  //docNum, docLength, sumOfTermsSquare (doc normal) and possibly date
         Calculator.setCorpusSize(docsDictionary.size());
         Calculator.setSumLength(sumLengths);
-        entitiesPerDoc = new HashMap<>();
     }
 
 
@@ -139,12 +137,11 @@ public class Ranker {
                 double tfidf = Calculator.calculateTfIdf(term.getDf(), term.getDocTfi(docNum), dci.getMaxTf());
                 double normalizedIndex = (double)docNumTermFirstIndex.get(docNum).get(term) / dci.getNumOfTerms();
 
-                sumWeightForDoc += tfidf * (1 - normalizedIndex);
+                sumWeightForDoc += tfidf * Math.abs((1 - normalizedIndex));
             }
 //            double rank = Math.sqrt(score) + sumWeightForDoc;
-            double rank = 0.85 * score + 0.15 * sumWeightForDoc;
+            double rank = 0.8 * score + 0.2 * sumWeightForDoc;
             String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
-            entitiesPerDoc.put(realNum, docsDictionary.get(docNum).getMostFreqEntities());
             rankedDocs.add(new Pair(realNum, rank));
         }
 
@@ -164,7 +161,7 @@ public class Ranker {
     private double getIdfForBM25(int numOfDocsForTerm) {
         double up = Calculator.corpusSize - numOfDocsForTerm + 0.5;
         double down = numOfDocsForTerm + 0.5;
-        return Math.log(up / down) / Math.log(2);
+        return Math.log(up / down) / Math.log(2) + 1;
     }
 
     /**
@@ -183,11 +180,7 @@ public class Ranker {
         return idf * up / down;
     }
 
-    public HashMap<String, List<String>> getEntitiesPerDoc() {
-        return entitiesPerDoc;
-    }
 
-    //cossim?
 
 
 }
