@@ -348,7 +348,9 @@ public class Controller implements Observer {
         try {
             File file = new File(this.saveQueryResultsPath + "/queryResults" + stem + ".txt");
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
-            for (String queryNum : resultsPerQuery.keySet()){
+            List<String> quriesNumbers = new ArrayList<>(resultsPerQuery.keySet());
+            quriesNumbers.sort(String::compareTo);
+            for (String queryNum : quriesNumbers){
                 for (Pair<String, Double> pair: resultsPerQuery.get(queryNum)){
                     bf.write(queryNum + " 0 " +pair.getKey() + " 1" +  " 0.0" + " mt" + "\n");
                 }
@@ -443,7 +445,7 @@ public class Controller implements Observer {
             queryText = fieldTypingQuery.getText();
             queryResults = viewModel.search(queryText, stem, semanticsNum);
             for (Pair<String, Double> pair : queryResults) {
-                queryResultsIncludingIdDocs.add("query 000: " + DocCorpusInfo.getDocDecimalNum(pair.getKey()));
+                queryResultsIncludingIdDocs.add("query 000: " + pair.getKey());
                 queryResultsIncludingIdScore.add(pair.getValue());
             }
             resultsPerQuery.put("000", queryResults);
@@ -453,7 +455,7 @@ public class Controller implements Observer {
             for (Pair<String, String> queryPair : queriesFromFileText) {
                 queryResults = viewModel.search(queryPair.getValue(), stem, semanticsNum);
                 for (Pair<String, Double> pair : queryResults) {
-                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + DocCorpusInfo.getDocDecimalNum(pair.getKey()));
+                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + pair.getKey());
                     queryResultsIncludingIdScore.add(pair.getValue());
                 }
                 resultsPerQuery.put(queryPair.getKey(), queryResults);

@@ -115,7 +115,7 @@ public class Searcher {
             if (isTermInMap(queryTermsMap, term))
                 queryTermPosting.add(termsPosting.get(term));
             else
-                semTermPosting.add(new Pair(termsPosting.get(term), semTerms.get(term)));
+                semTermPosting.add(new Pair(termsPosting.get(term), semTerms.get(term.toLowerCase())));
         }
         return this.ranker.rank(queryTermPosting, semTermPosting);
     }
@@ -131,7 +131,7 @@ public class Searcher {
             if (this.semanticDictionary.containsKey(term))
                 semTermList = this.semanticDictionary.get(term);
             else
-                semTermList = semanticModel.termWithSimilarMeaning(term);
+                semTermList = semanticModel.termWithSimilarMeaning(term.toLowerCase());
             for (Pair<String, Double> pair: semTermList)
                 semTerms.put(pair.getKey(), pair.getValue());
         }
