@@ -111,13 +111,17 @@ public class Searcher {
         HashMap<String, Term> termsPosting = postingReader.getTermsPosting(allTerms);
         ArrayList<Term> queryTermPosting = new ArrayList<>();
         ArrayList<Pair<Term, Double>> semTermPosting = new ArrayList<>();
-        for (String term: allTerms){
-            if (queryTermsMap.containsKey(term))
+        for (String term: termsPosting.keySet()){
+            if (isTermInMap(queryTermsMap, term))
                 queryTermPosting.add(termsPosting.get(term));
             else
                 semTermPosting.add(new Pair(termsPosting.get(term), semTerms.get(term)));
         }
         return this.ranker.rank(queryTermPosting, semTermPosting);
+    }
+
+    private boolean isTermInMap(HashMap<String, Term> map, String term){
+        return map.containsKey(term) || map.containsKey(term.toUpperCase()) || map.containsKey(term.toLowerCase());
     }
 
     private HashMap<String, Double> getSemTerm(List<String> queryTerms){

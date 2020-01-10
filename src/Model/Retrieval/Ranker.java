@@ -40,7 +40,7 @@ public class Ranker {
      * @return 50 document numbers in which the terms given appeared in, ranked.
      */
     public List<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Double>> semanticTerms) {
-        if (semanticTerms == null)
+        if (semanticTerms.size() == 0)
             this.semantics = false;
 
         HashMap<String, Double> docNumBM25Query = new HashMap<>(); //docNum-> bm25

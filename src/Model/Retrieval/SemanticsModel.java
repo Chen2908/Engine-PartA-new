@@ -1,7 +1,7 @@
 package Model.Retrieval;
 
-import com.medallia.word2vec.Word2VecModel;
 import com.medallia.word2vec.Searcher.Match;
+import com.medallia.word2vec.Word2VecModel;
 import javafx.util.Pair;
 
 import java.io.File;
