@@ -343,6 +343,7 @@ public class Indexer {
         return newDic;
     }
 
+
     /**
      * This methods returns a hashMap that contains the terms values(keys)
      * and the term(values) that were bellow the threshold
