@@ -50,7 +50,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 10000, HASHSIZE);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 7000, HASHSIZE);
         Calculator.setCorpusSize(this.corpusSize);
     }
 

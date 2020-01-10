@@ -425,7 +425,12 @@ public class Controller implements Observer {
     public String showEntitiesForDoc (String docNo){
         String [] splitted = StringUtils.split(docNo, ':');
         String realdocNo = splitted [1];
-        return viewModel.getEntities(realdocNo).toString();
+        List<String> entities = viewModel.getEntities(realdocNo);
+        StringBuilder sb = new StringBuilder();
+        for (String en: entities){
+            sb.append(en + "\n");
+        }
+        return sb.toString();
     }
 
     public void search() {
