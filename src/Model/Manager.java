@@ -184,6 +184,5 @@ public class Manager {
 
     public List<Pair<String, Double>> search(String queryText) {
        return searcher.search(queryText);
-//        return null;
     }
 }

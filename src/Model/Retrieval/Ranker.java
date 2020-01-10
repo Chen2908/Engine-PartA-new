@@ -82,16 +82,6 @@ public class Ranker {
      * @param weight  - 1 if it is a term that appeared in the query, normalized score if it is a semantic term
      */
     private void putDocNumBM(DocTermInfo value, String docNum, HashMap<String, Double> docNumBM25Query, int size, double weight){
-        if (value == null)
-            System.out.println("DocTermInfo null");
-        if (docNum == null)
-            System.out.println("docNum null");
-        if (docNumBM25Query == null)
-            System.out.println("docNumBM25Query null");
-        if (docsDictionary.get(docNum) == null)
-            System.out.println("docsDictionary.get(docNum) null " +docNum );
-
-
         double bmVal = 0;
         int firstIndex = value.getTermFirstIndex();
         int Tfi= value.getTfi();

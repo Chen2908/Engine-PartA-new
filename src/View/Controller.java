@@ -20,6 +20,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -365,12 +366,13 @@ public class Controller implements Observer {
 
         TableColumn<String, MapViewDouble> firstColumn = new TableColumn<>("Query : DocNO");
         firstColumn.setCellValueFactory(new PropertyValueFactory<>("query : DocNo"));
-        firstColumn.setPrefWidth(300);
+        firstColumn.setPrefWidth(200);
         TableColumn<Double, MapViewDouble> secondColumn = new TableColumn<>("Score");
         secondColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
-        secondColumn.setPrefWidth(300);
-        tableView.getColumns().add(firstColumn);
-        tableView.getColumns().add(secondColumn);
+        secondColumn.setPrefWidth(200);
+
+        tableView.getColumns().addAll(firstColumn,secondColumn);
+        tableView.setEditable(true);
         tableView.getSelectionModel().setCellSelectionEnabled(true);
 
         for (int i = 0; i < this.queryResultsIncludingIdDocs.size(); i++) {
@@ -380,20 +382,30 @@ public class Controller implements Observer {
             tableView.getItems().add(mv);
         }
 
-        TableView.TableViewSelectionModel selectionModel = tableView.getSelectionModel();
-        selectionModel.setSelectionMode(SelectionMode.SINGLE);
         BorderPane bpane = new BorderPane();
         bpane.setCenter(tableView);
         Button btnShowEntities = new Button("Show entities for selected document");
-        bpane.setBottom(btnShowEntities);
-        EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e)
-            {
-                Object selected= selectionModel.getSelectedItem();
-
+        bpane.setTop(btnShowEntities);
+        bpane.setMaxWidth(400);
+        bpane.setMaxWidth(400);
+        btnShowEntities.setOnAction((ActionEvent e)-> {
+            ObservableList<MapViewDouble> listO = tableView.getSelectionModel().getSelectedItems();
+            int rowIndex = tableView.getSelectionModel().getSelectedIndex();
+            if (! listO.isEmpty()){
+                String docNO = listO.get(0).getDocNo();
+                String toShow = showEntitiesForDoc(docNO);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Top 5 entities");
+                alert.setContentText(toShow);
+                alert.showAndWait();
             }
-        };
-        btnShowEntities.setOnAction(event);
+            else{
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Oh no..");
+                alert.setContentText("No entities to show, please choose a row");
+                alert.showAndWait();
+            }
+        });
         Scene sceneQuery = new Scene(bpane, 600, 800);
         Stage stageQuery = new Stage();
         stageQuery.setTitle("Query Results");
@@ -402,6 +414,11 @@ public class Controller implements Observer {
     }
 
 
+    public String showEntitiesForDoc (String docNo){
+        String [] splitted = StringUtils.split(docNo, ':');
+        String realdocNo = splitted [1];
+        return "check entities for " + realdocNo;
+    }
 
     public void search() {
         if (!this.loaded && !this.parsed) {
