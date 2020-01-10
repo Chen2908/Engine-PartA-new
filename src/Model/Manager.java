@@ -17,7 +17,7 @@ public class Manager {
     private static final int BATCH_SIZE = 6000;
     private static final int THRESHOLD = 0 ;
     private static final int THREAD_POOL_SIZE = 5;
-    private static final int HASHSIZE = 800;
+    private static final int HASHSIZE = 10000;
 
     private ReadFile reader;
     private String corpusPath;
@@ -49,7 +49,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 250, HASHSIZE);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 10000, HASHSIZE);
         Calculator.setCorpusSize(this.corpusSize);
     }
 
