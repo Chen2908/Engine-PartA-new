@@ -346,10 +346,10 @@ public class Controller implements Observer {
         try {
             String stemming;
             if (stem)
-                stemming = "with stemming";
+                stemming = "WithStemming";
             else
-                stemming = "without stemming";
-            File file = new File(this.saveQueryResultsPath + "/queryResults_" + stemming + "_.txt");
+                stemming = "WithoutStemming";
+            File file = new File(this.saveQueryResultsPath + "/queryResults" + stemming + ".txt");
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
             List<String> quriesNumbers = new ArrayList<>(resultsPerQuery.keySet());
             quriesNumbers.sort(String::compareTo);

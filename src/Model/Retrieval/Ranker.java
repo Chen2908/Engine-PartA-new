@@ -104,13 +104,17 @@ public class Ranker {
      */
     private void putDocNumIndex(Term term, String docNum, int firstIndex, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex){
         HashMap<Term,Integer> index;
+        int score = 0;
+        double docPosition = (double) firstIndex / docsDictionary.get(docNum).getNumOfTerms();
+        if (docPosition <= 0.1)
+            score =1;
         if (docNumTermFirstIndex.containsKey(docNum)){
             index = docNumTermFirstIndex.get(docNum);
         }
         else {
             index = new HashMap<>();
         }
-        index.put(term, firstIndex);
+        index.put(term, score);
         docNumTermFirstIndex.put(docNum, index);
     }
 
@@ -130,17 +134,19 @@ public class Ranker {
             hashToWordOn = docNumBM25Query;
 
         for (String docNum : hashToWordOn.keySet()) {
-            double sumWeightForDoc = 0;
+            int sumWeightForDoc = 0;
+            double sumftidfs = 0;
             double score = hashToWordOn.get(docNum);
             for (Term term : docNumTermFirstIndex.get(docNum).keySet()){
                 DocCorpusInfo dci = docsDictionary.get(docNum);
                 double tfidf = Calculator.calculateTfIdf(term.getDf(), term.getDocTfi(docNum), dci.getMaxTf());
-                double normalizedIndex = (double)docNumTermFirstIndex.get(docNum).get(term) / dci.getNumOfTerms();
-
-                sumWeightForDoc += tfidf * Math.abs((1 - normalizedIndex));
+//                double normalizedIndex = (double)docNumTermFirstIndex.get(docNum).get(term) / dci.getNumOfTerms();
+//                sumWeightForDoc += tfidf * Math.abs((1 - normalizedIndex));
+                sumWeightForDoc += docNumTermFirstIndex.get(docNum).get(term);
+                sumftidfs += tfidf;
             }
 //            double rank = Math.sqrt(score) + sumWeightForDoc;
-            double rank = 0.8 * score + 0.2 * sumWeightForDoc;
+            double rank = 0.8 * score + 0.1 * sumWeightForDoc + 0.1 * sumftidfs;
             String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
             rankedDocs.add(new Pair(realNum, rank));
         }
