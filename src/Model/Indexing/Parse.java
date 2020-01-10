@@ -393,8 +393,6 @@ public class Parse {
                  wo2 = splittedBy2[0];
              }
              enterKey(wo1+"-"+wo2, position, false);
-             enterKey(wo1, position, false);
-             enterKey(wo2, position, false);
              return true;
         }
         return false;
