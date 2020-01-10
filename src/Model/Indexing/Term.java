@@ -22,7 +22,7 @@ public class Term implements IWritable {
     private final String docPrefixDel = "#";
 
     private final int VALUE_INDEX = 0;
-    private final int DF_INDEX = 1;
+    private final int TF_INDEX = 1;
     private final int DOCLIST_INDEX = 2;
 
     //</editor-fold>
@@ -54,7 +54,7 @@ public class Term implements IWritable {
 
         String[] splitByMainDel = StringUtils.split(termInfo, mainDel, 3);
         setValue(splitByMainDel[VALUE_INDEX]);
-
+        this.TF = Integer.parseInt(splitByMainDel[TF_INDEX]);
         addDocsInfo(splitByMainDel[DOCLIST_INDEX]);
     }
 
@@ -253,7 +253,7 @@ public class Term implements IWritable {
         StringBuilder updatedTermData = new StringBuilder();
 
         updatedTermData.append(getUpdatedValue(lineSplitToMainSections[VALUE_INDEX]) + mainDel);
-        updatedTermData.append(getUpdatedDF(lineSplitToMainSections[DF_INDEX]) + mainDel);
+        updatedTermData.append(getUpdatedDF(lineSplitToMainSections[TF_INDEX]) + mainDel);
         updatedTermData.append(getUpdatedDocListString(lineSplitToMainSections[DOCLIST_INDEX]));
 
         toUpdate.add(lineNum, updatedTermData);

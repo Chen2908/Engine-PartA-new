@@ -24,7 +24,7 @@ public class Searcher {
     private HashMap<String, DocCorpusInfo> docsInfo;
 
     private long sumOfDocsLength;
-    private boolean isSemanticSearch;
+    private int isSemanticSearch;
 
     private final String del = ";";
     private final int DIC_TERM_INDEX = 0;
@@ -39,9 +39,9 @@ public class Searcher {
     private final String SEM_DIC_SUB_PATH = "\\semanticDic.txt";
 
 
-    public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming, int semanticsNum){
+    public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming, int semantics){
         this.sumOfDocsLength = 0;
-        this.isSemanticSearch = (semanticsNum != 0);
+        this.isSemanticSearch = semantics;
         this.docsInfo = new HashMap<>();
         this.dictionary = new HashMap<>();
         this.semanticDictionary = new HashMap<>();
@@ -58,12 +58,12 @@ public class Searcher {
         this.postingReader = new PostingReader(dictionary,
                 indexDir.getAbsolutePath() + POSTING_FILES_SUB_PATH, numOfPosting);
 
-        if (semanticsNum == 1)
+        if (semantics == 1)
             this.semanticModel = new SemanticsModel();
-        else if (semanticsNum == 2){
+        else if (semantics == 2)
             this.semanticModel = new SemanticsAPI();
-            readSemanticDictionary();
-        }
+        readSemanticDictionary();
+
     }
 
     private void readDocsInfoDic(){
@@ -106,7 +106,7 @@ public class Searcher {
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
         HashMap<String, Double> semTerms = null;
-        if (this.isSemanticSearch)
+        if (this.isSemanticSearch > 0)
             semTerms = getSemTerm(allTerms);
         HashMap<String, Term> termsPosting = postingReader.getTermsPosting(allTerms);
         ArrayList<Term> queryTermPosting = new ArrayList<>();
