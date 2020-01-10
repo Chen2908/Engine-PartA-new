@@ -56,10 +56,10 @@ public class Manager {
     /**
      * Constructor with parameters for searching
      * @param indexPath - the path where to create the posting files in
-     * @param semantics - true if to apply semantics, otherwise false
+     * @param semanticsNum - 0 id no semantics, 1 for the wordsToVec model, 2 for thr API model
      */
-    public Manager (String indexPath, boolean stemming, boolean semantics){
-        this.searcher = new Searcher(indexPath, indexPath, HASHSIZE, stemming, semantics);
+    public Manager (String indexPath, boolean stemming, int semanticsNum){
+        this.searcher = new Searcher(indexPath, indexPath, HASHSIZE, stemming, semanticsNum);
     }
 
 

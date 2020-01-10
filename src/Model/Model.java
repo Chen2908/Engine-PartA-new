@@ -50,8 +50,8 @@ public class Model extends Observable {
         this.manager = new Manager(loadingPath, savingPath, stem);
     }
 
-    private void setManagerSearching(String postingPath, boolean stemming, boolean semantics) {
-        this.manager = new Manager(postingPath, stemming, semantics);
+    private void setManagerSearching(String postingPath, boolean stemming, int semanticsNum) {
+        this.manager = new Manager(postingPath, stemming, semanticsNum);
     }
 
 
@@ -134,8 +134,8 @@ public class Model extends Observable {
     }
 
 
-    public List<Pair<String, Double>> search(String queryText, boolean stemming, boolean semantics) {
-        setManagerSearching(this.indexPath, stemming, semantics);
+    public List<Pair<String, Double>> search(String queryText, boolean stemming, int semanticsNum) {
+        setManagerSearching(this.indexPath, stemming, semanticsNum);
         return manager.search(queryText);
     }
 }

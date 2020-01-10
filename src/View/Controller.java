@@ -1,18 +1,20 @@
 package View;
 
 import ViewModel.ViewModel;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.control.*;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -39,7 +41,7 @@ public class Controller implements Observer {
     private static Stage primaryStage;
     private boolean stem;
     private boolean semantics;
-    private boolean clickstream;
+    private int semanticsNum;
     private boolean loaded;
     private boolean parsed;
     private List<Pair<String, String>> queriesFromFileText;
@@ -60,7 +62,7 @@ public class Controller implements Observer {
     public javafx.scene.control.TextField fieldLoadingQuery;
     public javafx.scene.control.TextField fieldTypingQuery;
     public javafx.scene.control.CheckBox btnSemantics;
-    public javafx.scene.control.CheckBox btnClickstream;
+    public javafx.scene.control.CheckBox btnSemanticsAPI;
     public javafx.scene.control.Button btnBrowseQuery;
     public javafx.scene.control.Button btnSaveResults;
     public javafx.scene.control.Button btnShowResults;
@@ -81,7 +83,7 @@ public class Controller implements Observer {
         queriesFromFileText = new ArrayList<>();
         stem = false;
         semantics = false;
-        clickstream = false;
+        semanticsNum =0;
         loaded = false;
         parsed = false;
         disableAllButtonsButBrowseResetAndStart();
@@ -356,6 +358,7 @@ public class Controller implements Observer {
         }
     }
 
+
     public void showResults(){
         //show results
         TableView tableView = new TableView<>();
@@ -376,8 +379,22 @@ public class Controller implements Observer {
             MapViewDouble mv = new MapViewDouble(docNo, score);
             tableView.getItems().add(mv);
         }
-        StackPane sPane = new StackPane(tableView);
-        Scene sceneQuery = new Scene(sPane, 600, 800);
+
+        TableView.TableViewSelectionModel selectionModel = tableView.getSelectionModel();
+        selectionModel.setSelectionMode(SelectionMode.SINGLE);
+        BorderPane bpane = new BorderPane();
+        bpane.setCenter(tableView);
+        Button btnShowEntities = new Button("Show entities for selected document");
+        bpane.setBottom(btnShowEntities);
+        EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e)
+            {
+                Object selected= selectionModel.getSelectedItem();
+
+            }
+        };
+        btnShowEntities.setOnAction(event);
+        Scene sceneQuery = new Scene(bpane, 600, 800);
         Stage stageQuery = new Stage();
         stageQuery.setTitle("Query Results");
         stageQuery.setScene(sceneQuery);
@@ -406,7 +423,7 @@ public class Controller implements Observer {
 
         else if (!fieldTypingQuery.getText().isEmpty()) {
             queryText = fieldTypingQuery.getText();
-            queryResults = viewModel.search(queryText, stem, semantics);
+            queryResults = viewModel.search(queryText, stem, semanticsNum);
             for (Pair<String, Double> pair : queryResults) {
                 queryResultsIncludingIdDocs.add("query 000: " + pair.getKey());
                 queryResultsIncludingIdScore.add(pair.getValue());
@@ -416,7 +433,7 @@ public class Controller implements Observer {
         } else {
             //call search with each query from file
             for (Pair<String, String> queryPair : queriesFromFileText) {
-                queryResults = viewModel.search(queryPair.getValue(), stem, semantics);
+                queryResults = viewModel.search(queryPair.getValue(), stem, semanticsNum);
                 for (Pair<String, Double> pair : queryResults) {
                     queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + pair.getKey());
                     queryResultsIncludingIdScore.add(pair.getValue());
@@ -441,14 +458,17 @@ public class Controller implements Observer {
 
 
     public void btnSemanticsPressed(){
-        this.semantics = btnSemantics.isSelected();
+        if  (btnSemantics.isSelected()){
+            btnSemanticsAPI.setSelected(false);
+            this.semantics = btnSemantics.isSelected();
+            this.semanticsNum = 1;
+        }
+        if(btnSemanticsAPI.isSelected()){
+            btnSemantics.setSelected(false);
+            this.semantics = btnSemanticsAPI.isSelected();
+            this.semanticsNum = 2;
+        }
     }
-
-    public void btnClickstreamPressed(){
-        this.clickstream = btnClickstream.isSelected();
-    }
-
-
 
     //for table view
     public static class MapView{
