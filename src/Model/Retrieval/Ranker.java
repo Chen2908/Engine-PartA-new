@@ -17,6 +17,7 @@ public class Ranker {
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
+//    private HashMap <String, entitiesPerDoc
 
     /**
      * constructor
@@ -100,7 +101,6 @@ public class Ranker {
      * Puts docNum, <Term, first index> in hashmap
      * @param term
      * @param docNum
-     * @param realNum
      * @param firstIndex
      * @param docNumTermFirstIndex - insert hashmap
      */
@@ -145,6 +145,7 @@ public class Ranker {
             double rank = score + sumWeightForDoc;
             String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
             rankedDocs.add(new Pair(realNum, rank));
+
         }
 
         //sort docs according to weight
