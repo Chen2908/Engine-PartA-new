@@ -7,14 +7,8 @@ import java.math.BigDecimal;
  */
 public class Calculator {
 
-    private static int corpusSize;
-    private static long sumLength;
-
-    public Calculator(int N)
-    {
-        this.corpusSize = N;
-        this.sumLength = 0;
-    }
+    public static int corpusSize;
+    public static long sumLength;
 
 
     /**
@@ -57,12 +51,9 @@ public class Calculator {
        sumLength = sum;
     }
 
-    public static double averageDocLength(){
-        return sumLength/corpusSize;
-    }
 
-    public static int getCorpusSize() {
-        return corpusSize;
+    public static double averageDocLength(long sumLength, int corpusSize ){
+        return sumLength/corpusSize;
     }
 
     public static void setCorpusSize(int corpusSize) {

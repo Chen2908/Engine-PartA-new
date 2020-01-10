@@ -17,7 +17,7 @@ import java.io.*;
  * This class enables adding semantics to the retrieval.
  * It includes a method that returns the 5 most similar words to a given term
  */
-public class Semantics implements Serializable {
+public class SemanticsAPI implements Semantic, Serializable {
 
     public JsonElement jsonElem;
 
@@ -28,13 +28,13 @@ public class Semantics implements Serializable {
      * @param term - the term to search similar words to
      * @return an ArrayList containing 5 most similar in meaning word to term
      */
-    public ArrayList<Pair<String, Integer>> termWithSimilarMeaning(String term) {
-        ArrayList<Pair<String, Integer>> similarTerms = new ArrayList<>();
+    public List<Pair<String, Double>> termWithSimilarMeaning(String term) {
+        List<Pair<String, Double>> similarTerms = new ArrayList<>();
         StringBuilder readTerms = new StringBuilder();
         String text;
         try {
             //create the connection to the page with term
-            URL datamuse = new URL("http://api.datamuse.com/words?ml=" + term + "&max=5");
+            URL datamuse = new URL("http://api.datamuse.com/words?rd=" + term + "&max=3");
             BufferedReader in = new BufferedReader(new InputStreamReader(datamuse.openStream()));
             text = in.readLine();
             if (text != null)
@@ -49,7 +49,7 @@ public class Semantics implements Serializable {
             //retrieve only the term
             for (JsonElement s : terms) {
                 JsonObject jterms = (JsonObject) (s);
-                similarTerms.add(new Pair(jterms.get("word").getAsString(), jterms.get("score").getAsString()));
+                similarTerms.add(new Pair(jterms.get("word").getAsString(),(double)(jterms.get("score").getAsInt())/120000));
             }
 
         } catch (Exception e) {
@@ -60,11 +60,11 @@ public class Semantics implements Serializable {
 
     //test
     public static void main(String[] args) {
-        Semantics testSemantics = new Semantics();
+        SemanticsAPI testSemantics = new SemanticsAPI();
         //test.rank(null, null);
         double startTime = System.currentTimeMillis();
-        ArrayList<Pair<String, Integer>> print = testSemantics.termWithSimilarMeaning("ship");
-        System.out.println("sport: " + (System.currentTimeMillis()-startTime)/1000 + " seconds");
+        List<Pair<String, Double>> print = testSemantics.termWithSimilarMeaning("petroleum");
+        System.out.println("petroleum: " + (System.currentTimeMillis()-startTime)/1000 + " seconds");
         System.out.println(print);
 
 

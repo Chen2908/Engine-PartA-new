@@ -78,7 +78,7 @@
                      </effect>
                   </Button>
                   <TextField fx:id="fieldLoadingQuery" layoutX="134.0" layoutY="282.0" prefHeight="25.0" prefWidth="350.0" />
-                  <TextField fx:id="fieldTypingQuery" layoutX="134.0" layoutY="326.0"  prefHeight="25.0" prefWidth="349.0" />
+                  <TextField fx:id="fieldTypingQuery" layoutX="134.0" layoutY="326.0" prefHeight="25.0" prefWidth="349.0" />
                   <Label layoutX="9.0" layoutY="282.0" prefHeight="20.0" prefWidth="80.0" text="Query file :">
                      <font>
                         <Font name="System Bold" size="14.0" />
@@ -94,7 +94,7 @@
                         <Font name="System Bold" size="14.0" />
                      </font>
                   </Label>
-                  <Button fx:id="btnStartS" layoutX="248.0" layoutY="389.0" mnemonicParsing="false" onAction="#search" prefHeight="35.0" prefWidth="132.0" style="-fx-background-color: #31a7f2;" text="Run query" textFill="#f7f1f1">
+                  <Button fx:id="btnStartS" layoutX="248.0" layoutY="427.0" mnemonicParsing="false" onAction="#search" prefHeight="40.0" prefWidth="132.0" style="-fx-background-color: #31a7f2;" text="Run query" textFill="#f7f1f1">
                      <font>
                         <Font name="Eras Bold ITC" size="14.0" />
                      </font>
@@ -102,7 +102,7 @@
                         <Glow />
                      </effect>
                   </Button>
-                  <CheckBox fx:id="btnSemantics" layoutX="310.0" layoutY="364.0" mnemonicParsing="false" onAction="#btnSemanticsPressed" text="Include Semantics">
+                  <CheckBox fx:id="btnSemantics" layoutX="247.0" layoutY="371.0" mnemonicParsing="false" onAction="#btnSemanticsPressed" text="Semantics model">
                      <font>
                         <Font name="System Bold" size="12.0" />
                      </font>
@@ -120,14 +120,6 @@
                         <Font name="Eras Bold ITC" size="12.0" />
                      </font>
                   </Button>
-                  <CheckBox fx:id="btnClickstream" layoutX="207.0" layoutY="365.0" mnemonicParsing="false" onAction="#btnClickstreamPressed" text="Clickstream">
-                     <font>
-                        <Font name="System Bold" size="12.0" />
-                     </font>
-                     <effect>
-                        <Glow />
-                     </effect>
-                  </CheckBox>
                </children>
             </AnchorPane>
             <ImageView fx:id="boximage" fitHeight="174.0" fitWidth="374.0" layoutX="146.0" layoutY="16.0" pickOnBounds="true" preserveRatio="true">
@@ -143,6 +135,14 @@
                   <DropShadow color="#ffa8c8" />
                </effect>
             </Label>
+            <CheckBox fx:id="btnSemanticsAPI" layoutX="278.0" layoutY="536.0" mnemonicParsing="false" onAction="#btnSemanticsPressed" text="Semantics model - API">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+               <effect>
+                  <Glow />
+               </effect>
+            </CheckBox>
          </children>
       </Pane>
    </center>
