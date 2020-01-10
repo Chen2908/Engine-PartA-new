@@ -16,7 +16,7 @@ public class Searcher {
     private File indexDir;
     private FileContentReader fileReader;
     private PostingReader postingReader;
-    private Semantics semanticModel;
+    private Semantic semanticModel;
     private Parse parser;
     private Ranker ranker;
     private HashMap<String, Integer> dictionary;
@@ -24,7 +24,7 @@ public class Searcher {
     private HashMap<String, DocCorpusInfo> docsInfo;
 
     private long sumOfDocsLength;
-    private boolean isSemanticSearch;
+    private int isSemanticSearch;
 
     private final String del = ";";
     private final int DIC_TERM_INDEX = 0;
@@ -39,7 +39,7 @@ public class Searcher {
     private final String SEM_DIC_SUB_PATH = "\\semanticDic.txt";
 
 
-    public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming, boolean semantics){
+    public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming, int semantics){
         this.sumOfDocsLength = 0;
         this.isSemanticSearch = semantics;
         this.docsInfo = new HashMap<>();
@@ -58,10 +58,11 @@ public class Searcher {
         this.postingReader = new PostingReader(dictionary,
                 indexDir.getAbsolutePath() + POSTING_FILES_SUB_PATH, numOfPosting);
 
-        if (semantics) {
-            this.semanticModel = new Semantics();
-            readSemanticDictionary();
-        }
+        if (semantics == 1)
+            this.semanticModel = new SemanticsModel();
+        else if (semantics == 2)
+            this.semanticModel = new SemanticsAPI();
+        readSemanticDictionary();
 
     }
 
@@ -105,7 +106,7 @@ public class Searcher {
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
         HashMap<String, Double> semTerms = null;
-        if (this.isSemanticSearch)
+        if (this.isSemanticSearch > 0)
             semTerms = getSemTerm(allTerms);
         HashMap<String, Term> termsPosting = postingReader.getTermsPosting(allTerms);
         ArrayList<Term> queryTermPosting = new ArrayList<>();
