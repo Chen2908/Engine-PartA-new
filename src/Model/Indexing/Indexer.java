@@ -96,8 +96,6 @@ public class Indexer {
      */
     public void setTerms(HashMap<String, Term> terms){
         this.terms = terms;
-        addDocsCorpusInfo();
-        docsCorpusInfo = new HashMap<>();
         createIndex();
     }
 
@@ -422,10 +420,11 @@ public class Indexer {
      * This method close all the indexer writes objects
      */
     public void closeWriter(){
+        addDocsCorpusInfo();
         writeCache();
         writeDictionary();
 //        writeBellowThreshHold();
-        writeDictionaryCSV();
+//        writeDictionaryCSV();
         writeDocsInfo();
         objectWriter.close();
     }
