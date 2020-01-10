@@ -189,6 +189,12 @@ public class DocCorpusInfo implements IWritable {
         return toWrite;
     }
 
+    public static String getDocDecimalNum(String docNum){
+        String[] docNumSplit = StringUtils.split(docNum, "-");
+        int docNumSuffix = Integer.parseInt(docNumSplit[1],16);
+        return docNumSplit[0] + "-" + docNumSuffix;
+    }
+
 
     //</editor-fold>
 
