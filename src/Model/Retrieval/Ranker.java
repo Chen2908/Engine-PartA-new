@@ -23,9 +23,9 @@ public class Ranker {
      *
      * @param docsDictionary
      */
-    public Ranker(HashMap<String, DocCorpusInfo> docsDictionary, long sumLengths, int cospusSize) {
+    public Ranker(HashMap<String, DocCorpusInfo> docsDictionary, long sumLengths) {
         this.docsDictionary = docsDictionary;  //docNum, docLength, sumOfTermsSquare (doc normal) and possibly date
-        Calculator.setCorpusSize(cospusSize);
+        Calculator.setCorpusSize(docsDictionary.size());
         Calculator.setSumLength(sumLengths);
         this.semantics = true;
     }

@@ -8,7 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SemanticsModel {
+public class SemanticsModel implements Semantic{
 
     public SemanticsModel() {
     }

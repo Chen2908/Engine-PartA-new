@@ -17,7 +17,7 @@ import java.io.*;
  * This class enables adding semantics to the retrieval.
  * It includes a method that returns the 5 most similar words to a given term
  */
-public class Semantics implements Serializable {
+public class SemanticsAPI implements Semantic, Serializable {
 
     public JsonElement jsonElem;
 
@@ -28,8 +28,8 @@ public class Semantics implements Serializable {
      * @param term - the term to search similar words to
      * @return an ArrayList containing 5 most similar in meaning word to term
      */
-    public ArrayList<Pair<String, Double>> termWithSimilarMeaning(String term) {
-        ArrayList<Pair<String, Double>> similarTerms = new ArrayList<>();
+    public List<Pair<String, Double>> termWithSimilarMeaning(String term) {
+        List<Pair<String, Double>> similarTerms = new ArrayList<>();
         StringBuilder readTerms = new StringBuilder();
         String text;
         try {
@@ -60,10 +60,10 @@ public class Semantics implements Serializable {
 
     //test
     public static void main(String[] args) {
-        Semantics testSemantics = new Semantics();
+        SemanticsAPI testSemantics = new SemanticsAPI();
         //test.rank(null, null);
         double startTime = System.currentTimeMillis();
-        ArrayList<Pair<String, Double>> print = testSemantics.termWithSimilarMeaning("petroleum");
+        List<Pair<String, Double>> print = testSemantics.termWithSimilarMeaning("petroleum");
         System.out.println("petroleum: " + (System.currentTimeMillis()-startTime)/1000 + " seconds");
         System.out.println(print);
 
