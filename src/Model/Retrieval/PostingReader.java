@@ -23,7 +23,7 @@ public class PostingReader {
     }
 
     public HashMap<String, Term> getTermsPosting(Collection<String> terms){
-
+        this.termsPosting = new HashMap<>();
         List<String> termsQueue = new ArrayList<>(terms);
         termsQueue.sort(Comparator.comparing(o -> fileNameHashFunction(o)));
 

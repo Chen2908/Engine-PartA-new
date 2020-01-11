@@ -97,8 +97,8 @@ public class Term implements IWritable {
      * @param docNum - document number
      * @param index - the index of the term in the given document
      */
-    public void updatesDocsInfo(String docNum, int index){
-        DocTermInfo doc = new DocTermInfo(docNum);
+    public void updatesDocsInfo(String docNum, int index, boolean isInHeadLine){
+        DocTermInfo doc = new DocTermInfo(docNum, isInHeadLine);
         if (!docs.containsKey(doc.getDocNum()))
             docs.put(doc.getDocNum(), doc);
         doc = docs.get(doc.getDocNum());

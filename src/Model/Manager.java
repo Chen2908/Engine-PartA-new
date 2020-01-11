@@ -17,7 +17,7 @@ public class Manager {
     private static final int BATCH_SIZE = 6000;
     private static final int THRESHOLD = 0 ;
     private static final int THREAD_POOL_SIZE = 5;
-    private static final int HASHSIZE = 5000;
+    private static final int HASHSIZE = 20000;
 
     private ReadFile reader;
     private String corpusPath;
@@ -50,7 +50,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 7000, HASHSIZE);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 20000, HASHSIZE);
         Calculator.setCorpusSize(this.corpusSize);
     }
 
@@ -141,10 +141,10 @@ public class Manager {
     private String createIndexFolders() {
         String stem;
         if(stemming){
-            stem = "With Stemming";
+            stem = "WithStemming";
         }
         else {
-            stem = "Without Stemming";
+            stem = "WithoutStemming";
         }
         String dir = postingPath + "\\"+ stem;
         File mainFolder = new File(dir);
