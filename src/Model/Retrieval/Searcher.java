@@ -104,21 +104,26 @@ public class Searcher {
     }
     
     public List<Pair<String, Double>> search(String query){
-        HashMap<String, Term> queryTermsMap = this.parser.parse(query, "A-1", "");
+
+        HashMap<String, Term> queryTermsMap = this.parser.parseQuery(query, "A-1");
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
         HashMap<String, Double> semTerms = null;
+
         if (this.isSemanticSearch > 0)
             semTerms = getSemTerm(allTerms);
+
         HashMap<String, Term> termsPosting = postingReader.getTermsPosting(allTerms);
         ArrayList<Term> queryTermPosting = new ArrayList<>();
         ArrayList<Pair<Term, Double>> semTermPosting = new ArrayList<>();
+
         for (String term: termsPosting.keySet()){
             if (isTermInMap(queryTermsMap, term))
                 queryTermPosting.add(termsPosting.get(term));
             else
                 semTermPosting.add(new Pair(termsPosting.get(term), semTerms.get(term.toLowerCase())));
         }
+
         return this.ranker.rank(queryTermPosting, semTermPosting);
     }
 
