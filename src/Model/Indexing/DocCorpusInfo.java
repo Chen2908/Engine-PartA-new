@@ -16,7 +16,6 @@ public class DocCorpusInfo implements IWritable {
     private int numOfUniqTerms; // number of terms that appears one time in the doc
     private double sumOfTermsSquare; // the doc vector size square
     private List<Pair<String, Integer>> mostFreqEntities;
-    private int numOfEntities;
     private final String entDel = ",";
     private final String del = ";";
 
@@ -32,7 +31,6 @@ public class DocCorpusInfo implements IWritable {
         this.numOfUniqTerms = 0;
         this.sumOfTermsSquare = 0;
         this.numOfTerms = 0;
-        this.numOfEntities = 0;
         this.mostFreqEntities = new ArrayList<>(5);
     }
 
