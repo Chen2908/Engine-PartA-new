@@ -31,6 +31,15 @@ public class DocTermInfo{
         this.isInHeadLine = isInHeadLine;
     }
 
+    public DocTermInfo(String docNum){
+        String[] splitDocNum = docNum.split("-");
+        this.docNumPrefix = splitDocNum[0];
+        this.docNumSuffix = String.format("%X", Integer.parseInt(splitDocNum[1]));
+        this.tfi = 0;
+        this.termIndexes = new StringBuilder();
+        this.isInHeadLine = false;
+    }
+
     public DocTermInfo(String prefix, String docInfo){
         this.termIndexes = new StringBuilder();
         String[] docInfoSplit = docInfo.split(del);
