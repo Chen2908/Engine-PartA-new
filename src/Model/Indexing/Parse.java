@@ -26,6 +26,7 @@ public class Parse {
     private boolean stem;
     private HashMap<String, Term> docTerms;
     private HashSet<String> myStopWords;
+    private boolean isInHeadLine = false;
 
 
     //<editor-fold des="initiate static variables">
@@ -95,8 +96,26 @@ public class Parse {
     public HashMap<String, Term> parse(List<Document> docs) {
         setDocTerms();
         for (Document doc : docs) {
+            if (doc.getTitle() != null && doc.getTitle().length() > 0) {
+                this.isInHeadLine = true;
+                parse(doc.getTitle(), doc.getDocNum(), doc.getDate());
+                this.isInHeadLine = false;
+            }
             parse(doc.getText(), doc.getDocNum(), doc.getDate());
         }
+        return docTerms;
+    }
+
+    /**
+     * parse wrapper for query
+     * @param queryText
+     * @param queryNo "A-1"
+     * @return hash map of the query' terms
+     *
+     */
+    public HashMap<String, Term> parseQuery(String queryText, String queryNo) {
+        setDocTerms();
+        parse(queryText,queryNo, " ");
         return docTerms;
     }
 
@@ -576,7 +595,7 @@ public class Parse {
                 finalTerm = new Term(format, false);
                 docTerms.put(format, finalTerm);
             }
-            finalTerm.updatesDocsInfo(docNo, position);
+            finalTerm.updatesDocsInfo(docNo, position, isInHeadLine);
         }
     }
 
@@ -705,7 +724,7 @@ public class Parse {
                 docTerms.put(key, term);
             } else
                 term = docTerms.get(key);
-            term.updatesDocsInfo(docNo, position);
+            term.updatesDocsInfo(docNo, position, isInHeadLine);
         }
     }
 
