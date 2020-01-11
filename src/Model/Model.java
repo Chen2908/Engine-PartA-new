@@ -31,7 +31,12 @@ public class Model extends Observable {
 
     //initiates the parsing and indexing process
     public void parse(String loadingPath, String savingPath, boolean stem) {
-        this.indexPath = savingPath;
+        String stemming;
+        if (stem)
+            stemming = "\\With Stemming";
+        else
+            stemming = "\\Without Stemming";
+        this.indexPath = savingPath + stemming + "\\Index";
         this.stem = stem;
         setManagerParsing(loadingPath, savingPath);
         manager.callReaderAndParser();
@@ -40,7 +45,6 @@ public class Model extends Observable {
         int vocabularySize = manager.getVocabularySize();
        // terms= manager.getDictionary();
         termstoShow = manager.getDictionaryToShow();
-        this.dicPath = manager.getDictionaryPath();
         setManagerSearching(this.indexPath, stem);
         String[] notify = {"dictionary done", Double.toString(time), Integer.toString(corpusSize), Integer.toString(vocabularySize)};
         setChanged();

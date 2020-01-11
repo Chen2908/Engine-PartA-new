@@ -50,7 +50,7 @@ public class Manager {
         this.parser = new Parse(corpusPath, stemming);
         setPaths();
         this.corpusSize= findCorpusSize(corpusPath);
-        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 1000, HASHSIZE);
+        this.inverter = new Indexer(this.indexPath, THREAD_POOL_SIZE, THRESHOLD, 7000, HASHSIZE);
         Calculator.setCorpusSize(this.corpusSize);
     }
 
@@ -117,9 +117,9 @@ public class Manager {
         try {
             String path;
             if (stemming)
-                path = postingPath + "With Stemming/Index/stop_words.txt";
+                path = postingPath + "\\With Stemming\\Index\\stop_words.txt";
             else
-                path = postingPath + "Without Stemming/Index/stop_words.txt";
+                path = postingPath + "\\Without Stemming\\Index\\stop_words.txt";
             File file = new File(path);
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
             for(String st: stopWords){

@@ -21,8 +21,8 @@ public class Calculator {
     public static double calculateTfIdf(int Df, int fj, int maxFj){
         if (maxFj == 0 || Df == 0)
             return -1;
-        double tf = fj / maxFj;
-        double idf = Math.log(corpusSize / Df);
+        double tf = (double) fj / maxFj;
+        double idf = Math.log((double) corpusSize / Df);
         return tf * idf;
     }
 
@@ -53,7 +53,7 @@ public class Calculator {
 
 
     public static double averageDocLength(long sumLength, int corpusSize ){
-        return sumLength/corpusSize;
+        return (double) sumLength/corpusSize;
     }
 
     public static void setCorpusSize(int corpusSize) {
