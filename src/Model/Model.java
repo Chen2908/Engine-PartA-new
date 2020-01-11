@@ -45,7 +45,6 @@ public class Model extends Observable {
         int vocabularySize = manager.getVocabularySize();
        // terms= manager.getDictionary();
         termstoShow = manager.getDictionaryToShow();
-        setManagerSearching(this.indexPath, stem);
         String[] notify = {"dictionary done", Double.toString(time), Integer.toString(corpusSize), Integer.toString(vocabularySize)};
         setChanged();
         notifyObservers(notify);

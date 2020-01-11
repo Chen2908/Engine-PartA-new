@@ -155,7 +155,7 @@ public class Searcher {
     public HashMap<String, List<String>> getEntities() {
         HashMap<String, List<String>> entities = new HashMap<>();
         for (String s: docsInfo.keySet()){
-            entities.put(s, docsInfo.get(s).getMostFreqEntities());
+            entities.put(DocCorpusInfo.getDocDecimalNum(s), docsInfo.get(s).getMostFreqEntities());
         }
         return entities;
     }

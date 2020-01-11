@@ -48,7 +48,7 @@ public class Calculator {
 
 
     public static void setSumLength(long sum) {
-       sumLength = sum;
+        sumLength = sum;
     }
 
 

@@ -12,8 +12,8 @@ import java.util.List;
 
 public class Ranker {
 
-    private final double K = 0.01;
-    private final double B = 0.1;
+    private final double K = 1.6;
+    private final double B = 0.75;
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
@@ -44,14 +44,15 @@ public class Ranker {
 
         HashMap<String, Double> docNumBM25Query = new HashMap<>(); //docNum-> bm25
         HashMap<String, Double> docNumBM25QueryPlusSemantics= new HashMap<>(); //docNum-> weighted bm25
-        HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex = new HashMap<>();
+        HashMap<String, HashMap<Term, Pair<Integer, Integer>>> docNumTermFirstIndex = new HashMap<>(); //docNum->term->(firstIndex, isInHeadline)
 
         for (Term term : queryTerms) {
             HashMap<String, DocTermInfo> termDocs = term.getDocs(); //string= docNum
             for (String docNum : termDocs.keySet()) {
+                int inHeadLine = termDocs.get(docNum).getIsInHeadLine() ? 1 : 0;
                 putDocNumBM(termDocs.get(docNum), docNum, docNumBM25Query, termDocs.size(),1);
                 int firstIndex = termDocs.get(docNum).getTermFirstIndex();
-                putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
+                putDocNumIndex(term, docNum, firstIndex,inHeadLine, docNumTermFirstIndex);
             }
         }
         if (semantics) {
@@ -62,9 +63,10 @@ public class Ranker {
                 double termScore = semanticPair.getValue();
                 //for each doc
                 for (String docNum : trmDocs.keySet()) {
+                    int inHeadLine = trmDocs.get(docNum).getIsInHeadLine() ? 1 : 0;
                     putDocNumBM(trmDocs.get(docNum), docNum, docNumBM25QueryPlusSemantics, trmDocs.size(), termScore);
                     int firstIndex = trmDocs.get(docNum).getTermFirstIndex();
-                    putDocNumIndex(term, docNum, firstIndex,docNumTermFirstIndex);
+                    putDocNumIndex(term, docNum, firstIndex, inHeadLine, docNumTermFirstIndex);
                 }
             }
         }
@@ -102,19 +104,15 @@ public class Ranker {
      * @param firstIndex
      * @param docNumTermFirstIndex - insert hashmap
      */
-    private void putDocNumIndex(Term term, String docNum, int firstIndex, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex){
-        HashMap<Term,Integer> index;
-        int score = 0;
-        double docPosition = (double) firstIndex / docsDictionary.get(docNum).getNumOfTerms();
-        if (docPosition <= 0.1)
-            score =1;
+    private void putDocNumIndex(Term term, String docNum, int firstIndex, int inHeadline, HashMap<String, HashMap<Term, Pair<Integer, Integer>>> docNumTermFirstIndex){
+        HashMap<Term, Pair<Integer, Integer>> index ;
         if (docNumTermFirstIndex.containsKey(docNum)){
             index = docNumTermFirstIndex.get(docNum);
         }
         else {
             index = new HashMap<>();
         }
-        index.put(term, score);
+        index.put(term, new Pair(firstIndex, inHeadline));
         docNumTermFirstIndex.put(docNum, index);
     }
 
@@ -125,8 +123,15 @@ public class Ranker {
      * @param docNumTermFirstIndex
      * @return 50 pair of (docNum,score), sorted by score
      */
-    private List<Pair<String, Double>> rankDocs(HashMap<String, Double> docNumBM25Query, HashMap<String, Double> docNumBM25Semantics, HashMap<String, HashMap<Term, Integer>> docNumTermFirstIndex) {
-        ArrayList<Pair<String, Double>> rankedDocs = new ArrayList<>();
+    private List<Pair<String, Double>> rankDocs(HashMap<String, Double> docNumBM25Query, HashMap<String, Double> docNumBM25Semantics,  HashMap<String, HashMap<Term, Pair<Integer, Integer>>> docNumTermFirstIndex) {
+        List<Pair<String, Double>> rankedDocs = new ArrayList<>();
+
+        double max = 0;
+        for(double d: docNumBM25Query.values()){
+            if (d>max)
+                max = d;
+        }
+
         HashMap<String, Double> hashToWordOn;
         if (semantics)
             hashToWordOn = docNumBM25Semantics;  //combined score
@@ -134,19 +139,18 @@ public class Ranker {
             hashToWordOn = docNumBM25Query;
 
         for (String docNum : hashToWordOn.keySet()) {
-            int sumWeightForDoc = 0;
-            double sumftidfs = 0;
+            double sumWeightForDoc = 0;
             double score = hashToWordOn.get(docNum);
             for (Term term : docNumTermFirstIndex.get(docNum).keySet()){
+                Pair<Integer, Integer> pair = docNumTermFirstIndex.get(docNum).get(term);
                 DocCorpusInfo dci = docsDictionary.get(docNum);
-                double tfidf = Calculator.calculateTfIdf(term.getDf(), term.getDocTfi(docNum), dci.getMaxTf());
-//                double normalizedIndex = (double)docNumTermFirstIndex.get(docNum).get(term) / dci.getNumOfTerms();
-//                sumWeightForDoc += tfidf * Math.abs((1 - normalizedIndex));
-                sumWeightForDoc += docNumTermFirstIndex.get(docNum).get(term);
-                sumftidfs += tfidf;
+//                double tfidf = Calculator.calculateTfIdf(term.getDf(), term.getDocTfi(docNum), dci.getMaxTf());
+                double normalizedIndex = (double)pair.getKey() / dci.getNumOfTerms();
+
+                sumWeightForDoc +=  Math.abs(1 - normalizedIndex) + 0.5 * pair.getValue();
             }
-//            double rank = Math.sqrt(score) + sumWeightForDoc;
-            double rank = 0.8 * score + 0.1 * sumWeightForDoc + 0.1 * sumftidfs;
+            double rank =  0.9 * score + 0.1 * sumWeightForDoc ;
+
             String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
             rankedDocs.add(new Pair(realNum, rank));
         }
@@ -167,7 +171,7 @@ public class Ranker {
     private double getIdfForBM25(int numOfDocsForTerm) {
         double up = Calculator.corpusSize - numOfDocsForTerm + 0.5;
         double down = numOfDocsForTerm + 0.5;
-        return Math.log(up / down) / Math.log(2) + 1;
+        return Math.log(up / down);
     }
 
     /**
@@ -182,8 +186,8 @@ public class Ranker {
         long sumLengths = Calculator.sumLength;
         int cospusSize = Calculator.corpusSize;
         double up = numOfOccurrecnes * (K + 1);
-        double down = numOfOccurrecnes + (K * (1 - B + (B * docLength / Calculator.averageDocLength(sumLengths,cospusSize))));
-        return idf * up / down;
+        double down = numOfOccurrecnes + (K * (1 - B + (B * (double) docLength / (sumLengths/cospusSize))));
+        return idf * (up / down);
     }
 
 

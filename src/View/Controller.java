@@ -45,9 +45,10 @@ public class Controller implements Observer {
     private boolean loaded;
     private boolean parsed;
     private List<Pair<String, String>> queriesFromFileText;
-    private HashMap<String, List<Pair<String, Double>>> resultsPerQuery;
+    private List<Pair<String, List<Pair<String, Double>>>> resultsPerQuery;
     private List<String> queryResultsIncludingIdDocs;
-    private List<Double> queryResultsIncludingIdScore;
+    private List<Integer> queryResultsIncludingIdScore;
+    private List<String> onlyQueriesNum;
 
     @FXML
     public javafx.scene.control.Button btnStart;
@@ -87,8 +88,8 @@ public class Controller implements Observer {
         loaded = false;
         parsed = false;
         disableAllButtonsButBrowseResetAndStart();
-        resultsPerQuery = new HashMap<>();
-
+        resultsPerQuery = new ArrayList<>();
+        onlyQueriesNum = new ArrayList<>();
         try {
             BufferedImage bufferedImage;
             bufferedImage = ImageIO.read(new File("./Capture1.JPG"));
@@ -96,7 +97,6 @@ public class Controller implements Observer {
             this.boximage.setImage(image);
         }catch (Exception e) {
         }
-
     }
 
     @Override
@@ -134,6 +134,7 @@ public class Controller implements Observer {
                         int vocabularySize = Integer.parseInt(args[3]);
                         showInfoOnIndex(time, corpusSize, vocabularySize);
                     }
+                    loadDictionary();
                     break;
                 case "dictionary loaded":
                     btnShowDictionary.setDisable(false);
@@ -154,7 +155,10 @@ public class Controller implements Observer {
     }
 
     private void readQueryFromFile() {
+        List<String> onlyqueries = new ArrayList<>();
+        List<Pair<String, String>> curremtqueriesFromFileText = new ArrayList<>();
         String queryNum = "";
+        String title = "";
         String filePath = queryPath;
         StringBuilder text = new StringBuilder();
         File queryFile = new File(filePath);
@@ -163,18 +167,64 @@ public class Controller implements Observer {
             while (sc.hasNext()) {
                 String line = sc.nextLine();
                 if (line.contains("<num>")){
-                    queryNum = line.substring(14);
+                    queryNum = StringUtils.split(line,":" )[1].trim();
+                    onlyqueries.add(queryNum);
                 }
-                if (line.contains("<title>")){
-                    queriesFromFileText.add(new Pair(queryNum, line.substring(8)));
+                else if (line.contains("<title>")){
+                    title = StringUtils.split(line,">")[1].trim();
+                }
+                else if (line.contains("<desc>")){
+                    StringBuilder desc = new StringBuilder();
+                    line = sc.nextLine();
+                    while (!line.isEmpty() && !line.equals(" ") && !line.equals("  ")){
+                        desc.append(line);
+                        text.append(line +" ");
+                        if (sc.hasNext()){
+                            line = sc.nextLine();
+                        }
+                    }
+                    curremtqueriesFromFileText.add(new Pair(queryNum, title+ " " +desc.toString()));
                 }
                 text.append(line + "\n");
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot read queries");
+            alert.showAndWait();
         }
         queryText = text.toString();
+        queriesFromFileText = curremtqueriesFromFileText;
+        onlyQueriesNum = onlyqueries;
     }
+
+//    private void readQueryFromFile() {
+//        String queryNum = "";
+//        List<Pair<String, String>> curremtqueriesFromFileText = new ArrayList<>();
+//        List<String> onlyqueries = new ArrayList<>();
+//        String filePath = queryPath;
+//        StringBuilder text = new StringBuilder();
+//        File queryFile = new File(filePath);
+//        String title = "";
+//        try {
+//            Scanner sc = new Scanner(queryFile);
+//            while (sc.hasNext()) {
+//                String line = sc.nextLine();
+//                if (line.contains("<num>")){
+//                    queryNum = StringUtils.split(line,":" )[1].trim();
+//                   onlyqueries.add(queryNum);
+//                }
+//                if (line.contains("<title>")){
+//                    title = StringUtils.split(line,">")[1].trim();
+//                    curremtqueriesFromFileText.add(new Pair(queryNum, title));
+//                }
+//                text.append(line + "\n");
+//            }
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        queryText = text.toString();
+//        queriesFromFileText = curremtqueriesFromFileText;
+//        onlyQueriesNum = onlyqueries;
+//    }
 
     private void showInfoOnIndex(double time, int corpusSize, int vocabularySize) {
         String info = "Corpus size: " + corpusSize + " documents"+
@@ -260,7 +310,7 @@ public class Controller implements Observer {
 
     public void loadDictionary() {
         if(stem)
-             viewModel.loadDictionary(savingPath+ "\\With Stemming\\Index", true);
+            viewModel.loadDictionary(savingPath+ "\\With Stemming\\Index", true);
         else
             viewModel.loadDictionary(savingPath+ "\\Without Stemming\\Index", false);
     }
@@ -310,25 +360,25 @@ public class Controller implements Observer {
             alert.showAndWait();
             return;
         }
-       deleteDirs(savingPath+ "\\With Stemming");
-       deleteDirs(savingPath+ "\\Without Stemming");
+        deleteDirs(savingPath+ "\\With Stemming");
+        deleteDirs(savingPath+ "\\Without Stemming");
         //reset memory
         viewModel.resetObjects();
         btnShowDictionary.setDisable(true);
         btnLoadDictionary.setDisable(true);
     }
 
-     private void deleteDirs(String path){
-         File dir= new File(path);
-             if (dir.exists()) {
-                 try {
-                     FileUtils.cleanDirectory(dir);
-                     FileUtils.deleteDirectory(dir);
-                 }catch (Exception e){
-                     Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot delete directory");
-                     alert.showAndWait();
-                 }
-             }
+    private void deleteDirs(String path){
+        File dir= new File(path);
+        if (dir.exists()) {
+            try {
+                FileUtils.cleanDirectory(dir);
+                FileUtils.deleteDirectory(dir);
+            }catch (Exception e){
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot delete directory");
+                alert.showAndWait();
+            }
+        }
     }
 
     //partB
@@ -351,12 +401,12 @@ public class Controller implements Observer {
                 stemming = "WithoutStemming";
             File file = new File(this.saveQueryResultsPath + "/queryResults" + stemming + ".txt");
             BufferedWriter bf = new BufferedWriter(new FileWriter(file));
-            List<String> quriesNumbers = new ArrayList<>(resultsPerQuery.keySet());
-            quriesNumbers.sort(String::compareTo);
-            for (String queryNum : quriesNumbers){
-                for (Pair<String, Double> pair: resultsPerQuery.get(queryNum)){
+            int i=0;
+            for (String queryNum : onlyQueriesNum){
+                for (Pair<String, Double> pair: resultsPerQuery.get(i).getValue()){
                     bf.write(queryNum + " 0 " +pair.getKey() + " 1" +  " 0.0" + " mt" + "\n");
                 }
+                i++;
             }
             bf.close();
         }catch (IOException e){
@@ -373,7 +423,7 @@ public class Controller implements Observer {
         TableColumn<String, MapViewDouble> firstColumn = new TableColumn<>("Query : DocNo");
         firstColumn.setCellValueFactory(new PropertyValueFactory<>("docNo"));
         firstColumn.setPrefWidth(200);
-        TableColumn<Double, MapViewDouble> secondColumn = new TableColumn<>("Score");
+        TableColumn<Integer, MapViewDouble> secondColumn = new TableColumn<>("Score");
         secondColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
         secondColumn.setPrefWidth(200);
 
@@ -382,7 +432,7 @@ public class Controller implements Observer {
         tableView.getSelectionModel().setCellSelectionEnabled(true);
 
         for (int i = 0; i < this.queryResultsIncludingIdDocs.size(); i++) {
-            double score = this.queryResultsIncludingIdScore.get(i);
+            int score = this.queryResultsIncludingIdScore.get(i);
             String docNo = this.queryResultsIncludingIdDocs.get(i);
             MapViewDouble mv = new MapViewDouble(docNo, score);
             tableView.getItems().add(mv);
@@ -401,7 +451,8 @@ public class Controller implements Observer {
                 String docNO = listO.get(0).getDocNo();
                 String toShow = showEntitiesForDoc(docNO);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Top 5 entities");
+                alert.setTitle("Top 5");
+                alert.setHeaderText("Top 5 entities for " + docNO);
                 alert.setContentText(toShow);
                 alert.showAndWait();
             }
@@ -425,10 +476,13 @@ public class Controller implements Observer {
         String realdocNo = splitted [1];
         List<String> entities = viewModel.getEntities(realdocNo);
         StringBuilder sb = new StringBuilder();
-        for (String en: entities){
-            sb.append(en + "\n");
+        if (entities!=null) {
+            for (String en : entities) {
+                sb.append(en + "\n");
+            }
+            return sb.toString();
         }
-        return sb.toString();
+        else return "cannot show entities";
     }
 
     public void search() {
@@ -440,8 +494,8 @@ public class Controller implements Observer {
 
         List<Pair<String, Double>> queryResults;
         List<String> queryResultsIncludingIdDocs = new ArrayList<>();
-        List<Double> queryResultsIncludingIdScore = new ArrayList<>();
-        HashMap<String, List<Pair<String, Double>>> resultsPerQuery = new HashMap<>();
+        List<Integer> queryResultsIncludingIdScore = new ArrayList<>();
+        List<Pair<String, List<Pair<String, Double>>>> resultsPerQuery = new ArrayList<>();
 
         if (!fieldTypingQuery.getText().isEmpty() && !fieldLoadingQuery.getText().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "You can choose either a query file or a text query, not both");
@@ -452,21 +506,23 @@ public class Controller implements Observer {
         else if (!fieldTypingQuery.getText().isEmpty()) {
             queryText = fieldTypingQuery.getText();
             queryResults = viewModel.search(queryText, stem, semanticsNum);
+            int j=0;
             for (Pair<String, Double> pair : queryResults) {
-                queryResultsIncludingIdDocs.add("query 000: " + pair.getKey());
-                queryResultsIncludingIdScore.add(pair.getValue());
+                queryResultsIncludingIdDocs.add("query 000:" + pair.getKey());
+                queryResultsIncludingIdScore.add(j++);
             }
-            resultsPerQuery.put("000", queryResults);
+            resultsPerQuery.add(new Pair("000", queryResults));
 
         } else {
             //call search with each query from file
             for (Pair<String, String> queryPair : queriesFromFileText) {
                 queryResults = viewModel.search(queryPair.getValue(), stem, semanticsNum);
+                int i=0;
                 for (Pair<String, Double> pair : queryResults) {
-                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ": " + pair.getKey());
-                    queryResultsIncludingIdScore.add(pair.getValue());
+                    queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ":" + pair.getKey());
+                    queryResultsIncludingIdScore.add(i++);
                 }
-                resultsPerQuery.put(queryPair.getKey(), queryResults);
+                resultsPerQuery.add(new Pair(queryPair.getKey(), queryResults));
             }
         }
         this.resultsPerQuery = resultsPerQuery;
@@ -536,11 +592,11 @@ public class Controller implements Observer {
     //for table view
     public static class MapViewDouble{
         private SimpleStringProperty docNo;
-        private SimpleDoubleProperty score;
+        private SimpleIntegerProperty score;
 
-        public MapViewDouble(String docNo, double score){
+        public MapViewDouble(String docNo, int score){
             this.docNo = new SimpleStringProperty(docNo);
-            this.score = new SimpleDoubleProperty(score);
+            this.score = new SimpleIntegerProperty(score);
         }
 
         public void setScore(int count) {
@@ -555,7 +611,7 @@ public class Controller implements Observer {
             return docNo.get();
         }
 
-        public double getScore() {
+        public int getScore() {
             return score.get();
         }
 
@@ -563,7 +619,7 @@ public class Controller implements Observer {
             return docNo;
         }
 
-        public SimpleDoubleProperty scoreProperty() {
+        public SimpleIntegerProperty scoreProperty() {
             return score;
         }
     }

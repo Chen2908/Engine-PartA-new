@@ -218,7 +218,7 @@ public class Parse {
                                 if (docNo.equals("A-1")) {
                                     String[] splittedTemp = StringUtils.split(temp, " ");
                                     for (int k = 0; k < splittedTemp.length; k++) {
-                                        handle_1_word_term(splittedTemp[k], i + k);
+                                        handle_1_word_term(splittedTemp[k].toLowerCase(), i + k);
                                     }
                                 }
                                 i = curr - 1;
