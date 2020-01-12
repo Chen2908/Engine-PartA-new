@@ -54,8 +54,11 @@ public class Term implements IWritable {
 
         String[] splitByMainDel = StringUtils.split(termInfo, mainDel, 3);
         setValue(splitByMainDel[VALUE_INDEX]);
-        this.TF = Integer.parseInt(splitByMainDel[TF_INDEX]);
         addDocsInfo(splitByMainDel[DOCLIST_INDEX]);
+    }
+
+    public void setTF (int tf){
+        this.TF = tf;
     }
 
     private void addDocsInfo(String docInfoString){

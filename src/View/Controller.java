@@ -1,7 +1,6 @@
 package View;
 
 import ViewModel.ViewModel;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
@@ -9,7 +8,10 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -544,7 +546,7 @@ public class Controller implements Observer {
                 //merge into desc
                 title.forEach(
                         (key,value) -> desc.merge
-                                (key ,value, (v1, v2) ->  0.7 * v1 + 0.3 * v2));
+                                (key ,value, (v1, v2) ->   v1 /*+ 0.3 * v2*/));
 
                 for(String docNum: desc.keySet()){
                     queryResults.add(new Pair(docNum, desc.get(docNum)));

@@ -13,8 +13,8 @@ import java.util.List;
 
 public class Ranker {
 
-    private final double K = 0.1;
-    private final double B = 0.01;
+    private final double K = 0.05;
+    private final double B = 0.1;
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
@@ -83,15 +83,15 @@ public class Ranker {
         for (String docNum : docNumBM25Query1.keySet()) {
             double normalBm = docNumBM25Query1.get(docNum) / max;
             double extraWeight1 = 0;
-            if (docNoInTheBeggining.containsKey(docNum))
-                extraWeight1 += docNoInTheBeggining.get(docNum);
+//            if (docNoInTheBeggining.containsKey(docNum))
+//                extraWeight1 += docNoInTheBeggining.get(docNum);
             if (docNoInHeadLine.containsKey(docNum))
-                extraWeight1 += 4 * docNoInHeadLine.get(docNum);
+                extraWeight1 += 3*docNoInHeadLine.get(docNum);
             if (docNoPartOfEntiry.containsKey(docNum))
-                extraWeight1 += 2 * docNoPartOfEntiry.get(docNum);
+                extraWeight1 += docNoPartOfEntiry.get(docNum);
             extraWeight1 /= docsDictionary.get(docNum).getNumOfUniqTerms();
             int counter = docNumOfQueryTerms.get(docNum);
-            finalRanks.put(docNum,  normalBm * counter*counter); /*+ extraWeight1 * 0.2);*/
+            finalRanks.put(docNum,  0.8*normalBm + 0.2*extraWeight1);
 
         }
 
