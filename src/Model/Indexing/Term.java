@@ -149,7 +149,7 @@ public class Term implements IWritable {
 
         for (DocTermInfo doc: term.getDocs().values())
             if (docs.containsKey(doc.getDocNum()))
-                docs.get(doc.getDocNum()).merge(docs.get(doc));
+                docs.get(doc.getDocNum()).merge(doc);
             else
                 docs.put(doc.getDocNum(), doc);
     }
