@@ -1,7 +1,5 @@
 package Model.Indexing;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class DocTermInfo{
 
     //<editor-fold des="Class Fields">
@@ -30,7 +28,6 @@ public class DocTermInfo{
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
         this.isInHeadLine = isInHeadLine;
-        this.firstIndex = -1;
     }
 
     public DocTermInfo(String docNum){
@@ -40,7 +37,6 @@ public class DocTermInfo{
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
         this.isInHeadLine = false;
-        this.firstIndex = -1;
     }
 
     public DocTermInfo(String prefix, String docInfo){
@@ -74,12 +70,20 @@ public class DocTermInfo{
      */
     public void addIndex(int index){
         if(this.termIndexes.length() != 0)
-            this.termIndexes.append("," + index);
+            this.termIndexes.append(del + index);
         else {
             this.termIndexes.append(index);
             this.firstIndex = index;
         }
 
+    }
+
+    public void merge (DocTermInfo doc){
+        this.tfi += doc.getTfi();
+        if (firstIndex > doc.getTermFirstIndex())
+           this.firstIndex = doc.getTermFirstIndex();
+        if (doc.getIsInHeadLine())
+            isInHeadLine = true;
     }
 
     public void setInHeadLine(boolean inHeadLine) {

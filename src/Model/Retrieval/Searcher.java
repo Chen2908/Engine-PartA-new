@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 public class Searcher {
@@ -107,11 +106,8 @@ public class Searcher {
     public List<Pair<String, Double>> search(String query){
 
         HashMap<String, Term> queryTermsMap = this.parser.parseQuery(query, "A-1"); //title
-
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
-
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
-
         HashMap<String, Double> semTerms = null;
 
         if (this.isSemanticSearch > 0) {
@@ -119,11 +115,8 @@ public class Searcher {
         }
 
         HashMap<String, Term> termsPosting = postingReader.getTermsPosting(allTerms);
-
         ArrayList<Term> queryTermPosting = new ArrayList<>();
-
         ArrayList<Pair<Term, Double>> semTermPosting = new ArrayList<>();
-
 
         for (String termTitle: termsPosting.keySet()){
             if (isTermInMap(queryTermsMap, termTitle))
