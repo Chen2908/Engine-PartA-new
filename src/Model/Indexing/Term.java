@@ -146,23 +146,12 @@ public class Term implements IWritable {
     public void merge(Term term){
         this.value = getUpdatedValue(term.value);
         this.TF += term.getTF();
-//        docs.putAll(term.getDocs());
-        HashMap<String, DocTermInfo> merged =new HashMap<>(this.docs);
-        DocTermInfo value;
-        for(String newDoc : term.getDocs().keySet()){
-            if (merged.containsKey(newDoc)){
-                value = merged.get(newDoc);
-                int combinedTfi = value.getTfi() + term.getDocs().get(newDoc).getTfi();
-                value.setTfi(combinedTfi);
-                value.setTermFirstIndex(Math.min(value.getTermFirstIndex(),term.getDocs().get(newDoc).getTermFirstIndex()));
-                value.setInHeadLine(term.getDocs().get(newDoc).getIsInHeadLine() || value.getIsInHeadLine());
-                merged.put(newDoc, value);
-            }
-            else{
-                merged.put(newDoc, term.getDocs().get(newDoc));
-            }
-        }
-        this.docs=merged;
+
+        for (DocTermInfo doc: term.getDocs().values())
+            if (docs.containsKey(doc.getDocNum()))
+                docs.get(doc.getDocNum()).merge(docs.get(doc));
+            else
+                docs.put(doc.getDocNum(), doc);
     }
 
     /**
