@@ -173,8 +173,10 @@ public class Parse {
                         //the word is in format $number and number>million
                         if (((i + 1) < textLength)) {
                             found = checkPriceMB(word, singleWords[i + 1], i);
-                            if (found)
+                            if (found) {
                                 i++;
+                                continue;
+                            }
                         }
                     }
                 }
@@ -212,7 +214,12 @@ public class Parse {
                                 curr++;
                                 found = true;
                             }
-                            if (found) {
+                            String[] numOfWordsInTemp = StringUtils.split(temp, " ");
+                            if (numOfWordsInTemp.length == 1) {
+                                handle_1_word_term(temp, i);
+                                continue;
+                            }
+                            else if (found) {
                                 enterKey(temp, i, true);
                                 //handle each word
                                 if (docNo.equals("A-1")) {
