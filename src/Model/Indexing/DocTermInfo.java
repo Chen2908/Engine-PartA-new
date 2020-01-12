@@ -13,6 +13,7 @@ public class DocTermInfo{
     private StringBuilder termIndexes; // contains all the indexes where that term appears in the doc, separated by commas.
     private final String del = ",";
     private final String endDel = ";";
+    private int firstIndex;
 
     //</editor-fold>
 
@@ -29,6 +30,7 @@ public class DocTermInfo{
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
         this.isInHeadLine = isInHeadLine;
+        this.firstIndex = -1;
     }
 
     public DocTermInfo(String docNum){
@@ -38,6 +40,7 @@ public class DocTermInfo{
         this.tfi = 0;
         this.termIndexes = new StringBuilder();
         this.isInHeadLine = false;
+        this.firstIndex = -1;
     }
 
     public DocTermInfo(String prefix, String docInfo){
@@ -72,9 +75,19 @@ public class DocTermInfo{
     public void addIndex(int index){
         if(this.termIndexes.length() != 0)
             this.termIndexes.append("," + index);
-        else
+        else {
             this.termIndexes.append(index);
+            this.firstIndex = index;
+        }
 
+    }
+
+    public void setInHeadLine(boolean inHeadLine) {
+        isInHeadLine = inHeadLine;
+    }
+
+    public void setTermFirstIndex(int index) {
+        this.firstIndex = index;
     }
 
     private void setInHeadLine(String isInHeadLine){
@@ -137,8 +150,9 @@ public class DocTermInfo{
     }
 
     public int getTermFirstIndex() {
-        if (termIndexes != null && termIndexes.length() > 0)
-            return Integer.parseInt(StringUtils.split(termIndexes.toString(), del)[0]);
-        return -1;
+//        if (termIndexes != null && termIndexes.length() > 0)
+//            return Integer.parseInt(StringUtils.split(termIndexes.toString(), del)[0]);
+//        return -1;
+        return firstIndex;
     }
 }

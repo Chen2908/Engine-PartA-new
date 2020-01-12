@@ -44,7 +44,7 @@ public class Controller implements Observer {
     private int semanticsNum;
     private boolean loaded;
     private boolean parsed;
-    private List<Pair<String, String>> queriesFromFileText;
+    private List<Pair<String, Pair<String, String>>> queriesFromFileText;
     private List<Pair<String, List<Pair<String, Double>>>> resultsPerQuery;
     private List<String> queryResultsIncludingIdDocs;
     private List<Integer> queryResultsIncludingIdScore;
@@ -125,6 +125,10 @@ public class Controller implements Observer {
                     saveQueryResultsPath = args[1];
                     btnShowResults.setDisable(false);
                     writeResultsToFile();
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "results were save to file");
+                    alert.setTitle("Results");
+                    alert.setHeaderText(null);
+                    alert.showAndWait();
                     break;
                 case "dictionary done":
                     enableButtons();
@@ -156,7 +160,7 @@ public class Controller implements Observer {
 
     private void readQueryFromFile() {
         List<String> onlyqueries = new ArrayList<>();
-        List<Pair<String, String>> curremtqueriesFromFileText = new ArrayList<>();
+        List<Pair<String, Pair<String, String>>> curremtqueriesFromFileText = new ArrayList<>();
         String queryNum = "";
         String title = "";
         String filePath = queryPath;
@@ -183,7 +187,7 @@ public class Controller implements Observer {
                             line = sc.nextLine();
                         }
                     }
-                    curremtqueriesFromFileText.add(new Pair(queryNum, title+ " " +desc.toString()));
+                    curremtqueriesFromFileText.add(new Pair(queryNum, new Pair(title, desc.toString())));
                 }
                 text.append(line + "\n");
             }
@@ -265,7 +269,7 @@ public class Controller implements Observer {
         btnStart.setDisable(true);
         btnStem.setDisable(true);
         btnReset.setDisable(true);
-        btnStartS.setDisable(true);
+        //btnStartS.setDisable(true);
     }
 
     public void disableBrowseButtons() {
@@ -422,10 +426,10 @@ public class Controller implements Observer {
 
         TableColumn<String, MapViewDouble> firstColumn = new TableColumn<>("Query : DocNo");
         firstColumn.setCellValueFactory(new PropertyValueFactory<>("docNo"));
-        firstColumn.setPrefWidth(200);
+        firstColumn.setPrefWidth(300);
         TableColumn<Integer, MapViewDouble> secondColumn = new TableColumn<>("Score");
         secondColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
-        secondColumn.setPrefWidth(200);
+        secondColumn.setPrefWidth(300);
 
         tableView.getColumns().addAll(firstColumn,secondColumn);
         tableView.setEditable(true);
@@ -441,6 +445,7 @@ public class Controller implements Observer {
         BorderPane bpane = new BorderPane();
         bpane.setCenter(tableView);
         Button btnShowEntities = new Button("Show entities for selected document");
+        btnShowEntities.setStyle("-fx-background-color: #31a7f2");
         bpane.setTop(btnShowEntities);
         bpane.setMaxWidth(400);
         bpane.setMaxWidth(400);
@@ -514,9 +519,42 @@ public class Controller implements Observer {
             resultsPerQuery.add(new Pair("000", queryResults));
 
         } else {
+            List<Pair<String, Double>> queryResultsTitle;
+            List<Pair<String, Double>> queryResultsDesc;
             //call search with each query from file
-            for (Pair<String, String> queryPair : queriesFromFileText) {
-                queryResults = viewModel.search(queryPair.getValue(), stem, semanticsNum);
+            for (Pair<String, Pair<String, String>> queryPair : queriesFromFileText) {
+                queryResults = new ArrayList<>();
+                queryResultsTitle = viewModel.search(queryPair.getValue().getKey(), stem, semanticsNum); //run search on title
+                queryResultsDesc = viewModel.search(queryPair.getValue().getValue(), stem, semanticsNum); //run search on desc
+                HashMap<String, Double> title = new HashMap<>();
+                HashMap<String, Double> desc = new HashMap<>();
+                for (Pair<String, Double> pair: queryResultsTitle){
+                    title.put(pair.getKey(), pair.getValue());
+                }
+                for (Pair<String,Double> pair: queryResultsDesc){
+                    desc.put(pair.getKey(), pair.getValue());
+                }
+                //unite
+                double maxQ = title.values().stream().max(Double::compare).get();
+                double maxD = desc.values().stream().max(Double::compare).get();
+
+                title.entrySet().stream().forEach(e -> e.setValue(e.getValue()/maxQ));
+                desc.entrySet().stream().forEach(e -> e.setValue(e.getValue()/(maxD)));
+
+                //merge into desc
+                title.forEach(
+                        (key,value) -> desc.merge
+                                (key ,value, (v1, v2) ->  0.7 * v1 + 0.3 * v2));
+
+                for(String docNum: desc.keySet()){
+                    queryResults.add(new Pair(docNum, desc.get(docNum)));
+                }
+
+                //sort docs according to weight
+                queryResults.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
+                int minLength = Math.min(queryResults.size(), 50);
+                queryResults =  queryResults.subList(0, minLength);
+
                 int i=0;
                 for (Pair<String, Double> pair : queryResults) {
                     queryResultsIncludingIdDocs.add("query " + queryPair.getKey() + ":" + pair.getKey());

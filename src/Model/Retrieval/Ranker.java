@@ -5,6 +5,7 @@ import Model.Indexing.DocCorpusInfo;
 import Model.Indexing.DocTermInfo;
 import Model.Indexing.Term;
 import javafx.util.Pair;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,8 +13,8 @@ import java.util.List;
 
 public class Ranker {
 
-    private final double K = 1.6;
-    private final double B = 0.75;
+    private final double K = 0.1;
+    private final double B = 0.01;
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
@@ -34,163 +35,132 @@ public class Ranker {
      * This method receives queryTerms, an arrayList of term objects, that appeared the query, and semanticTerms,
      * an arrayList of terms that are closed to the terms in queryTerms, and their score.
      * The method ranks the documents these terms appeared in and returns 50 first documents.
-     * @param queryTerms
-     * @param semanticTerms
+     *
+     *
      * @return 50 document numbers in which the terms given appeared in, ranked.
      */
     public List<Pair<String, Double>> rank(ArrayList<Term> queryTerms, ArrayList<Pair<Term, Double>> semanticTerms) {
         if (semanticTerms.size() == 0)
             this.semantics = false;
 
-        HashMap<String, Double> docNumBM25Query = new HashMap<>(); //docNum-> bm25
-        HashMap<String, Double> docNumBM25QueryPlusSemantics= new HashMap<>(); //docNum-> weighted bm25
-        HashMap<String, HashMap<Term, Pair<Integer, Integer>>> docNumTermFirstIndex = new HashMap<>(); //docNum->term->(firstIndex, isInHeadline)
+        HashMap<String, List<Pair<Integer, Integer>>> docTFDF = new HashMap<>();
+        HashMap<String, Double> docNumBM25Query1 = new HashMap<>(); //docNum-> bm25
+        HashMap<String, Integer> docNoInHeadLine = new HashMap<>();
+        HashMap<String, Integer> docNoInTheBeggining = new HashMap<>();
+        HashMap<String, Integer> docNoPartOfEntiry = new HashMap<>();
+
+        HashMap<String, Double> finalRanks = new HashMap<>(); //docNum-> rank
 
         for (Term term : queryTerms) {
             HashMap<String, DocTermInfo> termDocs = term.getDocs(); //string= docNum
             for (String docNum : termDocs.keySet()) {
-                int inHeadLine = termDocs.get(docNum).getIsInHeadLine() ? 1 : 0;
-                putDocNumBM(termDocs.get(docNum), docNum, docNumBM25Query, termDocs.size(),1);
-                int firstIndex = termDocs.get(docNum).getTermFirstIndex();
-                putDocNumIndex(term, docNum, firstIndex,inHeadLine, docNumTermFirstIndex);
-            }
-        }
-        if (semantics) {
-            docNumBM25QueryPlusSemantics.putAll(docNumBM25Query);
-            for (Pair<Term, Double> semanticPair : semanticTerms) {
-                Term term = semanticPair.getKey();
-                HashMap<String, DocTermInfo> trmDocs = term.getDocs(); //string= docNum
-                double termScore = semanticPair.getValue();
-                //for each doc
-                for (String docNum : trmDocs.keySet()) {
-                    int inHeadLine = trmDocs.get(docNum).getIsInHeadLine() ? 1 : 0;
-                    putDocNumBM(trmDocs.get(docNum), docNum, docNumBM25QueryPlusSemantics, trmDocs.size(), termScore);
-                    int firstIndex = trmDocs.get(docNum).getTermFirstIndex();
-                    putDocNumIndex(term, docNum, firstIndex, inHeadLine, docNumTermFirstIndex);
+                List<Pair<Integer, Integer>> docList;
+                if (docTFDF.containsKey(docNum)) {
+                    docList = docTFDF.get(docNum);
+                } else {
+                    docList = new ArrayList<>();
                 }
+                docList.add(new Pair(termDocs.get(docNum).getTfi(), termDocs.size()));
+                docTFDF.put(docNum, docList);
+
+                checkAtTheBegining(docNum, termDocs.get(docNum), docNoInTheBeggining);
+                checkInHeadline(docNum, termDocs.get(docNum), docNoInHeadLine);
+                checkPartOFEntity(docNum, term, docNoPartOfEntiry);
+
             }
         }
-        return rankDocs(docNumBM25Query, docNumBM25QueryPlusSemantics,docNumTermFirstIndex);
-    }
 
-
-    /**
-     * Puts pairs of docNum, BM25 score in the hashmap
-     * @param value - DocTermInfo object
-     * @param docNum
-     * @param docNumBM25Query  - insert hashmap
-     * @param size - number of documents that term appeared in
-     * @param weight  - 1 if it is a term that appeared in the query, normalized score if it is a semantic term
-     */
-    private void putDocNumBM(DocTermInfo value, String docNum, HashMap<String, Double> docNumBM25Query, int size, double weight){
-        double bmVal = 0;
-        int firstIndex = value.getTermFirstIndex();
-        int Tfi= value.getTfi();
-        int numOfTerms = docsDictionary.get(docNum).getNumOfTerms();
-        double idf = getIdfForBM25(size);
-        double bm25 = calculateBM25PerTerm(Tfi,numOfTerms,idf);
-        if (docNumBM25Query.containsKey(docNum)) {
-            bmVal = docNumBM25Query.get(docNum) + bm25 * weight;
-        } else {
-            bmVal = bm25 * weight;
-        }
-        docNumBM25Query.put(docNum, bmVal);
-    }
-
-    /**
-     * Puts docNum, <Term, first index> in hashmap
-     * @param term
-     * @param docNum
-     * @param firstIndex
-     * @param docNumTermFirstIndex - insert hashmap
-     */
-    private void putDocNumIndex(Term term, String docNum, int firstIndex, int inHeadline, HashMap<String, HashMap<Term, Pair<Integer, Integer>>> docNumTermFirstIndex){
-        HashMap<Term, Pair<Integer, Integer>> index ;
-        if (docNumTermFirstIndex.containsKey(docNum)){
-            index = docNumTermFirstIndex.get(docNum);
-        }
-        else {
-            index = new HashMap<>();
-        }
-        index.put(term, new Pair(firstIndex, inHeadline));
-        docNumTermFirstIndex.put(docNum, index);
-    }
-
-    /**
-     * Rank documents according to ranking formula
-     * @param docNumBM25Query
-     * @param docNumBM25Semantics
-     * @param docNumTermFirstIndex
-     * @return 50 pair of (docNum,score), sorted by score
-     */
-    private List<Pair<String, Double>> rankDocs(HashMap<String, Double> docNumBM25Query, HashMap<String, Double> docNumBM25Semantics,  HashMap<String, HashMap<Term, Pair<Integer, Integer>>> docNumTermFirstIndex) {
-        List<Pair<String, Double>> rankedDocs = new ArrayList<>();
-
-        double max = 0;
-        for(double d: docNumBM25Query.values()){
-            if (d>max)
-                max = d;
+        double max = -Double.MAX_VALUE;
+        for (String docNum : docTFDF.keySet()) {
+            double bm25 = calculateBM25PerDoc(docTFDF.get(docNum), docNum);
+            docNumBM25Query1.put(docNum, bm25);
+            if (bm25 > max)
+                max = bm25;
         }
 
-        HashMap<String, Double> hashToWordOn;
-        if (semantics)
-            hashToWordOn = docNumBM25Semantics;  //combined score
-        else
-            hashToWordOn = docNumBM25Query;
+        for (String docNum : docNumBM25Query1.keySet()) {
+            double normalBm = docNumBM25Query1.get(docNum) / max;
+            double extraWeight1 = 0;
+            if (docNoInTheBeggining.containsKey(docNum))
+                extraWeight1 += docNoInTheBeggining.get(docNum);
+            if (docNoInHeadLine.containsKey(docNum))
+                extraWeight1 += 4 * docNoInHeadLine.get(docNum);
+            if (docNoPartOfEntiry.containsKey(docNum))
+                extraWeight1 += 2 * docNoPartOfEntiry.get(docNum);
+            extraWeight1 /= docsDictionary.get(docNum).getNumOfUniqTerms();
+            finalRanks.put(docNum,  normalBm); /*+ extraWeight1 * 0.2);*/
 
-        for (String docNum : hashToWordOn.keySet()) {
-            double sumWeightForDoc = 0;
-            double score = hashToWordOn.get(docNum);
-            for (Term term : docNumTermFirstIndex.get(docNum).keySet()){
-                Pair<Integer, Integer> pair = docNumTermFirstIndex.get(docNum).get(term);
-                DocCorpusInfo dci = docsDictionary.get(docNum);
-//                double tfidf = Calculator.calculateTfIdf(term.getDf(), term.getDocTfi(docNum), dci.getMaxTf());
-                double normalizedIndex = (double)pair.getKey() / dci.getNumOfTerms();
+        }
 
-                sumWeightForDoc +=  Math.abs(1 - normalizedIndex) + 0.5 * pair.getValue();
-            }
-            double rank =  0.9 * score + 0.1 * sumWeightForDoc ;
-
-            String realNum = DocCorpusInfo.getDocDecimalNum(docNum);
-            rankedDocs.add(new Pair(realNum, rank));
+        List<Pair<String, Double>> docRanks = new ArrayList<>();
+        for (String doc : finalRanks.keySet()) {
+            docRanks.add(new Pair<>(DocCorpusInfo.getDocDecimalNum(doc), finalRanks.get(doc)));
         }
 
         //sort docs according to weight
-        rankedDocs.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
-        int minLength = Math.min(rankedDocs.size(), MAX_DOCS_TO_RETURN);
-        return rankedDocs.subList(0, minLength);
+        docRanks.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
+        int minLength = Math.min(docRanks.size(), MAX_DOCS_TO_RETURN);
+        return docRanks.subList(0, minLength);
+         //return docRanks;
+
+    }
+
+    private void checkPartOFEntity(String docNum, Term term, HashMap<String, Integer> docNoPartOfEntiry) {
+        if (docPartOfEntities(docNum, term)) {
+            int partOf;
+            if (docNoPartOfEntiry.containsKey(docNum))
+                partOf = docNoPartOfEntiry.get(docNum) + 1;
+            else
+                partOf = 1;
+            docNoPartOfEntiry.put(docNum, partOf);
+        }
+    }
+
+    private boolean docPartOfEntities(String docNo, Term term) {
+        for (String entity : docsDictionary.get(docNo).getMostFreqEntities()) {
+            if (StringUtils.containsIgnoreCase(entity, term.getValue()))
+                return true;
+        }
+        return false;
+    }
+
+    private void checkAtTheBegining(String docNum, DocTermInfo dti, HashMap<String, Integer> docNoInTheBeggining) {
+        if ((double) dti.getTermFirstIndex() / docsDictionary.get(docNum).getNumOfTerms() < 0.1) {
+            int atBegining;
+            if (docNoInTheBeggining.containsKey(docNum))
+                atBegining = docNoInTheBeggining.get(docNum) + 1;
+            else
+                atBegining = 1;
+            docNoInTheBeggining.put(docNum, atBegining);
+        }
+    }
+
+    private void checkInHeadline(String docNum, DocTermInfo dti, HashMap<String, Integer> docNoInHeadLine) {
+        if (dti.getIsInHeadLine()) {
+            int inHeadline;
+            if (docNoInHeadLine.containsKey(docNum))
+                inHeadline = docNoInHeadLine.get(docNum) + 1;
+            else
+                inHeadline = 1;
+            docNoInHeadLine.put(docNum, inHeadline);
+        }
     }
 
 
-    /**
-     * This method calculates idf according to BM25
-     *
-     * @param numOfDocsForTerm number of docs the term appeared in
-     * @return idf for term
-     */
-    private double getIdfForBM25(int numOfDocsForTerm) {
-        double up = Calculator.corpusSize - numOfDocsForTerm + 0.5;
-        double down = numOfDocsForTerm + 0.5;
-        return Math.log(up / down);
+    private double calculateBM25PerDoc(List<Pair<Integer, Integer>> pairs, String docNum) {
+        double result = 0;
+        for (Pair<Integer, Integer> pair : pairs) {
+            double tf = (double) pair.getKey() / docsDictionary.get(docNum).getMaxTf();
+            double idf = Math.log((Calculator.corpusSize - pair.getValue() + 0.5) / (pair.getValue() + 0.5));
+            double up = tf * (K + 1) * idf;
+            double average = Calculator.sumLength / Calculator.corpusSize;
+            int uniqueTerms = docsDictionary.get(docNum).getNumOfUniqTerms();
+            double down = tf + (K * (1 - B + (B * ((double) uniqueTerms / average))));
+            result += (up / down);
+        }
+        return result;
     }
-
-    /**
-     * This method calculated BM25 for each doc according to the BM25 formula
-     *
-     * @param numOfOccurrecnes
-     * @param docLength
-     * @param idf
-     * @return idf * up / down;
-     */
-    private double calculateBM25PerTerm(int numOfOccurrecnes, int docLength, double idf) {
-        long sumLengths = Calculator.sumLength;
-        int cospusSize = Calculator.corpusSize;
-        double up = numOfOccurrecnes * (K + 1);
-        double down = numOfOccurrecnes + (K * (1 - B + (B * (double) docLength / (sumLengths/cospusSize))));
-        return idf * (up / down);
-    }
-
-
-
-
 }
+
+
+
