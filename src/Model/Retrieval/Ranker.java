@@ -48,6 +48,7 @@ public class Ranker {
         HashMap<String, Integer> docNoInHeadLine = new HashMap<>();
         HashMap<String, Integer> docNoInTheBeggining = new HashMap<>();
         HashMap<String, Integer> docNoPartOfEntiry = new HashMap<>();
+        HashMap<String, Integer> docNumOfQueryTerms = new HashMap<>();
 
         HashMap<String, Double> finalRanks = new HashMap<>(); //docNum-> rank
 
@@ -66,6 +67,7 @@ public class Ranker {
                 checkAtTheBegining(docNum, termDocs.get(docNum), docNoInTheBeggining);
                 checkInHeadline(docNum, termDocs.get(docNum), docNoInHeadLine);
                 checkPartOFEntity(docNum, term, docNoPartOfEntiry);
+                countQueryTerms(docNum, docNumOfQueryTerms);
 
             }
         }
@@ -88,7 +90,8 @@ public class Ranker {
             if (docNoPartOfEntiry.containsKey(docNum))
                 extraWeight1 += 2 * docNoPartOfEntiry.get(docNum);
             extraWeight1 /= docsDictionary.get(docNum).getNumOfUniqTerms();
-            finalRanks.put(docNum,  normalBm); /*+ extraWeight1 * 0.2);*/
+            int counter = docNumOfQueryTerms.get(docNum);
+            finalRanks.put(docNum,  normalBm * counter*counter); /*+ extraWeight1 * 0.2);*/
 
         }
 
@@ -103,6 +106,15 @@ public class Ranker {
         return docRanks.subList(0, minLength);
          //return docRanks;
 
+    }
+
+    private void countQueryTerms(String docNum, HashMap<String, Integer> docNumOfQueryTerms) {
+        int counter;
+        if (docNumOfQueryTerms.containsKey(docNum))
+            counter = docNumOfQueryTerms.get(docNum) + 1;
+        else
+            counter = 1;
+        docNumOfQueryTerms.put(docNum, counter);
     }
 
     private void checkPartOFEntity(String docNum, Term term, HashMap<String, Integer> docNoPartOfEntiry) {
@@ -154,6 +166,7 @@ public class Ranker {
             double idf = Math.log((Calculator.corpusSize - pair.getValue() + 0.5) / (pair.getValue() + 0.5));
             double up = tf * (K + 1) * idf;
             double average = Calculator.sumLength / Calculator.corpusSize;
+            //double average = Double.MAX_VALUE;
             int uniqueTerms = docsDictionary.get(docNum).getNumOfUniqTerms();
             double down = tf + (K * (1 - B + (B * ((double) uniqueTerms / average))));
             result += (up / down);
