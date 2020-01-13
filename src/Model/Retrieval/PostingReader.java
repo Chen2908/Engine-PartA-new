@@ -11,9 +11,12 @@ public class PostingReader {
     private File postingDirPath;
     private FileContentReader fileReader;
     private HashMap<String, Term> termsPosting;
-    private HashMap<String, Integer> dictionary;
+    private HashMap<String, int[]> dictionary;
 
-    public PostingReader(HashMap<String, Integer> dictionary, String postingDirPath, int numOfPostingFiles){
+    private final int DIC_LINE_INDEX = 1;
+    private final int DIC_TF_INDEX = 0;
+
+    public PostingReader(HashMap<String, int[]> dictionary, String postingDirPath, int numOfPostingFiles){
         this.postingDirPath = new File(postingDirPath);
         this.fileReader = new FileContentReader();
         this.numOfPostingFiles = numOfPostingFiles;
@@ -43,7 +46,7 @@ public class PostingReader {
                 fileLines = fileReader.getFileContent(termFilePath);
             prevTermFilePath = termFilePath;
 
-            addTermToMap(fileLines, dictionary.get(termValue));
+            addTermToMap(fileLines, dictionary.get(termValue)[DIC_LINE_INDEX]);
         }
 
         return termsPosting;
@@ -58,7 +61,7 @@ public class PostingReader {
     private void addTermToMap(List<String> lines, Integer termLine){
         String termInfo = lines.get(termLine);
         Term term = new Term(termInfo);
-        term.setTF(dictionary.get(term.getValue()));
+        term.setTF(dictionary.get(term.getValue())[DIC_TF_INDEX]);
         this.termsPosting.put(term.getValue(), term);
     }
 

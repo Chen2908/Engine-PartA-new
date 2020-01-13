@@ -47,7 +47,7 @@ public class Ranker {
         HashMap<String, Double> docNumBM25Query1 = new HashMap<>(); //docNum-> bm25
         HashMap<String, Integer> docNoInHeadLine = new HashMap<>();
         HashMap<String, Integer> docNoInTheBeggining = new HashMap<>();
-        HashMap<String, Integer> docNoPartOfEntiry = new HashMap<>();
+        HashMap<String, Integer> docNoPartOfEntity = new HashMap<>();
         HashMap<String, Integer> docNumOfQueryTerms = new HashMap<>();
 
         HashMap<String, Double> finalRanks = new HashMap<>(); //docNum-> rank
@@ -66,7 +66,7 @@ public class Ranker {
 
                 checkAtTheBegining(docNum, termDocs.get(docNum), docNoInTheBeggining);
                 checkInHeadline(docNum, termDocs.get(docNum), docNoInHeadLine);
-                checkPartOFEntity(docNum, term, docNoPartOfEntiry);
+                checkPartOFEntity(docNum, term, docNoPartOfEntity);
                 countQueryTerms(docNum, docNumOfQueryTerms);
 
             }
@@ -86,12 +86,12 @@ public class Ranker {
 //            if (docNoInTheBeggining.containsKey(docNum))
 //                extraWeight1 += docNoInTheBeggining.get(docNum);
             if (docNoInHeadLine.containsKey(docNum))
-                extraWeight1 += 3*docNoInHeadLine.get(docNum);
-            if (docNoPartOfEntiry.containsKey(docNum))
-                extraWeight1 += docNoPartOfEntiry.get(docNum);
+                extraWeight1 += 2*docNoInHeadLine.get(docNum);
+            if (docNoPartOfEntity.containsKey(docNum))
+                extraWeight1 += docNoPartOfEntity.get(docNum);
             extraWeight1 /= docsDictionary.get(docNum).getNumOfUniqTerms();
             int counter = docNumOfQueryTerms.get(docNum);
-            finalRanks.put(docNum,  0.8*normalBm + 0.2*extraWeight1);
+            finalRanks.put(docNum,  0.7*normalBm + 0.3*extraWeight1);
 
         }
 
