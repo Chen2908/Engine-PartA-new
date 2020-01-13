@@ -71,6 +71,13 @@ public class DocCorpusInfo implements IWritable {
             addEntity(docNum, term);
     }
 
+    /**
+     * This methods adds a new entity to the list
+     * if the list is full it inserts the entity only if the number
+     * of occurrences of one of the current entities is lower
+     * @param docNum
+     * @param term
+     */
     private void addEntity(String docNum, Term term){
         if (this.mostFreqEntities.size() < 5) {
             this.mostFreqEntities.add(new Pair<>(term.getValue(), term.getDocTfi(docNum)));
