@@ -48,6 +48,7 @@ public class Ranker {
         HashMap<String, Integer> docNoInHeadLine = new HashMap<>();
         HashMap<String, Integer> docNoInTheBeggining = new HashMap<>();
         HashMap<String, Integer> docNoPartOfEntiry = new HashMap<>();
+        HashMap<String, Integer> DocNumNumOfQueryTerms = new HashMap<>();
 
         HashMap<String, Double> finalRanks = new HashMap<>(); //docNum-> rank
 
@@ -66,6 +67,7 @@ public class Ranker {
                 checkAtTheBegining(docNum, termDocs.get(docNum), docNoInTheBeggining);
                 checkInHeadline(docNum, termDocs.get(docNum), docNoInHeadLine);
                 checkPartOFEntity(docNum, term, docNoPartOfEntiry);
+                countNumOfQueryTerms(docNum, DocNumNumOfQueryTerms);
 
             }
         }
@@ -88,7 +90,8 @@ public class Ranker {
             if (docNoPartOfEntiry.containsKey(docNum))
                 extraWeight1 += 3*docNoPartOfEntiry.get(docNum);
             extraWeight1 /= docsDictionary.get(docNum).getNumOfUniqTerms();
-            finalRanks.put(docNum, 0.8 * normalBm + extraWeight1 * 0.2);
+            //int counter = DocNumNumOfQueryTerms.get(docNum)* DocNumNumOfQueryTerms.get(docNum);
+            finalRanks.put(docNum, 0.8 * normalBm  + extraWeight1 * 0.2);
 
         }
 
@@ -102,6 +105,14 @@ public class Ranker {
         int minLength = Math.min(docRanks.size(), MAX_DOCS_TO_RETURN);
         return docRanks.subList(0, minLength);
 
+    }
+
+    private void countNumOfQueryTerms(String docNum, HashMap<String, Integer> docNumNumOfQueryTerms) {
+        int counter=1;
+        if (docNumNumOfQueryTerms.containsKey(docNum)) {
+            counter = docNumNumOfQueryTerms.get(docNum) + 1;
+        }
+        docNumNumOfQueryTerms.put(docNum, counter);
     }
 
     private void checkPartOFEntity(String docNum, Term term, HashMap<String, Integer> docNoPartOfEntiry) {
