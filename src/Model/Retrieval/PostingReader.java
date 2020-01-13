@@ -58,6 +58,7 @@ public class PostingReader {
     private void addTermToMap(List<String> lines, Integer termLine){
         String termInfo = lines.get(termLine);
         Term term = new Term(termInfo);
+        term.setTF(dictionary.get(term.getValue()));
         this.termsPosting.put(term.getValue(), term);
     }
 

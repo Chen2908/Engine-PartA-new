@@ -19,7 +19,8 @@ public class Searcher {
     private Semantic semanticModel;
     private Parse parser;
     private Ranker ranker;
-    private HashMap<String, Integer> dictionary;
+    private HashMap<String, Integer> dictionaryFileLines;
+    private HashMap<String, Integer> dictionaryTermTF;
     private HashMap<String, List<Pair<String, Double>>> semanticDictionary;
     private HashMap<String, DocCorpusInfo> docsInfo;
 
@@ -33,6 +34,7 @@ public class Searcher {
 
     private final int DOC_NUM_INDEX = 0;
 
+
     private final String DOCSINFO_SUB_PATH = "\\Docs\\DocsInfo.txt";
     private final String POSTING_FILES_SUB_PATH = "\\Terms";
     private final String DIC_SUB_PATH = "\\dictionary.txt";
@@ -42,7 +44,8 @@ public class Searcher {
     public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming){
         this.sumOfDocsLength = 0;
         this.docsInfo = new HashMap<>();
-        this.dictionary = new HashMap<>();
+        this.dictionaryFileLines = new HashMap<>();
+        this.dictionaryTermTF = new HashMap<>();
         this.semanticDictionary = new HashMap<>();
 
         this.indexDir = new File(indexDirPath);
@@ -54,7 +57,7 @@ public class Searcher {
         readDocsInfoDic();
 
         this.ranker = new Ranker(docsInfo, sumOfDocsLength);
-        this.postingReader = new PostingReader(dictionary,
+        this.postingReader = new PostingReader(dictionaryTermTF,
                 indexDir.getAbsolutePath() + POSTING_FILES_SUB_PATH, numOfPosting);
 
     }
@@ -85,7 +88,8 @@ public class Searcher {
 
         for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i).compareTo("") != 0; i++){
             splitLine = dictionaryFile.get(i).split(del);
-            this.dictionary.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_LINE_NUM_INDEX]));
+            this.dictionaryFileLines.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_TF_INDEX]));
+            this.dictionaryFileLines.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_LINE_NUM_INDEX]));
         }
     }
 
@@ -150,7 +154,7 @@ public class Searcher {
     }
 
     public HashMap<String, Integer> getDictionary() {
-        return dictionary;
+        return dictionaryFileLines;
     }
 
     public HashMap<String, List<String>> getEntities() {
