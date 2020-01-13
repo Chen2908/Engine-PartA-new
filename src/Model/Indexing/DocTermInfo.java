@@ -1,5 +1,7 @@
 package Model.Indexing;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class DocTermInfo{
 
     //<editor-fold des="Class Fields">
@@ -73,7 +75,6 @@ public class DocTermInfo{
             this.termIndexes.append(del + index);
         else {
             this.termIndexes.append(index);
-            this.firstIndex = index;
         }
 
     }
@@ -154,9 +155,9 @@ public class DocTermInfo{
     }
 
     public int getTermFirstIndex() {
-//        if (termIndexes != null && termIndexes.length() > 0)
-//            return Integer.parseInt(StringUtils.split(termIndexes.toString(), del)[0]);
-//        return -1;
-        return firstIndex;
+        if (termIndexes != null && termIndexes.length() > 0)
+            return Integer.parseInt(StringUtils.split(termIndexes.toString(), del)[0]);
+        return -1;
+
     }
 }

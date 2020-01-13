@@ -186,7 +186,7 @@ public class Controller implements Observer {
                             line = sc.nextLine();
                         }
                     }
-                    curremtqueriesFromFileText.add(new Pair(queryNum, new Pair(title, desc.toString())));
+                    curremtqueriesFromFileText.add(new Pair(queryNum, new Pair(title + " " + title.toLowerCase(), desc.toString())));
                 }
                 text.append(line + "\n");
             }

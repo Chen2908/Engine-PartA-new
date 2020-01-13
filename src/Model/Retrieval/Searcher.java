@@ -19,8 +19,8 @@ public class Searcher {
     private Semantic semanticModel;
     private Parse parser;
     private Ranker ranker;
-    private HashMap<String, Integer> dictionaryFileLines;
-    private HashMap<String, Integer> dictionaryTermTF;
+    private HashMap<String, int[]> dictionary;
+
     private HashMap<String, List<Pair<String, Double>>> semanticDictionary;
     private HashMap<String, DocCorpusInfo> docsInfo;
 
@@ -44,8 +44,7 @@ public class Searcher {
     public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming){
         this.sumOfDocsLength = 0;
         this.docsInfo = new HashMap<>();
-        this.dictionaryFileLines = new HashMap<>();
-        this.dictionaryTermTF = new HashMap<>();
+        this.dictionary = new HashMap<>();
         this.semanticDictionary = new HashMap<>();
 
         this.indexDir = new File(indexDirPath);
@@ -57,7 +56,7 @@ public class Searcher {
         readDocsInfoDic();
 
         this.ranker = new Ranker(docsInfo, sumOfDocsLength);
-        this.postingReader = new PostingReader(dictionaryTermTF,
+        this.postingReader = new PostingReader(dictionary,
                 indexDir.getAbsolutePath() + POSTING_FILES_SUB_PATH, numOfPosting);
 
     }
@@ -88,8 +87,8 @@ public class Searcher {
 
         for(int i = 0; i < dictionaryFile.size() && dictionaryFile.get(i).compareTo("") != 0; i++){
             splitLine = dictionaryFile.get(i).split(del);
-            this.dictionaryFileLines.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_TF_INDEX]));
-            this.dictionaryFileLines.put(splitLine[DIC_TERM_INDEX], Integer.parseInt(splitLine[DIC_LINE_NUM_INDEX]));
+            int [] termDicInfo = { Integer.parseInt(splitLine[DIC_TF_INDEX]), Integer.parseInt(splitLine[DIC_LINE_NUM_INDEX]) };
+            this.dictionary.put(splitLine[DIC_TERM_INDEX], termDicInfo);
         }
     }
 
@@ -153,8 +152,8 @@ public class Searcher {
         return semTerms;
     }
 
-    public HashMap<String, Integer> getDictionary() {
-        return dictionaryFileLines;
+    public HashMap<String, int[]> getDictionary() {
+        return dictionary;
     }
 
     public HashMap<String, List<String>> getEntities() {

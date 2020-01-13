@@ -14,7 +14,7 @@ import java.util.List;
 public class Ranker {
 
     private final double K = 0.05;
-    private final double B = 0.1;
+    private final double B = 0.01;
     private final int MAX_DOCS_TO_RETURN = 50;
     private HashMap<String, DocCorpusInfo> docsDictionary;  //all relevant information about the documents
     private boolean semantics;
@@ -81,12 +81,12 @@ public class Ranker {
         for (String docNum : docNumBM25Query1.keySet()) {
             double normalBm = docNumBM25Query1.get(docNum) / max;
             double extraWeight1 = 0;
-//            if (docNoInTheBeggining.containsKey(docNum))
-//                extraWeight1 += docNoInTheBeggining.get(docNum);
+            if (docNoInTheBeggining.containsKey(docNum))
+                extraWeight1 += docNoInTheBeggining.get(docNum);
             if (docNoInHeadLine.containsKey(docNum))
-                extraWeight1 += 3*docNoInHeadLine.get(docNum);
+                extraWeight1 += 6*docNoInHeadLine.get(docNum);
             if (docNoPartOfEntiry.containsKey(docNum))
-                extraWeight1 += docNoPartOfEntiry.get(docNum);
+                extraWeight1 += 3*docNoPartOfEntiry.get(docNum);
             extraWeight1 /= docsDictionary.get(docNum).getNumOfUniqTerms();
             finalRanks.put(docNum, 0.8 * normalBm + extraWeight1 * 0.2);
 
@@ -149,13 +149,13 @@ public class Ranker {
     private double calculateBM25PerDoc(List<Pair<Integer, Integer>> pairs, String docNum) {
         double result = 0;
         for (Pair<Integer, Integer> pair : pairs) {
-            double tf = (double) pair.getKey() / docsDictionary.get(docNum).getMaxTf();
+            double tf = (double) pair.getKey(); /*/ docsDictionary.get(docNum).getMaxTf();*/
             double idf = Math.log((Calculator.corpusSize - pair.getValue() + 0.5) / (pair.getValue() + 0.5));
             double up = tf * (K + 1) * idf;
             double average = Calculator.sumLength / Calculator.corpusSize;
-            int uniqueTerms = docsDictionary.get(docNum).getNumOfUniqTerms();
+            int uniqueTerms = docsDictionary.get(docNum).getNumOfTerms();
             double down = tf + (K * (1 - B + (B * ((double) uniqueTerms / average))));
-            result += up / down;
+            result += (up / down);
         }
         return result;
     }
