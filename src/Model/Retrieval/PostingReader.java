@@ -16,6 +16,12 @@ public class PostingReader {
     private final int DIC_LINE_INDEX = 1;
     private final int DIC_TF_INDEX = 0;
 
+    /**
+     * Constructor
+     * @param dictionary - the dictionary that matches the posting files (key - termValue, value - int[2]{ term TF, term Line in posting }
+     * @param postingDirPath - the path to the directory of all the posting files
+     * @param numOfPostingFiles - total number of posting files
+     */
     public PostingReader(HashMap<String, int[]> dictionary, String postingDirPath, int numOfPostingFiles){
         this.postingDirPath = new File(postingDirPath);
         this.fileReader = new FileContentReader();
@@ -25,6 +31,13 @@ public class PostingReader {
         this.dictionary = dictionary;
     }
 
+    /**
+     * This method gets a collection of term and return an HashMap
+     * that contains all the information (Term - Object) about the given term
+     * only in case the term exists in the dictionary and posting files
+     * @param terms - that there information is needed
+     * @return the information about the existing terms
+     */
     public HashMap<String, Term> getTermsPosting(Collection<String> terms){
         this.termsPosting = new HashMap<>();
         List<String> termsQueue = new ArrayList<>(terms);
@@ -85,6 +98,11 @@ public class PostingReader {
         return termDicValue;
     }
 
+    /**
+     * This method gets a term and returns the path to the posting file of that term
+     * @param term
+     * @return the path to the posting file of the given term
+     */
     private String getFilePath(String term){
         return postingDirPath.getAbsolutePath() + "\\" + fileNameHashFunction(term) + ".txt";
     }

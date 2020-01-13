@@ -4,7 +4,6 @@ import Model.Indexing.DocCorpusInfo;
 import Model.Indexing.Parse;
 import Model.Indexing.Term;
 import javafx.util.Pair;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,15 +12,13 @@ import java.util.List;
 
 public class Searcher {
 
-    private File indexDir;
+    private File indexDir;//holds the directory of the indexed file directory
     private FileContentReader fileReader;
     private PostingReader postingReader;
     private Semantic semanticModel;
     private Parse parser;
     private Ranker ranker;
     private HashMap<String, int[]> dictionary;
-
-    private HashMap<String, List<Pair<String, Double>>> semanticDictionary;
     private HashMap<String, DocCorpusInfo> docsInfo;
 
     private long sumOfDocsLength;
@@ -40,16 +37,19 @@ public class Searcher {
     private final String DIC_SUB_PATH = "\\dictionary.txt";
     private final String SEM_DIC_SUB_PATH = "\\semanticDic.txt";
 
-
+    /**
+     * Constructor
+     * @param indexDirPath - the path to the index files directory
+     * @param stopWordPath - the path to the stop word file
+     * @param numOfPosting - the number of posting file
+     * @param stemming - the type of semantic model to use
+     */
     public Searcher(String indexDirPath, String stopWordPath, int numOfPosting, boolean stemming){
         this.sumOfDocsLength = 0;
         this.docsInfo = new HashMap<>();
         this.dictionary = new HashMap<>();
-        this.semanticDictionary = new HashMap<>();
-
         this.indexDir = new File(indexDirPath);
         this.fileReader = new FileContentReader();
-
         this.parser = new Parse(stopWordPath, stemming);
 
         readDictionary();
@@ -61,15 +61,21 @@ public class Searcher {
 
     }
 
+    /**
+     * This method sets a semantic model
+     * @param semanticsNum - type of semantic model
+     */
     public void setSemanticModel(int semanticsNum) {
         this.isSemanticSearch = semanticsNum;
         if (semanticsNum == 1)
             this.semanticModel = new SemanticsModel();
         else if (semanticsNum == 2)
             this.semanticModel = new SemanticsAPI();
-        readSemanticDictionary();
     }
 
+    /**
+     * This method reads the docs information
+     */
     private void readDocsInfoDic(){
         List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + DOCSINFO_SUB_PATH);
         String[] splitLine;
@@ -81,6 +87,9 @@ public class Searcher {
         }
     }
 
+    /**
+     * This methods read the dictionary
+     */
     private void readDictionary(){
         List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + DIC_SUB_PATH);
         String[] splitLine;
@@ -92,22 +101,14 @@ public class Searcher {
         }
     }
 
-    private void readSemanticDictionary(){
-        List<String> dictionaryFile = fileReader.getFileContent(indexDir.getAbsolutePath() + SEM_DIC_SUB_PATH);
-        if (dictionaryFile == null)
-            return;
-        String[] splitLine;
-        for(String line : dictionaryFile){
-            splitLine = StringUtils.split(line, ",");
-            List<Pair<String,Double>> semList = new ArrayList<>();
-            for (int i = 1; i < splitLine.length; i += 2)
-                semList.add(new Pair<>(splitLine[i], Double.parseDouble(splitLine[i+1])));
-            this.semanticDictionary.put(splitLine[0], semList);
-        }
-    }
-    
+    /**
+     * This methods get a query, parse it, send it ot the ranker
+     * and returns a sorted List of the the documents numbers
+     * @param query - query to answer
+     * @return documents sorted by the ranking
+     */
     public List<Pair<String, Double>> search(String query){
-
+        long sTime = System.currentTimeMillis();
         HashMap<String, Term> queryTermsMap = this.parser.parseQuery(query, "A-1"); //title
         ArrayList<String> queryTerms = new ArrayList<>(queryTermsMap.keySet());
         ArrayList<String> allTerms = new ArrayList<>(queryTerms);
@@ -127,22 +128,34 @@ public class Searcher {
             else
                 semTermPosting.add(new Pair(termsPosting.get(termTitle), semTerms.get(termTitle.toLowerCase())));
         }
-
-        return this.ranker.rank(queryTermPosting, semTermPosting);
+        List<Pair<String, Double>> docs = this.ranker.rank(queryTermPosting, semTermPosting);
+        System.out.println((System.currentTimeMillis() - sTime));
+        return docs;
     }
 
+    /**
+     * This methods checks if the given term is found it the given
+     * HashMap keys
+     * @param map - HashMap to search in
+     * @param term - value to search for
+     * @return if the term appears in the mpa in any way (regular, lower, upper)
+     */
     private boolean isTermInMap(HashMap<String, Term> map, String term){
         return map.containsKey(term) || map.containsKey(term.toUpperCase()) || map.containsKey(term.toLowerCase());
     }
 
+    /**
+     * THis method gets a list of term and returns a list of all the terms that
+     * the semantic model found closest to them
+     * @param queryTerms
+     * @return all the terms that the semantic model found similar to the given terms
+     */
     private HashMap<String, Double> getSemTerm(List<String> queryTerms){
         HashMap<String, Double> semTerms = new HashMap<>();
         List<Pair<String, Double>> semTermList;
         for (String term: queryTerms){
-            if (this.semanticDictionary.containsKey(term))
-                semTermList = this.semanticDictionary.get(term);
-            else
-                semTermList = semanticModel.termWithSimilarMeaning(term.toLowerCase());
+            semTermList = semanticModel.termWithSimilarMeaning(term.toLowerCase());
+
             for (Pair<String, Double> pair: semTermList)
                 semTerms.put(pair.getKey(), pair.getValue());
         }
@@ -152,10 +165,18 @@ public class Searcher {
         return semTerms;
     }
 
+    /**
+     * Getter
+     * @return returns the HashMap of the dictionary
+     */
     public HashMap<String, int[]> getDictionary() {
         return dictionary;
     }
 
+    /**
+     * Getter
+     * @return the an HashMap of all the entities for all the documents
+     */
     public HashMap<String, List<String>> getEntities() {
         HashMap<String, List<String>> entities = new HashMap<>();
         for (String s: docsInfo.keySet()){
