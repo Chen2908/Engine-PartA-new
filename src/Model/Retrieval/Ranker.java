@@ -162,11 +162,11 @@ public class Ranker {
         for (Pair<Integer, Integer> pair : pairs) {
             double tf = (double) pair.getKey(); /*/ docsDictionary.get(docNum).getMaxTf();*/
             double idf = Math.log((Calculator.corpusSize - pair.getValue() + 0.5) / (pair.getValue() + 0.5));
-            double up = tf * (K + 1) * idf;
+            double up = tf * (K + 1);
             double average = Calculator.sumLength / Calculator.corpusSize;
             int uniqueTerms = docsDictionary.get(docNum).getNumOfTerms();
             double down = tf + (K * (1 - B + (B * ((double) uniqueTerms / average))));
-            result += (up / down);
+            result += idf * ((up / down)+ 1.0);
         }
         return result;
     }

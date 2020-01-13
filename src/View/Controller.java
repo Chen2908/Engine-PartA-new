@@ -543,7 +543,7 @@ public class Controller implements Observer {
                 //merge into desc
                 title.forEach(
                         (key,value) -> desc.merge
-                                (key ,value, (v1, v2) ->  0.7* v1 + 0.3 * v2));
+                                (key ,value, (v1, v2) ->  0.4 * v1 + 0.6 * v2));
 
                 for(String docNum: desc.keySet()){
                     queryResults.add(new Pair(docNum, desc.get(docNum)));
