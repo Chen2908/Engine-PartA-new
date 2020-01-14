@@ -53,7 +53,7 @@ public class SemanticsAPI implements Semantic, Serializable {
             }
 
         } catch (Exception e) {
-            System.out.println("error in reading similar terms");
+            //System.out.println("error in reading similar terms");
         }
         return similarTerms;
     }

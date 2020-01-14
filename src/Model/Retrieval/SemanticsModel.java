@@ -28,7 +28,7 @@ public class SemanticsModel implements Semantic{
                 similarTerms.add(new Pair(similarWord, similarityScore*0.5));
             }
         }catch(Exception e){
-            System.out.println("Cannot get similar words");
+            //System.out.println("Cannot get similar words");
         }
         if (similarTerms.isEmpty())
             return similarTerms;
