@@ -186,7 +186,7 @@ public class Controller implements Observer {
                             line = sc.nextLine();
                         }
                     }
-                    curremtqueriesFromFileText.add(new Pair(queryNum, new Pair(title + " " + title.toLowerCase(), desc.toString())));
+                    curremtqueriesFromFileText.add(new Pair(queryNum, new Pair(title, desc.toString())));
                 }
                 text.append(line + "\n");
             }
@@ -579,6 +579,9 @@ public class Controller implements Observer {
 
 
     public void btnSemanticsPressed(){
+        if (!btnSemanticsAPI.isSelected() && !btnSemantics.isSelected()) {
+            this.semanticsNum = 0;
+        }
         if  (btnSemantics.isSelected()){
             btnSemanticsAPI.setSelected(false);
             this.semantics = btnSemantics.isSelected();

@@ -49,7 +49,7 @@ public class SemanticsAPI implements Semantic, Serializable {
             //retrieve only the term
             for (JsonElement s : terms) {
                 JsonObject jterms = (JsonObject) (s);
-                similarTerms.add(new Pair(jterms.get("word").getAsString(),(double)(jterms.get("score").getAsInt())/120000));
+                similarTerms.add(new Pair(jterms.get("word").getAsString(),(double)(jterms.get("score").getAsInt())/140000));
             }
 
         } catch (Exception e) {

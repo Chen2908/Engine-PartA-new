@@ -25,7 +25,7 @@ public class SemanticsModel implements Semantic{
             for (Match match : matches) {
                 String similarWord = match.match(); //matching word
                 double similarityScore = match.distance();  // how close the match is to the original word
-                similarTerms.add(new Pair(similarWord, similarityScore));
+                similarTerms.add(new Pair(similarWord, similarityScore*0.5));
             }
         }catch(Exception e){
             System.out.println("Cannot get similar words");
@@ -41,8 +41,8 @@ public class SemanticsModel implements Semantic{
     public static void main(String[] args) {
         SemanticsModel testSemantics = new SemanticsModel();
         double startTime = System.currentTimeMillis();
-        List<Pair<String, Double>> print = testSemantics.termWithSimilarMeaning("petroleum");
-        System.out.println("petroleum : " + (System.currentTimeMillis()-startTime)/1000 + " seconds");
+        List<Pair<String, Double>> print = testSemantics.termWithSimilarMeaning("Falkland");
+        System.out.println("Falkland  : " + (System.currentTimeMillis()-startTime)/1000 + " seconds");
         System.out.println(print);
 
     }
