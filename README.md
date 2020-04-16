@@ -21,7 +21,7 @@ OPERATIONS
 3. Select a posting files path 
 4. Click start to run processing the corpus 
 
-POST PROCESSING 
+*POST PROCESSING*
 ----------------
 1. Reset button : clicking this button will delete all content in the selected posting files path
 2. Load dictionary : will load the term dictionary to memory
